@@ -1,5 +1,7 @@
 import Core
 import Foundation
+import Essentials
+import HMAC
 
 public enum PBKDF2Error: Error {
     case invalidInput
@@ -9,11 +11,11 @@ public final class PBKDF2<Variant: Hash> {
     /// Used to make the block number
     /// Credit to Marcin Krzyzanowski
     private static func blockNumSaltThing(blockNum block: UInt) -> Bytes {
-        var inti = [UInt8](repeating: 0, count: 4)
-        inti[0] = UInt8((block >> 24) & 0xFF)
-        inti[1] = UInt8((block >> 16) & 0xFF)
-        inti[2] = UInt8((block >> 8) & 0xFF)
-        inti[3] = UInt8(block & 0xFF)
+        var inti = Bytes(repeating: 0, count: 4)
+        inti[0] = Byte((block >> 24) & 0xFF)
+        inti[1] = Byte((block >> 16) & 0xFF)
+        inti[2] = Byte((block >> 8) & 0xFF)
+        inti[3] = Byte(block & 0xFF)
         return inti
     }
     

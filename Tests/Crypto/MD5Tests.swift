@@ -1,8 +1,10 @@
 import XCTest
 import Core
-@testable import Crypto
+@testable import MD5
+@testable import HMAC
+@testable import PBKDF2
 
-class CryptoTests: XCTestCase {
+class MD5Tests: XCTestCase {
     func testMD5() {
         // Source: https://github.com/bcgit/bc-java/blob/adecd89d33edf278a5c601af2de696f0a6f65251/core/src/test/java/org/bouncycastle/crypto/test/MD5DigestTest.java
         let tests = [
@@ -41,7 +43,7 @@ class CryptoTests: XCTestCase {
         let data = [UInt8](repeating: Byte.A, count: 50000000)
         
         measure {
-            _ = MD5.hash(BytesSlice.init(data))
+            _ = MD5.hash(data)
         }
     }
 
@@ -89,7 +91,7 @@ class CryptoTests: XCTestCase {
         }
     }
 
-    static var allTests : [(String, (CryptoTests) -> () throws -> Void)] {
+    static var allTests : [(String, (MD5Tests) -> () throws -> Void)] {
         return [
             ("testMD5", testMD5),
             ("testHMACMD5", testHMACMD5),

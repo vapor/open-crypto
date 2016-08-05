@@ -17,4 +17,5 @@
   }
 
   generateTests($tests, "md5", 1000);
+  generateTests($tests, "sha1", 1000);
 ?>

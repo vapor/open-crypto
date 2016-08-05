@@ -12,15 +12,15 @@
 
 import Core
 
-internal func arrayOfBytes<T>(_ value:T, length:Int? = nil) -> [UInt8] {
+public func arrayOfBytes<T>(_ value:T, length:Int? = nil) -> Bytes {
     let totalBytes = length ?? sizeof(T.self)
     
     let valuePointer = UnsafeMutablePointer<T>.allocate(capacity: 1)
     
     valuePointer.pointee = value
     
-    let bytesPointer = UnsafeMutablePointer<UInt8>(valuePointer)
-    var bytes = [UInt8](repeating: 0, count: totalBytes)
+    let bytesPointer = UnsafeMutablePointer<Byte>(valuePointer)
+    var bytes = Bytes(repeating: 0, count: totalBytes)
     for j in 0..<min(sizeof(T.self),totalBytes) {
         bytes[totalBytes - 1 - j] = (bytesPointer + j).pointee
     }
@@ -31,22 +31,25 @@ internal func arrayOfBytes<T>(_ value:T, length:Int? = nil) -> [UInt8] {
     return bytes
 }
 
-internal func toUInt32Array(_ slice: ArraySlice<UInt8>) -> Array<UInt32> {
+public func toUInt32Array(_ slice: BytesSlice) -> Array<UInt32> {
     var result = Array<UInt32>()
     result.reserveCapacity(16)
     
-    for idx in stride(from: slice.startIndex, to: slice.endIndex, by: sizeof(UInt32.self)) {
-        let val1:UInt32 = (UInt32(slice[idx.advanced(by: 3)]) << 24)
-        let val2:UInt32 = (UInt32(slice[idx.advanced(by: 2)]) << 16)
-        let val3:UInt32 = (UInt32(slice[idx.advanced(by: 1)]) << 8)
-        let val4:UInt32 = UInt32(slice[idx])
-        let val:UInt32 = val1 | val2 | val3 | val4
-        result.append(val)
+    for index in stride(from: slice.startIndex, to: slice.endIndex, by: sizeof(UInt32.self)) {
+        result.append(toUInt32(slice, fromIndex: index))
     }
     return result
 }
 
-//internal func toUInt64Array(_ slice: ArraySlice<UInt8>) -> Array<UInt64> {
+public func toUInt32(_ slice: BytesSlice, fromIndex index: Int) -> UInt32 {
+    let val1 = UInt32(slice[index.advanced(by: 3)]) << 24
+    let val2 = UInt32(slice[index.advanced(by: 2)]) << 16
+    let val3 = UInt32(slice[index.advanced(by: 1)]) << 8
+    let val4 = UInt32(slice[index])
+    return val1 | val2 | val3 | val4
+}
+
+//internal func toUInt64Array(_ slice: BytesSlice) -> Array<UInt64> {
 //    var result = Array<UInt64>()
 //    result.reserveCapacity(32)
 //    for idx in stride(from: slice.startIndex, to: slice.endIndex, by: sizeof(UInt64.self)) {
@@ -64,8 +67,8 @@ internal func toUInt32Array(_ slice: ArraySlice<UInt8>) -> Array<UInt32> {
 //    return result
 //}
 
-internal func xor(_ lhs: [UInt8], _ rhs: [UInt8]) -> [UInt8] {
-    var result = [UInt8](repeating: 0, count: min(lhs.count, rhs.count))
+public func xor(_ lhs: Bytes, _ rhs: Bytes) -> Bytes {
+    var result = Bytes(repeating: 0, count: min(lhs.count, rhs.count))
     
     for i in 0..<result.count {
         result[i] = lhs[i] ^ rhs[i]
@@ -74,32 +77,11 @@ internal func xor(_ lhs: [UInt8], _ rhs: [UInt8]) -> [UInt8] {
     return result
 }
 
-extension String {
-    internal subscript (i: Int) -> Character {
-        return self[index(self.startIndex, offsetBy: i)]
-    }
-    
-    internal subscript (i: Int) -> String {
-        return String(self[i] as Character)
-    }
-    
-    internal subscript (r: Range<Int>) -> String {
-        let r2 = Range.init(uncheckedBounds: (lower: index(startIndex, offsetBy: r.lowerBound), upper: index(startIndex, offsetBy: r.upperBound)))
-        
-        return substring(with: r2)
-    }
+public func leftRotate(_ x: UInt32, count c: UInt32) -> UInt32 {
+    return (x << c) | (x >> (32 - c))
 }
 
-extension Character {
-    func utf16Value() -> UInt16 {
-        for s in String(self).utf16 {
-            return s
-        }
-        return 0
-    }
-}
-
-// Too slow for actual usage
+// Too slow for actual usage - retain until future generics speed improvements
 //internal protocol CryptoUnsignedInteger: UnsignedInteger {
 //    static var byteLength: Int { get }
 //    

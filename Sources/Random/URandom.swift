@@ -12,6 +12,8 @@
     import Darwin
 #endif
 
+import Core
+
 /**
  URandom represents a file connection to /dev/urandom on Unix systems.
  /dev/urandom is a cryptographically secure random generator provided by the OS.
@@ -37,8 +39,8 @@ public class URandom {
     }
     
     /// Get a byte array of random UInt8s
-    public func random(numBytes: Int) -> [UInt8] {
-        return read(numBytes: numBytes).map({ UInt8(bitPattern: $0) })
+    public func random(numBytes: Int) -> Bytes {
+        return read(numBytes: numBytes).map({ Byte(bitPattern: $0) })
     }
     
     /// Get a random int8
@@ -48,7 +50,7 @@ public class URandom {
     
     /// Get a random uint8
     public var uint8: UInt8 {
-        return UInt8(bitPattern: int8)
+        return Byte(bitPattern: int8)
     }
     
     /// Get a random int16

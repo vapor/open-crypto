@@ -1,14 +1,8 @@
-//
-//  MD5.swift
-//  Crypto
-//
-//  Created by Joannis Orlandos on 04/08/2016.
-//
-//
-
 import Core
+import Essentials
 
-public class MD5 {
+public class MD5: StreamingHash {
+    // MARK - MD5 Specific variables
     public static let blockSize  = 64
     internal static var chunkSize = 64
     
@@ -45,18 +39,16 @@ public class MD5 {
         0xf7537e82,0xbd3af235,0x2ad7d2bb,0xeb86d391]
     
     internal static let H: [UInt32] = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]
-}
-
-extension MD5: StreamingHash {
+    
+    // MARK - MD5 specific calculation code
     func result() -> Bytes {
-        var result = [UInt8]()
-        result.reserveCapacity(h.count / 4)
+        var result = Bytes()
         
         // Store result in little endian
         for int in h {
             let int = int.littleEndian
             
-            result += [UInt8(int & 0xff), UInt8((int >> 8) & 0xff), UInt8((int >> 16) & 0xff), UInt8((int >> 24) & 0xff)]
+            result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
         }
         
         return result
@@ -91,7 +83,7 @@ extension MD5: StreamingHash {
                 F = c ^ (b | (~d))
                 g = (7 * i) % 16
             default:
-                break
+                fatalError("Strange bug")
             }
             
             temp = d
@@ -101,7 +93,7 @@ extension MD5: StreamingHash {
             let x = (a &+ F &+ MD5.k[i] &+ chunk[g])
             let c = MD5.s[i]
             
-            b = b &+ MD5.leftRotate(x, c)
+            b = b &+ leftRotate(x, count: c)
             a = temp
         }
         
@@ -112,10 +104,7 @@ extension MD5: StreamingHash {
         h[3] = h[3] &+ d
     }
     
-    private static func leftRotate(_ x: UInt32, _ c: UInt32) -> UInt32 {
-        return (x << c) | (x >> (32 - c))
-    }
-    
+    // MARK - Hashing helpers
     public func append(bytes: Bytes) {
         message.append(bytes: bytes)
         processChunks()
@@ -146,24 +135,28 @@ extension MD5: StreamingHash {
         }
     }
     
-    private func applyBitLength(of length: Int) {
+    private func applyBitLength(of length: Int, reversed: Bool = true) {
         let lengthInBits = length * 8
         let lengthBytes = arrayOfBytes(lengthInBits, length: 8)
-        message.append(bytes: lengthBytes.reversed())
+        
+        if reversed {
+            message.append(bytes: lengthBytes.reversed())
+        } else {
+            message.append(bytes: lengthBytes)
+        }
     }
     
-    public static func hash(_ message: BytesSlice) -> Bytes {
+    // MARK - MD5 Specific performant override
+    public static func hash(_ message: Bytes) -> Bytes {
         var newMessage = message
         
         newMessage.append(0x80)
         
         // Append `0x00` until the (message length) -mod- 512 == 448
         // TODO: faster method
-        while newMessage.count % 64 != 56 {
+        while newMessage.count % self.chunkSize != self.chunkSize - 8 {
             newMessage.append(0x00)
         }
-        
-        newMessage.reserveCapacity(newMessage.count + 4)
         
         var hash = MD5.H
         
@@ -173,7 +166,7 @@ extension MD5: StreamingHash {
         newMessage += lengthBytes.reversed()
         
         // Process in 64-byte chunks
-        let chunks = newMessage.count / 64
+        let chunks = newMessage.count / self.chunkSize
         
         //        if newMessage.count % 64 > 0 {
         //            chunks += 1
@@ -181,8 +174,8 @@ extension MD5: StreamingHash {
         
         // Loop over the chunks
         for i in 0..<chunks {
-            let chunkOffset = i * 64
-            let end = Swift.min(64, newMessage.count - chunkOffset)
+            let chunkOffset = i * self.chunkSize
+            let end = Swift.min(self.chunkSize, newMessage.count - chunkOffset)
             var chunk: [UInt32] = toUInt32Array(newMessage[chunkOffset..<(chunkOffset + end)])
             
             var a = hash[0]
@@ -221,7 +214,7 @@ extension MD5: StreamingHash {
                 let x = (a &+ F &+ k[i] &+ chunk[g])
                 let c = s[i]
                 
-                b = b &+ leftRotate(x, c)
+                b = b &+ leftRotate(x, count: c)
                 a = temp
             }
             
@@ -232,14 +225,13 @@ extension MD5: StreamingHash {
             hash[3] = hash[3] &+ d
         }
         
-        var result = [UInt8]()
-        result.reserveCapacity(hash.count / 4)
+        var result = Bytes()
         
         // Store result in little endian
         for int in hash {
             let int = int.littleEndian
             
-            result += [UInt8(int & 0xff), UInt8((int >> 8) & 0xff), UInt8((int >> 16) & 0xff), UInt8((int >> 24) & 0xff)]
+            result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
         }
         
         return result
