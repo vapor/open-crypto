@@ -26,12 +26,12 @@ class SHA1Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try SHA1().hash(test.0.bytes).hexString.lowercased()
+            let result = try SHA1.hash(test.0.bytes).hexString.lowercased()
             XCTAssertEqual(result, test.1.lowercased())
         }
         
         // Source: https://github.com/krzyzanowskim/CryptoSwift/blob/swift3-snapshots/CryptoSwiftTests/HashTests.swift
-        XCTAssertEqual(try SHA1().hash([0x31, 0x32, 0x33]).hexString.lowercased(), "40bd001563085fc35165329ea1ff5c5ecbdbbeef")
+        XCTAssertEqual(try SHA1.hash([0x31, 0x32, 0x33]).hexString.lowercased(), "40bd001563085fc35165329ea1ff5c5ecbdbbeef")
     }
     
     /*func testStreamingSHA1performance() {

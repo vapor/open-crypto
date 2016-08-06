@@ -2,13 +2,19 @@ import Core
 
 public protocol Hash {
     static var blockSize: Int { get }
-    func hash(_ stream: ByteStream) throws -> ByteStream
+
+    init(_ stream: ByteStream)
+    func hash() throws -> ByteStream
 }
 
 extension Hash {
-    public func hash(_ bytes: Bytes) throws -> Bytes {
+    public init(_ bytes: Bytes) {
         let inputStream = BasicByteStream(bytes: bytes)
-        let outputStream = try hash(inputStream)
+        self.init(inputStream)
+    }
+
+    public func hash() throws -> Bytes {
+        let outputStream: ByteStream = try self.hash()
 
         var output: Bytes = []
         while !outputStream.closed {
@@ -17,6 +23,11 @@ extension Hash {
         }
 
         return output
+    }
+
+    public static func hash(_ bytes: Bytes) throws -> Bytes {
+        let hasher = Self(bytes)
+        return try hasher.hash()
     }
 }
 

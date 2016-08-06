@@ -44,3 +44,26 @@ extension ArrayProtocol where Iterator.Element == Byte {
         self.init(data)
     }
 }
+
+extension Sequence where Iterator.Element == Byte {
+    public func applyPadding(until length: Int) -> Bytes {
+        var bytes = Array(self)
+        bytes.append(0x80)
+
+        while bytes.count < length {
+            bytes.append(0x00)
+        }
+
+        return bytes
+    }
+
+    public func applyBitLength(of length: Int, reversed: Bool = true) -> Bytes {
+        var lengthBytes = arrayOfBytes(length * 8, length: 8)
+
+        if reversed {
+            lengthBytes = lengthBytes.reversed()
+        }
+
+        return self + lengthBytes
+    }
+}

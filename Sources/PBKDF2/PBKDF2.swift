@@ -8,10 +8,7 @@ public enum PBKDF2Error: Error {
 }
 
 public final class PBKDF2<Variant: Hash> {
-    public let variant: Variant
-    public init(_ variant: Variant) {
-        self.variant = variant
-    }
+    public init() { }
 
     /// Used to make the block number
     /// Credit to Marcin Krzyzanowski
@@ -37,11 +34,11 @@ public final class PBKDF2<Variant: Hash> {
             var s = salt
             s.append(contentsOf: self.blockNumSaltThing(blockNum: block))
             
-            var ui = try HMAC(variant).authenticate(s, key: password)
+            var ui = try HMAC<Variant>().authenticate(s, key: password)
             var u1 = ui
             
             for _ in 0..<iterations - 1 {
-                u1 = try HMAC(variant).authenticate(u1, key: password)
+                u1 = try HMAC<Variant>().authenticate(u1, key: password)
                 ui = xor(ui, u1)
             }
             

@@ -2,19 +2,98 @@ import Core
 import Essentials
 
 public final class SHA1: Hash {
-    public static let blockSize  = 64
-    
-    public init() {
-        h = SHA1.H
+
+    public enum Error: Swift.Error {
+        case invalidByteCount
+        case switchError
     }
 
-    var h: [UInt32]
-    
-    internal static let H: [UInt32] = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
+    private var h: [UInt32]
+    private var stream: ByteStream
 
-    private func process(_ bytes: Bytes) {
+    /**
+        Create a new SHA1 capable of hashing a Stream.
+    */
+    public init(_ stream: ByteStream) {
+        self.stream = stream
+        h = [
+            0x67452301,
+            0xEFCDAB89,
+            0x98BADCFE,
+            0x10325476,
+            0xC3D2E1F0
+        ]
+    }
+
+    // MARK - Hash Protocol
+
+    /**
+        SHA1 uses a block size of 64.
+    */
+    public static let blockSize = 64
+
+    /**
+        Create a hashed ByteStream from an input ByteStream
+        using the SHA1 protocol.
+    */
+    public func hash() throws -> ByteStream {
+        var count = 0
+        while !stream.closed {
+            var bytes = try stream.next(SHA1.blockSize)
+
+            if stream.closed {
+                if bytes.count > SHA1.blockSize - 8 {
+                    // if the block is too big, just pad and process
+                    bytes = bytes.applyPadding(until: SHA1.blockSize)
+                    try process(bytes)
+                    count += bytes.count
+
+                    // give an empty block for padding
+                    bytes = []
+                } else {
+                    // add this block's count to the total
+                    count += bytes.count
+                }
+
+                // pad and process the last block 
+                // adding the bit length
+                bytes = bytes.applyPadding(until: SHA1.blockSize - 8)
+                bytes = bytes.applyBitLength(of: count, reversed: false)
+                try process(bytes)
+            } else {
+                // if the stream is still open,
+                // process as normal
+                try process(bytes)
+                count += bytes.count
+            }
+        }
+
+        // convert the hash into a byte
+        // array of results
+        var result: Bytes = []
+        h.forEach { int in
+            result += convert(int)
+        }
+
+        // return a basic byte stream
+        return BasicByteStream(bytes: result)
+    }
+
+    // MARK: Processing
+
+    private func convert(_ int: UInt32) -> Bytes {
+        let int = int.bigEndian
+        return [
+            Byte(int & 0xff),
+            Byte((int >> 8) & 0xff),
+            Byte((int >> 16) & 0xff),
+            Byte((int >> 24) & 0xff)
+        ]
+    }
+
+    private func process(_ bytes: Bytes) throws {
         if bytes.count != SHA1.blockSize {
-            fatalError("Invalid byte count. \(bytes.count) != \(SHA1.blockSize).")
+            throw Error.invalidByteCount
         }
 
         var w = [UInt32](repeating: 0, count: 80)
@@ -25,25 +104,25 @@ public final class SHA1: Hash {
                 let start = bytes.startIndex + (j * sizeofValue(w[j]))
                 let end = start + 4
                 w[j] = toUInt32(bytes[start..<end], fromIndex: start).bigEndian
-                
+
             // Extend the sixteen 32-bit words into eighty 32-bit words:
             default:
                 w[j] = leftRotate(w[j - 3] ^ w[j - 8] ^ w[j - 14] ^ w[j - 16], count: 1)
                 break
             }
         }
-        
+
         var a = h[0]
         var b = h[1]
         var c = h[2]
         var d = h[3]
         var e = h[4]
-        
+
         // Main loop
         for j in 0..<80 {
             var f: UInt32
             var k: UInt32
-            
+
             switch (j) {
             case 0..<20:
                 f = (b & c) | ((~b) & d)
@@ -62,9 +141,9 @@ public final class SHA1: Hash {
                 k = 0xCA62C1D6
                 break
             default:
-                fatalError("Strange bug")
+                throw Error.switchError
             }
-            
+
             let temp = (leftRotate(a, count: 5) &+ f &+ e &+ w[j] &+ k) & 0xffffffff
             e = d
             d = c
@@ -72,75 +151,12 @@ public final class SHA1: Hash {
             b = a
             a = temp
         }
-        
+
         h[0] = (h[0] &+ a) & 0xffffffff
         h[1] = (h[1] &+ b) & 0xffffffff
         h[2] = (h[2] &+ c) & 0xffffffff
         h[3] = (h[3] &+ d) & 0xffffffff
         h[4] = (h[4] &+ e) & 0xffffffff
     }
-    
-    // MARK - HASH
 
-    public func hash(_ stream: ByteStream) throws -> ByteStream {
-        var count = 0
-        while !stream.closed {
-            var bytes = try stream.next(SHA1.blockSize)
-
-            if stream.closed {
-                if bytes.count > SHA1.blockSize - 8 {
-                    bytes = bytes.applyPadding(until: SHA1.blockSize)
-                    process(bytes)
-                    count += bytes.count
-                    bytes = []
-                } else {
-                    count += bytes.count
-                }
-
-                bytes = bytes.applyPadding(until: SHA1.blockSize - 8)
-                bytes = bytes.applyBitLength(of: count, reversed: false)
-                process(bytes)
-            } else {
-                process(bytes)
-                count += bytes.count
-            }
-        }
-
-        var result: Bytes = []
-
-        for int in h {
-            let int = int.bigEndian
-            result += [
-                Byte(int & 0xff),
-                Byte((int >> 8) & 0xff),
-                Byte((int >> 16) & 0xff),
-                Byte((int >> 24) & 0xff)
-            ]
-        }
-
-        return BasicByteStream(bytes: result)
-    }
-}
-
-extension Sequence where Iterator.Element == Byte {
-    private func applyPadding(until length: Int) -> Bytes {
-        var bytes = Array(self)
-        bytes.append(0x80)
-
-        while bytes.count < length {
-            bytes.append(0x00)
-        }
-
-        return bytes
-    }
-
-    private func applyBitLength(of length: Int, reversed: Bool = true) -> Bytes {
-        var lengthBytes = arrayOfBytes(length * 8, length: 8)
-
-        if reversed {
-            lengthBytes = lengthBytes.reversed()
-        }
-
-        return self + lengthBytes
-    }
 }
