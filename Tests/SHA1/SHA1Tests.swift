@@ -40,9 +40,9 @@ class SHA1Tests: XCTestCase {
     }
     
     func testPerformance() {
-        let data = Bytes(repeating: Byte.A, count: 10_000)
+        let data = Bytes(repeating: Byte.A, count: 10_000_000)
 
-        // 0.06 debug
+        // 0.257 release
         measure {
             let hasher = SHA1(data)
             _ = try! hasher.hash()

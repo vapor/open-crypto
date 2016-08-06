@@ -94,10 +94,9 @@ public final class SHA1: Hash {
     }
 
     private func process(_ bytes: BytesSlice) throws {
-        /*if bytes.count != SHA1.blockSize {
-            print(bytes.count)
+        if bytes.count != SHA1.blockSize {
             throw Error.invalidByteCount
-        }*/
+        }
 
         var w = [UInt32](repeating: 0, count: 80)
 
