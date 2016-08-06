@@ -1,7 +1,7 @@
 import XCTest
 import Core
-import SHA1
-import HMAC
+@testable import SHA1
+@testable import HMAC
 
 class SHA1Tests: XCTestCase {
     static var allTests = [
@@ -59,7 +59,7 @@ class SHA1Tests: XCTestCase {
         // Source: https://github.com/bcgit/bc-java/blob/adecd89d33edf278a5c601af2de696f0a6f65251/core/src/test/java/org/bouncycastle/crypto/test/SHA1HMacTest.java
         let tests = [
             (
-                "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+                "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
                 "Hi There",
                 "b617318655057264e28bc0b6fb378c8ef146be00",
                 false
@@ -71,7 +71,7 @@ class SHA1Tests: XCTestCase {
                 false
             ),
             (
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
                 "125d7342b9ac11cd91a39af48aa17b4f63f175d3",
                 true
@@ -83,7 +83,7 @@ class SHA1Tests: XCTestCase {
                 true
             ),
             (
-                "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+                "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
                 "Test With Truncation",
                 "4c1a03424b55e07fe7f27be1d58bb9324a9a5a04",
                 false
@@ -114,7 +114,7 @@ class SHA1Tests: XCTestCase {
             }
         }
         
-        // Source: https://github.com/krzyzanowskim/CryptoSwift/blob/swift3-snapshots/Sources/CryptoSwift/HMAC.swift
-        XCTAssertEqual(HMAC<SHA1>.authenticate([], withKey: []), [0x74,0xe6,0xf7,0x29,0x8a,0x9c,0x2d,0x16,0x89,0x35,0xf5,0x8c,0x00,0x1b,0xad,0x88])
+        // Source: https://github.com/krzyzanowskim/CryptoSwift/blob/swift3-snapshots/CryptoSwiftTests/HMACTests.swift
+        XCTAssertEqual(HMAC<SHA1>.authenticate([], withKey: []), [0xfb,0xdb,0x1d,0x1b,0x18,0xaa,0x6c,0x08,0x32,0x4b,0x7d,0x64,0xb7,0x1f,0xb7,0x63,0x70,0x69,0x0e,0x1d])
     }
 }
