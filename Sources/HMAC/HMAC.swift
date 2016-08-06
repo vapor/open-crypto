@@ -13,12 +13,12 @@ public class HMAC<Variant: Hash> {
     /// - parameter key: The key to authenticate with
     ///
     /// - returns: The authenticated message
-    public func authenticate(_ message: Bytes, key: Bytes) -> Bytes {
+    public func authenticate(_ message: Bytes, key: Bytes) throws -> Bytes {
         var key = key
         
         // If it's too long, hash it first
         if key.count > Variant.blockSize {
-            key = variant.hash(key)
+            key = try variant.hash(key)
         }
         
         // Add padding
@@ -39,8 +39,8 @@ public class HMAC<Variant: Hash> {
         }
         
         // Hash the information
-        let innerPaddingHash = variant.hash(innerPadding + message)
-        let outerPaddingHash = variant.hash(outerPadding + innerPaddingHash)
+        let innerPaddingHash = try variant.hash(innerPadding + message)
+        let outerPaddingHash = try variant.hash(outerPadding + innerPaddingHash)
         
         return outerPaddingHash
     }

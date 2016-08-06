@@ -1,6 +1,7 @@
 import Core
 import Essentials
 
+/*
 public class MD5: Hash {
     // MARK - MD5 Specific variables
     public static let blockSize  = 64
@@ -244,3 +245,4 @@ public class MD5: Hash {
         return result
     }
 }
+ */

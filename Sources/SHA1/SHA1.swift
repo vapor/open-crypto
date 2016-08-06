@@ -13,6 +13,10 @@ public final class SHA1: Hash {
     internal static let H: [UInt32] = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
 
     private func process(_ bytes: Bytes) {
+        if bytes.count != SHA1.blockSize {
+            fatalError("Invalid byte count. \(bytes.count) != \(SHA1.blockSize).")
+        }
+
         var w = [UInt32](repeating: 0, count: 80)
         for j in 0..<w.count {
             switch (j) {
@@ -78,16 +82,28 @@ public final class SHA1: Hash {
     
     // MARK - HASH
 
-    public func hash(_ stream: ByteStream) -> ByteStream {
+    public func hash(_ stream: ByteStream) throws -> ByteStream {
         var count = 0
-        while var bytes = stream.next(SHA1.blockSize) {
-            if bytes.count < SHA1.blockSize {
-                bytes = bytes.applyPadding(until: SHA1.blockSize)
-                bytes = bytes.applyBitLength(of: count, reversed: false)
-            }
+        while !stream.closed {
+            var bytes = try stream.next(SHA1.blockSize)
 
-            process(bytes)
-            count += bytes.count
+            if stream.closed {
+                if bytes.count > SHA1.blockSize - 8 {
+                    bytes = bytes.applyPadding(until: SHA1.blockSize)
+                    process(bytes)
+                    count += bytes.count
+                    bytes = []
+                } else {
+                    count += bytes.count
+                }
+
+                bytes = bytes.applyPadding(until: SHA1.blockSize - 8)
+                bytes = bytes.applyBitLength(of: count, reversed: false)
+                process(bytes)
+            } else {
+                process(bytes)
+                count += bytes.count
+            }
         }
 
         var result: Bytes = []
@@ -111,7 +127,7 @@ extension Sequence where Iterator.Element == Byte {
         var bytes = Array(self)
         bytes.append(0x80)
 
-        while bytes.count % length != (length - 8) {
+        while bytes.count < length {
             bytes.append(0x00)
         }
 

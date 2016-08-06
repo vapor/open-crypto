@@ -37,11 +37,11 @@ public final class PBKDF2<Variant: Hash> {
             var s = salt
             s.append(contentsOf: self.blockNumSaltThing(blockNum: block))
             
-            var ui = HMAC(variant).authenticate(s, key: password)
+            var ui = try HMAC(variant).authenticate(s, key: password)
             var u1 = ui
             
             for _ in 0..<iterations - 1 {
-                u1 = HMAC(variant).authenticate(u1, key: password)
+                u1 = try HMAC(variant).authenticate(u1, key: password)
                 ui = xor(ui, u1)
             }
             

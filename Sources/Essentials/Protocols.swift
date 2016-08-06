@@ -2,15 +2,17 @@ import Core
 
 public protocol Hash {
     static var blockSize: Int { get }
-    func hash(_ stream: ByteStream) -> ByteStream
+    func hash(_ stream: ByteStream) throws -> ByteStream
 }
 
 extension Hash {
-    public func hash(_ bytes: Bytes) -> Bytes {
-        let input = BasicByteStream(bytes: bytes)
+    public func hash(_ bytes: Bytes) throws -> Bytes {
+        let inputStream = BasicByteStream(bytes: bytes)
+        let outputStream = try hash(inputStream)
 
         var output: Bytes = []
-        while let next = hash(input).next(Self.blockSize) {
+        while !outputStream.closed {
+            let next = try outputStream.next(Self.blockSize)
             output += next
         }
 
@@ -19,26 +21,41 @@ extension Hash {
 }
 
 public protocol ByteStream {
-    func next(_ max: Int) -> Bytes?
+    var closed: Bool { get }
+    func next(_ max: Int) throws -> Bytes
 }
 
 public final class BasicByteStream: ByteStream {
     var bytes: Bytes
 
-    public init(bytes: Bytes) {
-        self.bytes = bytes
+    public enum Error: Swift.Error {
+        case closed
     }
 
-    public func next(_ max: Int) -> Bytes? {
-        guard bytes.count > 0 else { return nil }
+    public var closed: Bool
+
+    public init(bytes: Bytes) {
+        self.bytes = bytes
+        closed = false
+    }
+
+    public func next(_ max: Int) throws -> Bytes {
+        guard !closed else {
+            throw Error.closed
+        }
 
         var max = max
-        if bytes.count > max {
+        if max > bytes.count {
             max = bytes.count
         }
 
         let temp = bytes[0..<max]
         bytes = Array(bytes[max..<bytes.count])
+
+        print(bytes.count)
+        if bytes.count == 0 {
+            closed = true
+        }
 
         return Array(temp)
     }
