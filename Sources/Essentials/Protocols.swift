@@ -9,7 +9,7 @@ public protocol Hash {
 
 extension Hash {
     public init(_ bytes: Bytes) {
-        let inputStream = BasicByteStream(bytes: bytes)
+        let inputStream = BasicByteStream(bytes)
         self.init(inputStream)
     }
 
@@ -45,7 +45,7 @@ public final class BasicByteStream: ByteStream {
 
     public var closed: Bool
 
-    public init(bytes: Bytes) {
+    public init(_ bytes: Bytes) {
         self.bytes = bytes
         closed = false
     }
@@ -63,7 +63,6 @@ public final class BasicByteStream: ByteStream {
         let temp = bytes[0..<max]
         bytes = Array(bytes[max..<bytes.count])
 
-        print(bytes.count)
         if bytes.count == 0 {
             closed = true
         }

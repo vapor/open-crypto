@@ -1,15 +1,23 @@
 import Core
 import Essentials
 
-/// Used to authenticate messages using the `Hash` algorithm
+/**
+    Used to authenticate messages using the `Hash` algorithm
+*/
 public class HMAC<Variant: Hash> {
+    /**
+        Create an HMAC authenticator.
+    */
     public init() {}
-    /// Authenticates a message using the provided `Hash` algorithm
-    /// 
-    /// - parameter message: The message to authenticate
-    /// - parameter key: The key to authenticate with
-    ///
-    /// - returns: The authenticated message
+
+    /**
+        Authenticates a message using the provided `Hash` algorithm
+
+        - parameter message: The message to authenticate
+        - parameter key: The key to authenticate with
+
+        - returns: The authenticated message
+    */
     public func authenticate(_ message: Bytes, key: Bytes) throws -> Bytes {
         var key = key
         

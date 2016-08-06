@@ -48,6 +48,10 @@ extension ArrayProtocol where Iterator.Element == Byte {
 extension Sequence where Iterator.Element == Byte {
     public func applyPadding(until length: Int) -> Bytes {
         var bytes = Array(self)
+        if bytes.count == length {
+            return bytes
+        }
+
         bytes.append(0x80)
 
         while bytes.count < length {

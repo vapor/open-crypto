@@ -8,7 +8,7 @@ let package = Package(
         Target(name: "Random", dependencies: ["Essentials"]),
         Target(name: "HMAC", dependencies: ["Essentials"]),
         Target(name: "PBKDF2", dependencies: ["HMAC"]),
-        Target(name: "SHA1", dependencies: ["Essentials"]),
+        Target(name: "SHA1", dependencies: ["Essentials", "HMAC"]),
         Target(name: "BCrypt", dependencies: ["Random"]),
     ],
     dependencies: [

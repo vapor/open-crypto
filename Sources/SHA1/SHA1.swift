@@ -43,8 +43,9 @@ public final class SHA1: Hash {
 
             if stream.closed {
                 if bytes.count > SHA1.blockSize - 8 {
-                    // if the block is too big, just pad and process
+                    // if the block is slightly too big, just pad and process
                     bytes = bytes.applyPadding(until: SHA1.blockSize)
+
                     try process(bytes)
                     count += bytes.count
 
@@ -76,7 +77,7 @@ public final class SHA1: Hash {
         }
 
         // return a basic byte stream
-        return BasicByteStream(bytes: result)
+        return BasicByteStream(result)
     }
 
     // MARK: Processing
@@ -93,6 +94,7 @@ public final class SHA1: Hash {
 
     private func process(_ bytes: Bytes) throws {
         if bytes.count != SHA1.blockSize {
+            print(bytes.count)
             throw Error.invalidByteCount
         }
 
