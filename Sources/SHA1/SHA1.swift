@@ -14,8 +14,8 @@ public final class SHA1: Hash {
     /**
         Create a new SHA1 capable of hashing a Stream.
     */
-    public init(_ stream: ByteStream) {
-        self.stream = stream
+    public init(_ s: ByteStream) {
+        stream = s
         h = [
             0x67452301,
             0xEFCDAB89,
