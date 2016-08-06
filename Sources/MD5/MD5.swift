@@ -1,11 +1,9 @@
 import Core
 import Essentials
 
-/*
-public class MD5: Hash {
+public final class MD5: Hash {
     // MARK - MD5 Specific variables
     public static let blockSize  = 64
-    internal static var chunkSize = 64
     
     private static let s: [UInt32] = [
         7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
@@ -14,13 +12,18 @@ public class MD5: Hash {
         6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
     ]
    
-    public required init() {
-        message = Chunks(chunkSize: MD5.chunkSize)
-        h = MD5.H
+    public init(_ s: ByteStream) {
+        stream = s
+        h = [
+            0x67452301,
+            0xefcdab89,
+            0x98badcfe,
+            0x10325476
+        ]
     }
-    
-    var message: Chunks
-    var h: [UInt32]
+
+    private let stream: ByteStream
+    private var h: [UInt32]
     
     private static let k: [UInt32] = [
         0xd76aa478,0xe8c7b756,0x242070db,0xc1bdceee,
@@ -38,39 +41,85 @@ public class MD5: Hash {
         0xf4292244,0x432aff97,0xab9423a7,0xfc93a039,
         0x655b59c3,0x8f0ccc92,0xffeff47d,0x85845dd1,
         0x6fa87e4f,0xfe2ce6e0,0xa3014314,0x4e0811a1,
-        0xf7537e82,0xbd3af235,0x2ad7d2bb,0xeb86d391]
+        0xf7537e82,0xbd3af235,0x2ad7d2bb,0xeb86d391
+    ]
     
     internal static let H: [UInt32] = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]
-    
-    // MARK - MD5 specific calculation code
-    func result() -> Bytes {
-        var result = Bytes()
-        
-        // Store result in little endian
-        for int in h {
-            let int = int.littleEndian
-            
-            result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
+
+    // MARK - Hash Protocol
+
+    public func hash() throws -> ByteStream {
+        var count = 0
+        while !stream.closed {
+            let slice = try stream.next(MD5.blockSize)
+
+            if stream.closed {
+                var bytes = Array(slice)
+                if bytes.count > MD5.blockSize - 8 {
+                    // if the block is slightly too big, just pad and process
+                    bytes = bytes.applyPadding(until: MD5.blockSize)
+
+                    try process(BytesSlice(bytes))
+                    count += bytes.count
+
+                    // give an empty block for padding
+                    bytes = []
+                } else {
+                    // add this block's count to the total
+                    count += bytes.count
+                }
+
+                // pad and process the last block
+                // adding the bit length
+                bytes = bytes.applyPadding(until: MD5.blockSize - 8)
+                bytes = bytes.applyBitLength(of: count, reversed: false)
+                try process(BytesSlice(bytes))
+            } else {
+                // if the stream is still open,
+                // process as normal
+                try process(slice)
+                count += MD5.blockSize
+            }
         }
-        
-        return result
+
+        // convert the hash into a byte
+        // array of results
+        var result: Bytes = []
+        h.forEach { int in
+            result += convert(int)
+        }
+
+        // return a basic byte stream
+        return BasicByteStream(result)
     }
-    
-    internal func processChunk(_ chunk: Bytes) {
-        var chunk: [UInt32] = toUInt32Array(chunk[0..<chunk.count])
-        
+
+    // MARK: Processing
+
+    private func convert(_ int: UInt32) -> Bytes {
+        let int = int.littleEndian
+        return [
+            Byte(int & 0xff),
+            Byte((int >> 8) & 0xff),
+            Byte((int >> 16) & 0xff),
+            Byte((int >> 24) & 0xff)
+        ]
+    }
+
+    private func process(_ bytes: BytesSlice) throws {
+        var chunk: [UInt32] = toUInt32Array(bytes[0..<bytes.count])
+
         var a = h[0]
         var b = h[1]
         var c = h[2]
         var d = h[3]
-        
+
         // Main loop
         for i in 0..<64 {
             var g = 0
             var F: UInt32 = 0
-            
+
             var temp: UInt32
-            
+
             switch i {
             case 0..<16:
                 F = (b & c) | ((~b) & d)
@@ -87,18 +136,18 @@ public class MD5: Hash {
             default:
                 fatalError("Strange bug")
             }
-            
+
             temp = d
             d = c
             c = b
-            
+
             let x = (a &+ F &+ MD5.k[i] &+ chunk[g])
             let c = MD5.s[i]
-            
+
             b = b &+ leftRotate(x, count: c)
             a = temp
         }
-        
+
         // Add this chunk's hash to the result
         h[0] = h[0] &+ a
         h[1] = h[1] &+ b
@@ -106,143 +155,4 @@ public class MD5: Hash {
         h[3] = h[3] &+ d
     }
 
-    // MARK - StreamingHash
-
-
-    public func hash(_ stream: ByteStream) -> ByteStream {
-        let originalCount = message.count // FIXME: how to get count before using stream?
-        self.applyPadding(until: MD5.chunkSize)
-        self.applyBitLength(of: originalCount)
-
-        while let chunk = stream.next(MD5.chunkSize) {
-            processChunk(chunk)
-        }
-
-        let bytes = result()
-
-        return BasicByteStream(bytes: bytes)
-    }
-    
-    private func streamAppend(bytes: Bytes) {
-        message.append(bytes: bytes)
-        processChunks()
-    }
-    
-    private func processChunks() {
-        for chunk in message {
-            processChunk(chunk)
-        }
-    }
-
-    
-    private func applyPadding(until length: Int) {
-        self.message.append(0x80)
-        
-        while self.message.count % length != (length - 8) {
-            self.message.append(0x00)
-        }
-    }
-    
-    private func applyBitLength(of length: Int, reversed: Bool = true) {
-        let lengthInBits = length * 8
-        let lengthBytes = arrayOfBytes(lengthInBits, length: 8)
-        
-        if reversed {
-            message.append(bytes: lengthBytes.reversed())
-        } else {
-            message.append(bytes: lengthBytes)
-        }
-    }
-    
-    // MARK - MD5 Specific performant override
-    public func hash(bytes: Bytes) -> Bytes {
-        var newMessage = bytes
-        
-        newMessage.append(0x80)
-        
-        // Append `0x00` until the (message length) -mod- 512 == 448
-        // TODO: faster method
-        while newMessage.count % MD5.chunkSize != MD5.chunkSize - 8 {
-            newMessage.append(0x00)
-        }
-        
-        var hash = MD5.H
-        
-        // Append length and a 64-bit representation of the length in bits
-        let lengthInBits = message.count * 8
-        let lengthBytes = arrayOfBytes(lengthInBits, length: 8)
-        newMessage += lengthBytes.reversed()
-        
-        // Process in 64-byte chunks
-        let chunks = newMessage.count / MD5.chunkSize
-        
-        //        if newMessage.count % 64 > 0 {
-        //            chunks += 1
-        //        }
-        
-        // Loop over the chunks
-        for i in 0..<chunks {
-            let chunkOffset = i * MD5.chunkSize
-            let end = Swift.min(MD5.chunkSize, newMessage.count - chunkOffset)
-            var chunk: [UInt32] = toUInt32Array(newMessage[chunkOffset..<(chunkOffset + end)])
-            
-            var a = hash[0]
-            var b = hash[1]
-            var c = hash[2]
-            var d = hash[3]
-            
-            // Main loop
-            for i in 0..<64 {
-                var g = 0
-                var F: UInt32 = 0
-                
-                var temp: UInt32
-                
-                switch i {
-                case 0..<16:
-                    F = (b & c) | ((~b) & d)
-                    g = i
-                case 16..<32:
-                    F = (d & b) | ((~d) & c)
-                    g = (5 * i + 1) % 16
-                case 32..<48:
-                    F = b ^ c ^ d
-                    g = (3 * i + 5) % 16
-                case 48..<64:
-                    F = c ^ (b | (~d))
-                    g = (7 * i) % 16
-                default:
-                    break
-                }
-                
-                temp = d
-                d = c
-                c = b
-                
-                let x = (a &+ F &+ MD5.k[i] &+ chunk[g])
-                let c = MD5.s[i]
-                
-                b = b &+ leftRotate(x, count: c)
-                a = temp
-            }
-            
-            // Add this chunk's hash to the result
-            hash[0] = hash[0] &+ a
-            hash[1] = hash[1] &+ b
-            hash[2] = hash[2] &+ c
-            hash[3] = hash[3] &+ d
-        }
-        
-        var result = Bytes()
-        
-        // Store result in little endian
-        for int in hash {
-            let int = int.littleEndian
-            
-            result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
-        }
-        
-        return result
-    }
 }
- */

@@ -59,6 +59,7 @@ public final class SHA1: Hash {
 
                 // pad and process the last block 
                 // adding the bit length
+                bytes.append(0x80)
                 bytes = bytes.applyPadding(until: SHA1.blockSize - 8)
                 bytes = bytes.applyBitLength(of: count, reversed: false)
                 try process(BytesSlice(bytes))
@@ -126,7 +127,7 @@ public final class SHA1: Hash {
             var f: UInt32
             var k: UInt32
 
-            switch (j) {
+            switch j {
             case 0..<20:
                 f = (b & c) | ((~b) & d)
                 k = 0x5A827999

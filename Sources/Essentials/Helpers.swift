@@ -1,11 +1,3 @@
-//
-//  Helpers.swift
-//  Crypto
-//
-//  Created by Joannis Orlandos on 04/08/2016.
-//
-//
-
 import Foundation
 import Core
 
@@ -13,9 +5,11 @@ import Core
 public protocol ArrayProtocol: _ArrayProtocol {}
 extension Array: ArrayProtocol {}
 
-/// Provides access to hexStrings
-///
-/// TODO: Move to vapor/core
+/**
+    Provides access to hexStrings
+
+    Move to vapor/core
+*/
 extension ArrayProtocol where Iterator.Element == Byte {
     public var hexString: String {
         #if os(Linux)
@@ -48,11 +42,6 @@ extension ArrayProtocol where Iterator.Element == Byte {
 extension Sequence where Iterator.Element == Byte {
     public func applyPadding(until length: Int) -> Bytes {
         var bytes = Array(self)
-        if bytes.count == length {
-            return bytes
-        }
-
-        bytes.append(0x80)
 
         while bytes.count < length {
             bytes.append(0x00)
