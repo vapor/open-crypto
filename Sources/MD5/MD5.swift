@@ -2,8 +2,13 @@ import Core
 import Essentials
 
 public final class MD5: Hash {
+    public enum Error: Swift.Error {
+        case invalidByteCount
+        case switchError
+    }
+
     // MARK - MD5 Specific variables
-    public static let blockSize  = 64
+    public static let blockSize = 64
     
     private static let s: [UInt32] = [
         7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
@@ -14,17 +19,17 @@ public final class MD5: Hash {
    
     public init(_ s: ByteStream) {
         stream = s
-        h = [
-            0x67452301,
-            0xefcdab89,
-            0x98badcfe,
-            0x10325476
-        ]
+        digest = []
     }
 
+    private var a0: UInt32 = 0x67452301
+    private var b0: UInt32 = 0xefcdab89
+    private var c0: UInt32 = 0x98badcfe
+    private var d0: UInt32 = 0x10325476
+
     private let stream: ByteStream
-    private var h: [UInt32]
-    
+    private var digest: [UInt32]
+
     private static let k: [UInt32] = [
         0xd76aa478,0xe8c7b756,0x242070db,0xc1bdceee,
         0xf57c0faf,0x4787c62a,0xa8304613,0xfd469501,
@@ -43,8 +48,6 @@ public final class MD5: Hash {
         0x6fa87e4f,0xfe2ce6e0,0xa3014314,0x4e0811a1,
         0xf7537e82,0xbd3af235,0x2ad7d2bb,0xeb86d391
     ]
-    
-    internal static let H: [UInt32] = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]
 
     // MARK - Hash Protocol
 
@@ -55,24 +58,25 @@ public final class MD5: Hash {
 
             if stream.closed {
                 var bytes = Array(slice)
+                count += bytes.count
                 if bytes.count > MD5.blockSize - 8 {
                     // if the block is slightly too big, just pad and process
+                    bytes.append(0x80)
                     bytes = bytes.applyPadding(until: MD5.blockSize)
 
                     try process(BytesSlice(bytes))
-                    count += bytes.count
 
                     // give an empty block for padding
                     bytes = []
                 } else {
                     // add this block's count to the total
-                    count += bytes.count
+                    bytes.append(0x80)
                 }
 
                 // pad and process the last block
                 // adding the bit length
                 bytes = bytes.applyPadding(until: MD5.blockSize - 8)
-                bytes = bytes.applyBitLength(of: count, reversed: false)
+                bytes = bytes.applyBitLength(of: count, reversed: true)
                 try process(BytesSlice(bytes))
             } else {
                 // if the stream is still open,
@@ -85,7 +89,13 @@ public final class MD5: Hash {
         // convert the hash into a byte
         // array of results
         var result: Bytes = []
-        h.forEach { int in
+
+        digest.append(a0)
+        digest.append(b0)
+        digest.append(c0)
+        digest.append(d0)
+
+        digest.forEach { int in
             result += convert(int)
         }
 
@@ -106,12 +116,16 @@ public final class MD5: Hash {
     }
 
     private func process(_ bytes: BytesSlice) throws {
-        var chunk: [UInt32] = toUInt32Array(bytes[0..<bytes.count])
+        if bytes.count != MD5.blockSize {
+            throw Error.invalidByteCount
+        }
 
-        var a = h[0]
-        var b = h[1]
-        var c = h[2]
-        var d = h[3]
+        var chunk: [UInt32] = toUInt32Array(bytes)
+
+        var a = a0
+        var b = b0
+        var c = c0
+        var d = d0
 
         // Main loop
         for i in 0..<64 {
@@ -134,7 +148,7 @@ public final class MD5: Hash {
                 F = c ^ (b | (~d))
                 g = (7 * i) % 16
             default:
-                fatalError("Strange bug")
+                throw Error.switchError
             }
 
             temp = d
@@ -149,10 +163,10 @@ public final class MD5: Hash {
         }
 
         // Add this chunk's hash to the result
-        h[0] = h[0] &+ a
-        h[1] = h[1] &+ b
-        h[2] = h[2] &+ c
-        h[3] = h[3] &+ d
+        a0 = a0 &+ a
+        b0 = b0 &+ b
+        c0 = c0 &+ c
+        d0 = d0 &+ d
     }
 
 }

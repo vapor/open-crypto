@@ -22,5 +22,4 @@ class MD5Tests: XCTestCase {
             XCTAssertEqual(result, test.1.lowercased())
         }
     }
-    
 }
