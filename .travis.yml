@@ -6,10 +6,10 @@ sudo: required
 dist: trusty
 osx_image: xcode8
 install:
-  - eval "$(curl -sL swift.qutheory.io/travis)"
+  - eval "$(curl -sL swift.vapor.sh/travis)"
 script:
-  # Build Core
+  # Build Crypto
   - swift build
   - swift build --configuration release
-  # Test Core
+  # Test Crypto
   - swift test

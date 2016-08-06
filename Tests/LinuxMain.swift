@@ -1,7 +1,11 @@
 import XCTest
-@testable import CryptoTestSuite
+@testable import MD5TestSuite
+@testable import SHA1TestSuite
 
 XCTMain([
-     testCase(MD5Tests.allTests),
-     testCase(SHA1Tests.allTests),
+	// MD5
+    testCase(MD5Tests.allTests),
+
+    // SHA1
+    testCase(SHA1Tests.allTests),
 ])
