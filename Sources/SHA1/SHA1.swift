@@ -2,8 +2,8 @@ import Core
 import Essentials
 
 public final class SHA1: Hash {
-    // MARK - MD5 Specific variables
-    public static let blockSize  = 20
+    // MARK - SHA1 Specific variables
+    public static let blockSize  = 64
     internal static var chunkSize = 64
     
     public init() {
