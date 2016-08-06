@@ -39,14 +39,15 @@ public final class SHA1: Hash {
     public func hash() throws -> ByteStream {
         var count = 0
         while !stream.closed {
-            var bytes = try stream.next(SHA1.blockSize)
+            let slice = try stream.next(SHA1.blockSize)
 
             if stream.closed {
+                var bytes = Array(slice)
                 if bytes.count > SHA1.blockSize - 8 {
                     // if the block is slightly too big, just pad and process
                     bytes = bytes.applyPadding(until: SHA1.blockSize)
 
-                    try process(bytes)
+                    try process(BytesSlice(bytes))
                     count += bytes.count
 
                     // give an empty block for padding
@@ -60,12 +61,12 @@ public final class SHA1: Hash {
                 // adding the bit length
                 bytes = bytes.applyPadding(until: SHA1.blockSize - 8)
                 bytes = bytes.applyBitLength(of: count, reversed: false)
-                try process(bytes)
+                try process(BytesSlice(bytes))
             } else {
                 // if the stream is still open,
                 // process as normal
-                try process(bytes)
-                count += bytes.count
+                try process(slice)
+                count += SHA1.blockSize
             }
         }
 
@@ -92,21 +93,22 @@ public final class SHA1: Hash {
         ]
     }
 
-    private func process(_ bytes: Bytes) throws {
-        if bytes.count != SHA1.blockSize {
+    private func process(_ bytes: BytesSlice) throws {
+        /*if bytes.count != SHA1.blockSize {
             print(bytes.count)
             throw Error.invalidByteCount
-        }
+        }*/
 
         var w = [UInt32](repeating: 0, count: 80)
-        for j in 0..<w.count {
-            switch (j) {
-            // break chunk into sixteen 32-bit big-endian words
-            case 0..<16:
-                let start = bytes.startIndex + (j * sizeofValue(w[j]))
-                let end = start + 4
-                w[j] = toUInt32(bytes[start..<end], fromIndex: start).bigEndian
 
+        var index = bytes.startIndex
+
+        for j in 0..<w.count {
+            switch j {
+            // break chunk into sixteen 4-byte big-endian words
+            case 0..<16:
+                w[j] = toUInt32(bytes, from: index).bigEndian
+                index = bytes.index(index, offsetBy: 4)
             // Extend the sixteen 32-bit words into eighty 32-bit words:
             default:
                 w[j] = leftRotate(w[j - 3] ^ w[j - 8] ^ w[j - 14] ^ w[j - 16], count: 1)

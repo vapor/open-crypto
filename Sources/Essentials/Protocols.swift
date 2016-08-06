@@ -33,11 +33,12 @@ extension Hash {
 
 public protocol ByteStream {
     var closed: Bool { get }
-    func next(_ max: Int) throws -> Bytes
+    func next(_ max: Int) throws -> BytesSlice
 }
 
 public final class BasicByteStream: ByteStream {
-    var bytes: Bytes
+    let bytes: Bytes
+    var index: Int
 
     public enum Error: Swift.Error {
         case closed
@@ -47,26 +48,28 @@ public final class BasicByteStream: ByteStream {
 
     public init(_ bytes: Bytes) {
         self.bytes = bytes
+        index = 0
         closed = false
     }
 
-    public func next(_ max: Int) throws -> Bytes {
+    public func next(_ max: Int) throws -> BytesSlice {
         guard !closed else {
             throw Error.closed
         }
 
         var max = max
-        if max > bytes.count {
-            max = bytes.count
+        if max + index > bytes.count {
+            max = bytes.count - index
         }
 
-        let temp = bytes[0..<max]
-        bytes = Array(bytes[max..<bytes.count])
+        let new = bytes.index(index, offsetBy: max)
+        let slice = bytes[index..<new]
+        index = new
 
-        if bytes.count == 0 {
+        if index == bytes.count {
             closed = true
         }
 
-        return Array(temp)
+        return slice
     }
 }

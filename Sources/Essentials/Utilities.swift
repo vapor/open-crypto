@@ -36,12 +36,13 @@ public func toUInt32Array(_ slice: BytesSlice) -> Array<UInt32> {
     result.reserveCapacity(16)
     
     for index in stride(from: slice.startIndex, to: slice.endIndex, by: sizeof(UInt32.self)) {
-        result.append(toUInt32(slice, fromIndex: index))
+        result.append(toUInt32(slice, from: index))
     }
     return result
 }
 
-public func toUInt32(_ slice: BytesSlice, fromIndex index: Int) -> UInt32 {
+
+public func toUInt32(_ slice: BytesSlice, from index: Int) -> UInt32 {
     let val1 = UInt32(slice[index.advanced(by: 3)]) << 24
     let val2 = UInt32(slice[index.advanced(by: 2)]) << 16
     let val3 = UInt32(slice[index.advanced(by: 1)]) << 8
