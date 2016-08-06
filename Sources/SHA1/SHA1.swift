@@ -2,30 +2,25 @@ import Core
 import Essentials
 
 public final class SHA1: Hash {
-    // MARK - SHA1 Specific variables
     public static let blockSize  = 64
-    internal static var chunkSize = 64
     
     public init() {
-        //message = Chunks(chunkSize: SHA1.chunkSize)
         h = SHA1.H
     }
-    
-    //var message: Chunks
+
     var h: [UInt32]
     
     internal static let H: [UInt32] = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
 
-    internal func processChunk(_ chunk: Bytes) {
-        
+    private func process(_ bytes: Bytes) {
         var w = [UInt32](repeating: 0, count: 80)
         for j in 0..<w.count {
             switch (j) {
             // break chunk into sixteen 32-bit big-endian words
             case 0..<16:
-                let start = chunk.startIndex + (j * sizeofValue(w[j]))
+                let start = bytes.startIndex + (j * sizeofValue(w[j]))
                 let end = start + 4
-                w[j] = toUInt32(chunk[start..<end], fromIndex: start).bigEndian
+                w[j] = toUInt32(bytes[start..<end], fromIndex: start).bigEndian
                 
             // Extend the sixteen 32-bit words into eighty 32-bit words:
             default:
@@ -85,46 +80,51 @@ public final class SHA1: Hash {
 
     public func hash(_ stream: ByteStream) -> ByteStream {
         var count = 0
-        while var chunk = stream.next(SHA1.chunkSize) {
-            if chunk.count != SHA1.chunkSize {
-                chunk = applyPadding(chunk, until: SHA1.chunkSize)
-                chunk = applyBitLength(chunk, of: count, reversed: false)
+        while var bytes = stream.next(SHA1.blockSize) {
+            if bytes.count < SHA1.blockSize {
+                bytes = bytes.applyPadding(until: SHA1.blockSize)
+                bytes = bytes.applyBitLength(of: count, reversed: false)
             }
 
-            processChunk(chunk)
-            count += chunk.count
+            process(bytes)
+            count += bytes.count
         }
 
-        var result = Bytes()
+        var result: Bytes = []
 
-        // Store result in little endian
         for int in h {
             let int = int.bigEndian
-
-            result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
+            result += [
+                Byte(int & 0xff),
+                Byte((int >> 8) & 0xff),
+                Byte((int >> 16) & 0xff),
+                Byte((int >> 24) & 0xff)
+            ]
         }
 
         return BasicByteStream(bytes: result)
     }
+}
 
-    private func applyPadding(_ bytes: Bytes, until length: Int) -> Bytes {
-        var bytes = bytes
+extension Sequence where Iterator.Element == Byte {
+    private func applyPadding(until length: Int) -> Bytes {
+        var bytes = Array(self)
         bytes.append(0x80)
-        
+
         while bytes.count % length != (length - 8) {
             bytes.append(0x00)
         }
 
         return bytes
     }
-    
-    private func applyBitLength(_ bytes: Bytes, of length: Int, reversed: Bool = true) -> Bytes {
+
+    private func applyBitLength(of length: Int, reversed: Bool = true) -> Bytes {
         var lengthBytes = arrayOfBytes(length * 8, length: 8)
-        
+
         if reversed {
             lengthBytes = lengthBytes.reversed()
         }
 
-        return bytes + lengthBytes
+        return self + lengthBytes
     }
 }
