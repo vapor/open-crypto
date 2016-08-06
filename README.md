@@ -3,7 +3,7 @@
         src="http://project.unimarconi.it/talete/images/logo_crypto.png" 
         align="center" 
         alt="Crypto"
-        width="500px"
+        width="250px"
     >
 </p>
 
