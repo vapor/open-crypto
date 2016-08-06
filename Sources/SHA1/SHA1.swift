@@ -17,17 +17,31 @@ public final class SHA1: Hash {
     internal static let H: [UInt32] = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
     
     // MARK - SHA1 specific calculation code
+    func result() -> Bytes {
+        var result = Bytes()
+        
+        // Store result in big endian
+        for int in h {
+            let int = int.bigEndian
+            
+            result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
+        }
+        
+        return result
+    }
+
     internal func processChunk(_ chunk: Bytes) {
-        // break chunk into sixteen 32-bit words M[j], 0 ≤ j ≤ 15, big-endian
-        // Extend the sixteen 32-bit words into eighty 32-bit words:
+        
         var w = [UInt32](repeating: 0, count: 80)
-        for j in 0..<80 {
+        for j in 0..<w.count {
             switch (j) {
+            // break chunk into sixteen 32-bit big-endian words
             case 0..<16:
                 let start = chunk.startIndex + (j * sizeofValue(w[j]))
                 let end = start + 4
                 w[j] = toUInt32(chunk[start..<end], fromIndex: start).bigEndian
-                break
+                
+            // Extend the sixteen 32-bit words into eighty 32-bit words:
             default:
                 w[j] = leftRotate(w[j - 3] ^ w[j - 8] ^ w[j - 14] ^ w[j - 16], count: 1)
                 break

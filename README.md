@@ -48,7 +48,7 @@ We pride ourselves on providing a diverse and welcoming community. Join your fel
 
 ## 🔧 Compatibility
 
-Core has been tested on OS X 10.11, Ubuntu 14.04, and Ubuntu 15.10.
+Crypto has been tested on OS X 10.11, Ubuntu 14.04, and Ubuntu 15.10.
 
 ## 👥 Authors
 
