@@ -61,20 +61,17 @@ public final class MD5: Hash {
                 count += bytes.count
                 if bytes.count > MD5.blockSize - 8 {
                     // if the block is slightly too big, just pad and process
-                    bytes.append(0x80)
                     bytes = bytes.applyPadding(until: MD5.blockSize)
 
                     try process(BytesSlice(bytes))
 
                     // give an empty block for padding
                     bytes = []
-                } else {
-                    // add this block's count to the total
-                    bytes.append(0x80)
                 }
 
                 // pad and process the last block
                 // adding the bit length
+                bytes.append(0x80)
                 bytes = bytes.applyPadding(until: MD5.blockSize - 8)
                 bytes = bytes.applyBitLength(of: count, reversed: true)
                 try process(BytesSlice(bytes))

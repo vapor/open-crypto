@@ -1,7 +1,7 @@
 import XCTest
 import Core
 @testable import MD5
-@testable import HMAC
+import HMAC
 
 class MD5Tests: XCTestCase {
     static var allTests = [
@@ -20,6 +20,44 @@ class MD5Tests: XCTestCase {
         for test in tests {
             let result = try MD5.hash(test.0.bytes).hexString.lowercased()
             XCTAssertEqual(result, test.1.lowercased())
+        }
+    }
+
+    func testPerformance() {
+        let data = Bytes(repeating: Byte.A, count: 10_000_000)
+
+        // ~0.150 release
+        measure {
+            let hasher = MD5(data)
+            _ = try! hasher.hash()
+        }
+    }
+
+
+    func testHMAC() throws {
+        let tests: [(key: String, message: String, expected: String)] = [
+            (
+                "vapor",
+                "hello",
+                "bbd98ab1dbed72cdf3e924ae7eaf7943"
+            ),
+            (
+                "true",
+                "2+2=4",
+                "37bda9a2b521d4623883b3acb7d9c3f7"
+            )
+        ]
+
+        for (i, test) in tests.enumerated() {
+            do {
+                let result = try HMAC<MD5>().authenticate(
+                    test.message.bytes,
+                    key: test.key.bytes
+                    ).hexString.lowercased()
+                XCTAssertEqual(result, test.expected.lowercased())
+            } catch {
+                XCTFail("Test \(i) failed: \(error)")
+            }
         }
     }
 }

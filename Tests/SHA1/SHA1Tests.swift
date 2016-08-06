@@ -2,7 +2,6 @@ import XCTest
 import Core
 @testable import SHA1
 import HMAC
-import Essentials
 
 class SHA1Tests: XCTestCase {
     static var allTests = [
@@ -42,7 +41,7 @@ class SHA1Tests: XCTestCase {
     func testPerformance() {
         let data = Bytes(repeating: Byte.A, count: 10_000_000)
 
-        // 0.257 release
+        // ~0.250 release
         measure {
             let hasher = SHA1(data)
             _ = try! hasher.hash()
@@ -50,7 +49,7 @@ class SHA1Tests: XCTestCase {
     }
     
 
-    func testHMACSHA1() throws {
+    func testHMAC() throws {
         let tests: [(key: String, message: String, expected: String)] = [
             (
                 "vapor",
