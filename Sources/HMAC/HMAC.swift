@@ -3,18 +3,22 @@ import Essentials
 
 /// Used to authenticate messages using the `Hash` algorithm
 public class HMAC<Variant: Hash> {
+    public let variant: Variant
+    public init(_ variant: Variant) {
+        self.variant = variant
+    }
     /// Authenticates a message using the provided `Hash` algorithm
     /// 
     /// - parameter message: The message to authenticate
     /// - parameter key: The key to authenticate with
     ///
     /// - returns: The authenticated message
-    public static func authenticate(_ message: Bytes, withKey key: Bytes) -> Bytes {
+    public func authenticate(_ message: Bytes, key: Bytes) -> Bytes {
         var key = key
         
         // If it's too long, hash it first
         if key.count > Variant.blockSize {
-            key = Variant.hash(key)
+            key = variant.hash(key)
         }
         
         // Add padding
@@ -35,8 +39,8 @@ public class HMAC<Variant: Hash> {
         }
         
         // Hash the information
-        let innerPaddingHash = Variant.hash(innerPadding + message)
-        let outerPaddingHash = Variant.hash(outerPadding + innerPaddingHash)
+        let innerPaddingHash = variant.hash(innerPadding + message)
+        let outerPaddingHash = variant.hash(outerPadding + innerPaddingHash)
         
         return outerPaddingHash
     }

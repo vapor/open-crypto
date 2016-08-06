@@ -1,7 +1,7 @@
 import Core
 import Essentials
 
-public class MD5: StreamingHash {
+public class MD5: Hash {
     // MARK - MD5 Specific variables
     public static let blockSize  = 64
     internal static var chunkSize = 64
@@ -10,7 +10,8 @@ public class MD5: StreamingHash {
         7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
         5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
         4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
-        6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21]
+        6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
+    ]
    
     public required init() {
         message = Chunks(chunkSize: MD5.chunkSize)
@@ -103,9 +104,25 @@ public class MD5: StreamingHash {
         h[2] = h[2] &+ c
         h[3] = h[3] &+ d
     }
+
+    // MARK - StreamingHash
+
+
+    public func hash(_ stream: ByteStream) -> ByteStream {
+        let originalCount = message.count // FIXME: how to get count before using stream?
+        self.applyPadding(until: MD5.chunkSize)
+        self.applyBitLength(of: originalCount)
+
+        while let chunk = stream.next(MD5.chunkSize) {
+            processChunk(chunk)
+        }
+
+        let bytes = result()
+
+        return BasicByteStream(bytes: bytes)
+    }
     
-    // MARK - Hashing helpers
-    public func append(bytes: Bytes) {
+    private func streamAppend(bytes: Bytes) {
         message.append(bytes: bytes)
         processChunks()
     }
@@ -115,17 +132,7 @@ public class MD5: StreamingHash {
             processChunk(chunk)
         }
     }
-    
-    public func complete() -> Bytes {
-        let originalCount = message.count
-        
-        self.applyPadding(until: MD5.chunkSize)
-        self.applyBitLength(of: originalCount)
-        
-        processChunks()
-        
-        return result()
-    }
+
     
     private func applyPadding(until length: Int) {
         self.message.append(0x80)
@@ -147,14 +154,14 @@ public class MD5: StreamingHash {
     }
     
     // MARK - MD5 Specific performant override
-    public static func hash(_ message: Bytes) -> Bytes {
-        var newMessage = message
+    public func hash(bytes: Bytes) -> Bytes {
+        var newMessage = bytes
         
         newMessage.append(0x80)
         
         // Append `0x00` until the (message length) -mod- 512 == 448
         // TODO: faster method
-        while newMessage.count % self.chunkSize != self.chunkSize - 8 {
+        while newMessage.count % MD5.chunkSize != MD5.chunkSize - 8 {
             newMessage.append(0x00)
         }
         
@@ -166,7 +173,7 @@ public class MD5: StreamingHash {
         newMessage += lengthBytes.reversed()
         
         // Process in 64-byte chunks
-        let chunks = newMessage.count / self.chunkSize
+        let chunks = newMessage.count / MD5.chunkSize
         
         //        if newMessage.count % 64 > 0 {
         //            chunks += 1
@@ -174,8 +181,8 @@ public class MD5: StreamingHash {
         
         // Loop over the chunks
         for i in 0..<chunks {
-            let chunkOffset = i * self.chunkSize
-            let end = Swift.min(self.chunkSize, newMessage.count - chunkOffset)
+            let chunkOffset = i * MD5.chunkSize
+            let end = Swift.min(MD5.chunkSize, newMessage.count - chunkOffset)
             var chunk: [UInt32] = toUInt32Array(newMessage[chunkOffset..<(chunkOffset + end)])
             
             var a = hash[0]
@@ -211,8 +218,8 @@ public class MD5: StreamingHash {
                 d = c
                 c = b
                 
-                let x = (a &+ F &+ k[i] &+ chunk[g])
-                let c = s[i]
+                let x = (a &+ F &+ MD5.k[i] &+ chunk[g])
+                let c = MD5.s[i]
                 
                 b = b &+ leftRotate(x, count: c)
                 a = temp
