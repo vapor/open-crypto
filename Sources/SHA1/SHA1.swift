@@ -7,28 +7,14 @@ public final class SHA1: Hash {
     internal static var chunkSize = 64
     
     public init() {
-        message = Chunks(chunkSize: SHA1.chunkSize)
+        //message = Chunks(chunkSize: SHA1.chunkSize)
         h = SHA1.H
     }
     
-    var message: Chunks
+    //var message: Chunks
     var h: [UInt32]
     
     internal static let H: [UInt32] = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
-    
-    // MARK - SHA1 specific calculation code
-    func result() -> Bytes {
-        var result = Bytes()
-        
-        // Store result in big endian
-        for int in h {
-            let int = int.bigEndian
-            
-            result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
-        }
-        
-        return result
-    }
 
     internal func processChunk(_ chunk: Bytes) {
         
@@ -95,70 +81,50 @@ public final class SHA1: Hash {
         h[4] = (h[4] &+ e) & 0xffffffff
     }
     
-    // MARK - StreamingHash
-
+    // MARK - HASH
 
     public func hash(_ stream: ByteStream) -> ByteStream {
-        while let chunk = stream.next(64) {
-            streamAppend(bytes: chunk)
+        var count = 0
+        while var chunk = stream.next(SHA1.chunkSize) {
+            if chunk.count != SHA1.chunkSize {
+                chunk = applyPadding(chunk, until: SHA1.chunkSize)
+                chunk = applyBitLength(chunk, of: count, reversed: false)
+            }
+
+            processChunk(chunk)
+            count += chunk.count
         }
 
-        let result = streamHash()
-        return BasicByteStream(bytes: result)
-    }
-
-    private func streamAppend(bytes: Bytes) {
-        message.append(bytes: bytes)
-        processChunks()
-    }
-    
-    private func streamHash() -> Bytes {
-        let originalCount = message.count
-        
-        self.applyPadding(until: SHA1.chunkSize)
-        self.applyBitLength(of: originalCount, reversed: false)
-        
-        processChunks()
-        
-        return endianResult()
-    }
-
-    private func endianResult() -> Bytes {
         var result = Bytes()
 
         // Store result in little endian
         for int in h {
-            let int = int.littleEndian
+            let int = int.bigEndian
 
             result += [Byte(int & 0xff), Byte((int >> 8) & 0xff), Byte((int >> 16) & 0xff), Byte((int >> 24) & 0xff)]
         }
 
-        return result
+        return BasicByteStream(bytes: result)
     }
 
-
-    private func processChunks() {
-        for chunk in message {
-            processChunk(chunk)
-        }
-    }
-
-    private func applyPadding(until length: Int) {
-        self.message.append(0x80)
+    private func applyPadding(_ bytes: Bytes, until length: Int) -> Bytes {
+        var bytes = bytes
+        bytes.append(0x80)
         
-        while self.message.count % length != (length - 8) {
-            self.message.append(0x00)
+        while bytes.count % length != (length - 8) {
+            bytes.append(0x00)
         }
+
+        return bytes
     }
     
-    private func applyBitLength(of length: Int, reversed: Bool = true) {
-        let lengthInBits = length * 8
-        let lengthBytes = arrayOfBytes(lengthInBits, length: 8)
+    private func applyBitLength(_ bytes: Bytes, of length: Int, reversed: Bool = true) -> Bytes {
+        var lengthBytes = arrayOfBytes(length * 8, length: 8)
         
         if reversed {
-            message.append(bytes: lengthBytes.reversed())
-        } else {
-            message.append(bytes: lengthBytes)
+            lengthBytes = lengthBytes.reversed()
         }
+
+        return bytes + lengthBytes
     }
 }
