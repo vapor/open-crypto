@@ -16,7 +16,10 @@ public final class MD5: Hash {
         4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
         6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
     ]
-   
+
+    /**
+        Creates a new MD5 capable of hasing a Stream.
+    */
     public init(_ s: ByteStream) {
         stream = s
         digest = []
@@ -51,6 +54,10 @@ public final class MD5: Hash {
 
     // MARK - Hash Protocol
 
+    /**
+        Creates a hashed ByteStream from an input ByteStream
+        using the MD5 protocol.
+    */
     public func hash() throws -> ByteStream {
         var count = 0
         while !stream.closed {
