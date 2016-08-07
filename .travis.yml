@@ -13,3 +13,5 @@ script:
   - swift build --configuration release
   # Test Crypto
   - swift test
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
