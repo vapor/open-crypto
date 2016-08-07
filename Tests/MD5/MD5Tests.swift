@@ -5,7 +5,9 @@ import HMAC
 
 class MD5Tests: XCTestCase {
     static var allTests = [
-        ("testBasic", testBasic)
+        ("testBasic", testBasic),
+        ("testPerformance", testPerformance),
+        ("testHMAC", testHMAC),
     ]
 
     func testBasic() throws {

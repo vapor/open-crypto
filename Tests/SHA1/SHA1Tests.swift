@@ -7,11 +7,12 @@ class SHA1Tests: XCTestCase {
     static var allTests = [
         ("testBasic", testBasic),
         ("testPerformance", testPerformance),
+        ("testHMAC", testHMAC),
     ]
 
     func testBasic() throws {
         // Source: https://en.wikipedia.org/wiki/SHA-1#Example_hashes
-        let tests = [
+        let tests: [(key: String, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
                 "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"
@@ -27,8 +28,8 @@ class SHA1Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try SHA1.hash(test.0.bytes).hexString.lowercased()
-            XCTAssertEqual(result, test.1.lowercased())
+            let result = try SHA1.hash(test.key.bytes).hexString.lowercased()
+            XCTAssertEqual(result, test.expected.lowercased())
         }
         
         // Source: https://github.com/krzyzanowskim/CryptoSwift/blob/swift3-snapshots/CryptoSwiftTests/HashTests.swift
