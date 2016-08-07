@@ -7,7 +7,7 @@ let package = Package(
         Target(name: "MD5", dependencies: ["Essentials"]),
         Target(name: "Random", dependencies: ["Essentials"]),
         Target(name: "HMAC", dependencies: ["Essentials"]),
-        Target(name: "PBKDF2", dependencies: ["HMAC"]),
+        Target(name: "PBKDF2", dependencies: ["HMAC", "MD5", "SHA1"]),
         Target(name: "SHA1", dependencies: ["Essentials", "HMAC"]),
         Target(name: "BCrypt", dependencies: ["Random"]),
     ],
