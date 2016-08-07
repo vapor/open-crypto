@@ -55,7 +55,7 @@ class MD5Tests: XCTestCase {
                 let result = try HMAC<MD5>().authenticate(
                     test.message.bytes,
                     key: test.key.bytes
-                    ).hexString.lowercased()
+                ).hexString.lowercased()
                 XCTAssertEqual(result, test.expected.lowercased())
             } catch {
                 XCTFail("Test \(i) failed: \(error)")
