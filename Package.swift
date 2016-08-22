@@ -12,6 +12,6 @@ let package = Package(
         Target(name: "BCrypt", dependencies: ["Random"]),
     ],
     dependencies: [
-        .Package(url: "https://github.com/vapor/core.git", majorVersion: 0, minor: 3)
+        .Package(url: "https://github.com/vapor/core.git", majorVersion: 0, minor: 4)
     ]
 )

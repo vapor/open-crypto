@@ -9,7 +9,7 @@
 
 # Crypto
 
-![Swift](http://img.shields.io/badge/swift-v3.0--dev.07.25-brightgreen.svg)
+![Swift](http://img.shields.io/badge/swift-v3.0--dev.08.18-brightgreen.svg)
 [![Build Status](https://travis-ci.org/vapor/crypto.svg?branch=master)](https://travis-ci.org/vapor/crypto)
 [![CircleCI](https://circleci.com/gh/vapor/crypto.svg?style=shield)](https://circleci.com/gh/vapor/crypto)
 [![Code Coverage](https://codecov.io/gh/vapor/crypto/branch/master/graph/badge.svg)](https://codecov.io/gh/vapor/crypto)
@@ -36,7 +36,7 @@ Crypto is a collection of cryptography tools. It powers the hashing and encrypti
 
 |Crypto|Xcode|Swift|
 |:-:|:-:|:-:|
-|0.1.x|8.0 Beta **4**|DEVELOPMENT-SNAPSHOT-2016-07-25-a|
+|0.1.x|8.0 Beta **6**|DEVELOPMENT-SNAPSHOT-2016-08-18-a|
 
 ## 📖 Documentation
 
@@ -52,4 +52,4 @@ Crypto has been tested on OS X 10.11, Ubuntu 14.04, and Ubuntu 15.10.
 
 ## 👥 Authors
 
-Made by [Tanner Nelson](https://twitter.com/tanner0101), [Logan Wright](https://twitter.com/logmaestro), and the hundreds of members of the Qutheory community.
+Made by [Joannis Orlandos](https://github.com/Joannis), [Tanner Nelson](https://twitter.com/tanner0101) and the hundreds of members of the Vapor community.
