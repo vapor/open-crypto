@@ -25,6 +25,10 @@ class SHA1Tests: XCTestCase {
                 "",
                 "da39a3ee5e6b4b0d3255bfef95601890afd80709"
             ),
+            (
+                "dGhlIHNhbXBsZSBub25jZQ==258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
+                "b37a4f2cc0624f1690f64606cf385945b2bec4ea"
+            )
         ]
         
         for test in tests {
