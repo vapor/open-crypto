@@ -1,25 +1,16 @@
 import Foundation
 import Core
 
-// Dirty hack because generics
-public protocol ArrayProtocol: _ArrayProtocol {}
-extension Array: ArrayProtocol {}
+public protocol SequenceInitializable: Sequence {
+    init(_ sequence: [Iterator.Element])
+}
 
 /**
     Provides access to hexStrings
 
     Move to vapor/core
 */
-extension ArrayProtocol where Iterator.Element == Byte {
-    public var hexString: String {
-        #if os(Linux)
-            return self.lazy.reduce("") { $0 + (NSString(format:"%02x", $1).description) }
-        #else
-            let s = self.lazy.reduce("") { $0 + String(format:"%02x", $1) }
-            
-            return s
-        #endif
-    }
+extension SequenceInitializable where Iterator.Element == Byte {
     
     public init(hexString: String) {
         var data = Bytes()
@@ -40,6 +31,16 @@ extension ArrayProtocol where Iterator.Element == Byte {
 }
 
 extension Sequence where Iterator.Element == Byte {
+    public var hexString: String {
+        #if os(Linux)
+            return self.lazy.reduce("") { $0 + (NSString(format:"%02x", $1).description) }
+        #else
+            let s = self.lazy.reduce("") { $0 + String(format:"%02x", $1) }
+
+            return s
+        #endif
+    }
+
     public func applyPadding(until length: Int) -> Bytes {
         var bytes = Array(self)
 

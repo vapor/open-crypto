@@ -1,7 +1,7 @@
 import XCTest
-@testable import MD5TestSuite
-@testable import SHA1TestSuite
-@testable import PBKDF2TestSuite
+@testable import MD5Tests
+@testable import SHA1Tests
+@testable import PBKDF2Tests
 
 XCTMain([
     // MD5

@@ -13,21 +13,22 @@
 import Core
 
 public func arrayOfBytes<T>(_ value:T, length:Int? = nil) -> Bytes {
-    let totalBytes = length ?? sizeof(T.self)
+    let totalBytes = length ?? MemoryLayout<T>.size
     
     let valuePointer = UnsafeMutablePointer<T>.allocate(capacity: 1)
-    
     valuePointer.pointee = value
-    
-    let bytesPointer = UnsafeMutablePointer<Byte>(valuePointer)
+
     var bytes = Bytes(repeating: 0, count: totalBytes)
-    for j in 0..<min(sizeof(T.self),totalBytes) {
-        bytes[totalBytes - 1 - j] = (bytesPointer + j).pointee
+
+    valuePointer.withMemoryRebound(to: Byte.self, capacity: 1) { bytesPointer in
+        for j in 0..<min(MemoryLayout<T>.size,totalBytes) {
+            bytes[totalBytes - 1 - j] = (bytesPointer + j).pointee
+        }
+
+        valuePointer.deinitialize()
+        valuePointer.deallocate(capacity: 1)
     }
-    
-    valuePointer.deinitialize()
-    valuePointer.deallocate(capacity: 1)
-    
+
     return bytes
 }
 
@@ -35,7 +36,7 @@ public func toUInt32Array(_ slice: BytesSlice) -> Array<UInt32> {
     var result = Array<UInt32>()
     result.reserveCapacity(16)
     
-    for index in stride(from: slice.startIndex, to: slice.endIndex, by: sizeof(UInt32.self)) {
+    for index in stride(from: slice.startIndex, to: slice.endIndex, by: MemoryLayout<UInt32>.size) {
         result.append(toUInt32(slice, from: index))
     }
     return result
