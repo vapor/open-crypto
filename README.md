@@ -20,7 +20,7 @@ Crypto is a collection of cryptography tools. It powers the hashing and encrypti
 
 ## 🚀 Features 
 
-- 100% test coverage
+- 100% test coverage (Goal)
 - Documented methods
 - Pure Swift
 - AES
