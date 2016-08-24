@@ -32,7 +32,7 @@ public func arrayOfBytes<T>(_ value:T, length:Int? = nil) -> Bytes {
     return bytes
 }
 
-public func toUInt32Array(_ slice: BytesSlice) -> Array<UInt32> {
+public func toUInt32Array(_ slice: Bytes) -> Array<UInt32> {
     var result = Array<UInt32>()
     result.reserveCapacity(16)
     
@@ -43,7 +43,7 @@ public func toUInt32Array(_ slice: BytesSlice) -> Array<UInt32> {
 }
 
 
-public func toUInt32(_ slice: BytesSlice, from index: Int) -> UInt32 {
+public func toUInt32(_ slice: Bytes, from index: Int) -> UInt32 {
     let val1 = UInt32(slice[index.advanced(by: 3)]) << 24
     let val2 = UInt32(slice[index.advanced(by: 2)]) << 16
     let val3 = UInt32(slice[index.advanced(by: 1)]) << 8
