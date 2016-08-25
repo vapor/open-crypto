@@ -13,6 +13,6 @@ let package = Package(
     ],
     dependencies: [
         .Package(url: "https://github.com/vapor/core.git", majorVersion: 0, minor: 4),
-        .Package(url: "https://github.com/vapor/ctls.git", majorVersion: 0, minor: 1)
+        .Package(url: "https://github.com/vapor/clibressl.git", majorVersion: 0, minor: 1)
     ]
 )
