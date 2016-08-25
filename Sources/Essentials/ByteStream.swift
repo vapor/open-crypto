@@ -1,13 +1,31 @@
 import Core
 
+/**
+    Represents a stream of bytes that
+    can be passed to cryptographic
+    processes like hashers.
+*/
 public protocol ByteStream {
+    /**
+        When the stream is closed,
+        the crypto process will
+        stop requesting bytes.
+    */
     var closed: Bool { get }
-    func next(_ max: Int) throws -> BytesSlice
+
+    /**
+        Called by crypto processes in
+        a loop until the stream closes.
+    */
+    func next() throws -> Bytes
 }
 
+/**
+    The most basic ByteStream consists
+    of an array of bytes.
+*/
 public final class BasicByteStream: ByteStream {
     let bytes: Bytes
-    var index: Int
 
     public enum Error: Swift.Error {
         case closed
@@ -17,28 +35,15 @@ public final class BasicByteStream: ByteStream {
 
     public init(_ bytes: Bytes) {
         self.bytes = bytes
-        index = 0
         closed = false
     }
 
-    public func next(_ max: Int) throws -> BytesSlice {
+    public func next() throws -> Bytes {
         guard !closed else {
             throw Error.closed
         }
 
-        var max = max
-        if max + index > bytes.count {
-            max = bytes.count - index
-        }
-
-        let new = bytes.index(index, offsetBy: max)
-        let slice = bytes[index..<new]
-        index = new
-
-        if index == bytes.count {
-            closed = true
-        }
-        
-        return slice
+        closed = true
+        return bytes
     }
 }

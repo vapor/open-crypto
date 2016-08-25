@@ -376,7 +376,7 @@ public class BCrypt {
     }
     
     static func randomSalt() -> [Int8] {
-        let randomSalt = URandom().random(numBytes: 16).map {
+        let randomSalt = URandom().bytes(16).map {
             Int8(bitPattern: $0)
         }
         
