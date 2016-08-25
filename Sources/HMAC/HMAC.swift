@@ -1,14 +1,21 @@
 import Core
 import Essentials
+import CLibreSSL
 
 /**
     Used to authenticate messages using the `Hash` algorithm
 */
-public class HMAC<Variant: Hash> {
+public final class HMAC {
+    public let method: Method
+    private let stream: ByteStream
+
     /**
         Create an HMAC authenticator.
     */
-    public init() {}
+    public init(_ m: Method, _ s: ByteStream) {
+        stream = s
+        method = m
+    }
 
     /**
         Authenticates a message using the provided `Hash` algorithm
@@ -18,35 +25,71 @@ public class HMAC<Variant: Hash> {
 
         - returns: The authenticated message
     */
-    public func authenticate(_ message: Bytes, key: Bytes) throws -> Bytes {
-        var key = key
-        
-        // If it's too long, hash it first
-        if key.count > Variant.blockSize {
-            key = try Variant(key).hash()
+    public func authenticate(key: Bytes) throws -> Bytes {
+        var context = HMAC_CTX()
+        HMAC_CTX_init(&context)
+
+        HMAC_Init_ex(&context, key, Int32(key.count), method.evp, nil)
+
+        while !stream.closed {
+            let bytes = try stream.next()
+            HMAC_Update(&context, bytes, bytes.count)
         }
-        
-        // Add padding
-        if key.count < Variant.blockSize {
-            key = key + Bytes(repeating: 0, count: Variant.blockSize - key.count)
-        }
-        
-        // XOR the information
-        var outerPadding = Bytes(repeating: 0x5c, count: Variant.blockSize)
-        var innerPadding = Bytes(repeating: 0x36, count: Variant.blockSize)
-        
-        for (index, _) in key.enumerated() {
-            outerPadding[index] = key[index] ^ outerPadding[index]
-        }
-        
-        for (index, _) in key.enumerated() {
-            innerPadding[index] = key[index] ^ innerPadding[index]
-        }
-        
-        // Hash the information
-        let innerPaddingHash: Bytes = try Variant(innerPadding + message).hash()
-        let outerPaddingHash: Bytes = try Variant(outerPadding + innerPaddingHash).hash()
-        
-        return outerPaddingHash
+
+
+        var digest = Bytes(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
+        var length: UInt32 = 0
+        HMAC_Final(&context, &digest, &length);
+
+        return Array(digest[0..<Int(length)])
+    }
+}
+
+extension HMAC {
+    /**
+        Create the hasher from an array
+        of bytes. This will internally
+        create a BasicByteStream.
+    */
+    public convenience init(_ m: Method, _ bytes: Bytes) {
+        let inputStream = BasicByteStream(bytes)
+        self.init(m, inputStream)
+    }
+
+    /**
+        Create the hasher from something
+        representable as bytes. This will internally
+        create a BasicByteStream.
+    */
+    public convenience init<B: BytesRepresentable>(_ m: Method, _ bytes: B) throws {
+        self.init(m, try bytes.makeBytes())
+    }
+
+    /**
+        Create the hasher from an array
+        of bytes. This will internally
+        create a BasicByteStream.
+    */
+    public convenience init<A: Authenticatable>(_ auth: A.Type, _ bytes: Bytes) {
+        self.init(auth.method(), bytes)
+    }
+
+    /**
+        Create the hasher from something
+        representable as bytes. This will internally
+        create a BasicByteStream.
+    */
+    public convenience init<A: Authenticatable, B: BytesRepresentable>(_ auth: A.Type, _ bytes: B) throws {
+        self.init(auth, try bytes.makeBytes())
+    }
+
+    /**
+        Authenticates a message using something
+        that can be represented with bytes.
+     
+        - see: authenticate(key: Bytes)
+    */
+    public func authenticate<B: BytesRepresentable>(key: B) throws -> Bytes {
+        return try authenticate(key: try key.makeBytes())
     }
 }
