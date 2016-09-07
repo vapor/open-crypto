@@ -569,12 +569,12 @@ public class BCrypt {
     
     private func initKey() {
         // p = P_orig
-        p = UnsafeMutablePointer<Int32>.allocate(capacity: BCrypt.P_orig.count) // FIXME
-        // p.initialize(from: UnsafeMutablePointer<Int32>(BCrypt.P_orig), count: BCrypt.P_orig.count)
+        p = UnsafeMutablePointer<Int32>.allocate(capacity: BCrypt.P_orig.count)
+        p.initialize(from: UnsafeMutableRawPointer(mutating: BCrypt.P_orig).assumingMemoryBound(to: Int32.self), count: BCrypt.P_orig.count)
         
         // s = S_orig
-        s = UnsafeMutablePointer<Int32>.allocate(capacity: BCrypt.S_orig.count) // FIXME
-        // s.initialize(from: UnsafeMutablePointer<Int32>(BCrypt.S_orig), count: BCrypt.S_orig.count)
+        s = UnsafeMutablePointer<Int32>.allocate(capacity: BCrypt.S_orig.count)
+        s.initialize(from: UnsafeMutableRawPointer(mutating: BCrypt.S_orig).assumingMemoryBound(to: Int32.self), count: BCrypt.S_orig.count)
     }
     
     private func deinitKey() {
