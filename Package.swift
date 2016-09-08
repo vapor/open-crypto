@@ -12,7 +12,7 @@ let package = Package(
         Target(name: "HMAC", dependencies: ["Essentials"]),
     ],
     dependencies: [
-        .Package(url: "https://github.com/vapor/core.git", majorVersion: 0, minor: 4),
+        .Package(url: "https://github.com/vapor/core.git", majorVersion: 0, minor: 5),
         .Package(url: "https://github.com/vapor/clibressl.git", majorVersion: 0, minor: 1)
     ]
 )
