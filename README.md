@@ -36,7 +36,8 @@ Crypto is a collection of cryptography tools. It powers the hashing and encrypti
 
 |Crypto|Xcode|Swift|
 |:-:|:-:|:-:|
-|0.2.x|8.0 GM|DEVELOPMENT-SNAPSHOT-2016-09-06-a|
+|0.3.x|8.0 GM|DEVELOPMENT-SNAPSHOT-2016-09-06-a|
+|0.2.x|8.0 Beta **6**|DEVELOPMENT-SNAPSHOT-2016-08-18-a|
 |0.1.x|8.0 Beta **6**|DEVELOPMENT-SNAPSHOT-2016-08-18-a|
 
 ## 📖 Documentation
