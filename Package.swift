@@ -5,7 +5,7 @@ let package = Package(
     targets: [
         Target(name: "Essentials"),
         Target(name: "BCrypt", dependencies: ["Random"]),
-        Target(name: "Hash", dependencies: ["Essentials"]),
+        Target(name: "Hash", dependencies: ["Essentials", "Random"]),
         Target(name: "Random", dependencies: ["Essentials"]),
         Target(name: "HMAC", dependencies: ["Essentials", "Random"]),
         Target(name: "Cipher", dependencies: ["Essentials"]),
