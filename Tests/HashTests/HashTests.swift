@@ -23,6 +23,15 @@ class HashTests: XCTestCase {
         }
     }
 
+    func testWebSockets() throws {
+        let message = "dGhlIHNhbXBsZSBub25jZQ==258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        let expected: Bytes = [0xb3, 0x7a, 0x4f, 0x2c, 0xc0, 0x62, 0x4f, 0x16, 0x90, 0xf6,
+            0x46, 0x06, 0xcf, 0x38, 0x59, 0x45, 0xb2, 0xbe, 0xc4, 0xea]
+
+        let digest = try Hash.make(.sha1, message)
+        XCTAssertEqual(expected, digest)
+    }
+
     func testSHA224() throws {
         // Source: https://en.wikipedia.org/wiki/SHA-2
         let tests = [

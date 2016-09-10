@@ -14,7 +14,7 @@ public final class Cipher {
      
         - method: The cipher method to use
         - key: The crypto key
-        - iv: Optional initialization vector.
+        - iv: Optional initialization vector, defaults to the key if `useIV` is true.
      
         Note: Some cipher methods may require an intialization vector
         to work properly.
@@ -210,6 +210,91 @@ public enum Method {
     }
 
     case chacha20
+
+    case cast5(CAST5Mode)
+    public enum CAST5Mode {
+        case ecb
+        case ofb
+        case cbc
+        case cfb64
+    }
+
+    case aes128(AES128Mode)
+    public enum AES128Mode {
+        case ecb
+        case cbc
+        case cbcHMACSHA1
+        case cfb1
+        case cfb8
+        case cfb128
+        case ofb
+        case ctr
+        case gcm
+        case xts
+    }
+
+    case aes192(AES192Mode)
+    public enum AES192Mode {
+        case ecb
+        case cbc
+        case cfb1
+        case cfb8
+        case cfb128
+        case ofb
+        case ctr
+        case gcm
+    }
+
+    case aes256(AES256Mode)
+    public enum AES256Mode {
+        case ecb
+        case cbc
+        case cbcHMACSHA1
+        case cfb1
+        case cfb8
+        case cfb128
+        case ofb
+        case ctr
+        case gcm
+        case xts
+    }
+
+    case camellia128(Camellia128Mode)
+    public enum Camellia128Mode {
+        case ecb
+        case cbc
+        case cfb1
+        case cfb8
+        case cfb128
+        case ofb
+    }
+
+    case camellia192(Camellia192Mode)
+    public enum Camellia192Mode {
+        case ecb
+        case cbc
+        case cfb1
+        case cfb8
+        case cfb128
+        case ofb
+    }
+
+    case camellia256(Camellia256Mode)
+    public enum Camellia256Mode {
+        case ecb
+        case cbc
+        case cfb1
+        case cfb8
+        case cfb128
+        case ofb
+    }
+
+    case gost2814789(GOST2814789Mode)
+    public enum GOST2814789Mode {
+        case ecb
+        case cfb64
+        case cnt
+    }
 }
 
 extension Method {
@@ -311,57 +396,136 @@ extension Method {
             }
         case .chacha20:
             return EVP_chacha20()
-        /*
-            return EVP_cast5_ecb()
-            return EVP_cast5_ofb()
-            return EVP_cast5_cbc()
-
-            return EVP_aes_128_ecb()
-            return EVP_aes_128_cbc()
-            return EVP_aes_128_cfb1()
-            return EVP_aes_128_cfb8()
-            return EVP_aes_128_ofb()
-            return EVP_aes_128_ctr()
-            return EVP_aes_128_gcm()
-            return EVP_aes_128_xts()
-            return EVP_aes_192_ecb()
-            return EVP_aes_192_cbc()
-            return EVP_aes_192_cfb1()
-            return EVP_aes_192_cfb8()
-            return EVP_aes_192_ofb()
-            return EVP_aes_192_ctr()
-            return EVP_aes_192_gcm()
-            return EVP_aes_256_ecb()
-            return EVP_aes_256_cbc()
-            return EVP_aes_256_cfb1()
-            return EVP_aes_256_cfb8()
-            return EVP_aes_256_ofb()
-            return EVP_aes_256_ctr()
-            return EVP_aes_256_gcm()
-            return EVP_aes_256_xts()
-            return EVP_aes_128_cbc_hmac_sha1()
-            return EVP_aes_256_cbc_hmac_sha1()
-
-            return EVP_camellia_128_ecb()
-            return EVP_camellia_128_cbc()
-            return EVP_camellia_128_cfb1()
-            return EVP_camellia_128_cfb8()
-            return EVP_camellia_128_ofb()
-            return EVP_camellia_192_ecb()
-            return EVP_camellia_192_cbc()
-            return EVP_camellia_192_cfb1()
-            return EVP_camellia_192_cfb8()
-            return EVP_camellia_192_ofb()
-            return EVP_camellia_256_ecb()
-            return EVP_camellia_256_cbc()
-            return EVP_camellia_256_cfb1()
-            return EVP_camellia_256_cfb8()
-            return EVP_camellia_256_ofb()
-
-            return EVP_gost2814789_ecb()
-            return EVP_gost2814789_cfb64()
-            return EVP_gost2814789_cnt()
-        */
+        case .cast5(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_cast5_ecb()
+            case .ofb:
+                return EVP_cast5_ofb()
+            case .cbc:
+                return EVP_cast5_cbc()
+            case .cfb64:
+                return EVP_cast5_cfb64()
+            }
+        case .aes128(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_aes_128_ecb()
+            case .cbc:
+                return EVP_aes_128_cbc()
+            case .cbcHMACSHA1:
+                return EVP_aes_128_cbc_hmac_sha1()
+            case .cfb1:
+                return EVP_aes_128_cfb1()
+            case .cfb8:
+                return EVP_aes_128_cfb8()
+            case .cfb128:
+                return EVP_aes_128_cfb128()
+            case .ofb:
+                return EVP_aes_128_ofb()
+            case .ctr:
+                return EVP_aes_128_ctr()
+            case .gcm:
+                return EVP_aes_128_gcm()
+            case .xts:
+                return EVP_aes_128_xts()
+            }
+        case .aes192(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_aes_192_ecb()
+            case .cbc:
+                return EVP_aes_192_cbc()
+            case .cfb1:
+                return EVP_aes_192_cfb1()
+            case .cfb8:
+                return EVP_aes_192_cfb8()
+            case .cfb128:
+                return EVP_aes_192_cfb128()
+            case .ofb:
+                return EVP_aes_192_ofb()
+            case .ctr:
+                return EVP_aes_192_ctr()
+            case .gcm:
+                return EVP_aes_192_gcm()
+            }
+        case .aes256(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_aes_256_ecb()
+            case .cbc:
+                return EVP_aes_256_cbc()
+            case .cbcHMACSHA1:
+                return EVP_aes_256_cbc_hmac_sha1()
+            case .cfb1:
+                return EVP_aes_256_cfb1()
+            case .cfb8:
+                return EVP_aes_256_cfb8()
+            case .cfb128:
+                return EVP_aes_256_cfb128()
+            case .ofb:
+                return EVP_aes_256_ofb()
+            case .ctr:
+                return EVP_aes_256_ctr()
+            case .gcm:
+                return EVP_aes_256_gcm()
+            case .xts:
+                return EVP_aes_256_xts()
+            }
+        case .camellia128(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_camellia_128_ecb()
+            case .cbc:
+                return EVP_camellia_128_cbc()
+            case .cfb1:
+                return EVP_camellia_128_cfb1()
+            case .cfb8:
+                return EVP_camellia_128_cfb8()
+            case .cfb128:
+                return EVP_camellia_128_cfb128()
+            case .ofb:
+                return EVP_camellia_128_ofb()
+            }
+        case .camellia192(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_camellia_192_ecb()
+            case .cbc:
+                return EVP_camellia_192_cbc()
+            case .cfb1:
+                return EVP_camellia_192_cfb1()
+            case .cfb8:
+                return EVP_camellia_192_cfb8()
+            case .cfb128:
+                return EVP_camellia_192_cfb128()
+            case .ofb:
+                return EVP_camellia_192_ofb()
+            }
+        case .camellia256(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_camellia_256_ecb()
+            case .cbc:
+                return EVP_camellia_256_cbc()
+            case .cfb1:
+                return EVP_camellia_256_cfb1()
+            case .cfb8:
+                return EVP_camellia_256_cfb8()
+            case .cfb128:
+                return EVP_camellia_256_cfb128()
+            case .ofb:
+                return EVP_camellia_256_ofb()
+            }
+        case .gost2814789(let mode):
+            switch mode {
+            case .ecb:
+                return EVP_gost2814789_ecb()
+            case .cfb64:
+                return EVP_gost2814789_cfb64()
+            case .cnt:
+                return EVP_gost2814789_cnt()
+            }
         }
     }
 }

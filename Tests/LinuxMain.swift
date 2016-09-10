@@ -11,8 +11,8 @@ XCTMain([
     // Hash 
     testCase(HashTests.allTests),
     
-	// HMAC
-	testCase(HMACTests.allTests),
+    // HMAC
+    testCase(HMACTests.allTests),
 
     // Random
     testCase(RandomTests.allTests),
