@@ -1,8 +1,6 @@
 import XCTest
 import Core
 @testable import HMAC
-import SHA1
-import SHA2
 
 class HMACTests: XCTestCase {
     static var allTests = [
@@ -11,7 +9,7 @@ class HMACTests: XCTestCase {
     ]
 
     func testBasic() throws {
-        let digest = try HMAC(SHA1.self, "vapor").authenticate(key: "42")
+        let digest = try HMAC(.sha1, "vapor").authenticate(key: "42")
         XCTAssertEqual(digest.hexString, "b15d2d34c729a0647a6f124d5afe1927e55a9d7c")
     }
 
@@ -21,7 +19,7 @@ class HMACTests: XCTestCase {
     }
 
     func testConvenience() throws {
-        let digest = try SHA256.authenticate("vapor", key: "42")
+        let digest = try HMAC(.sha256, "vapor").authenticate(key: "42")
         XCTAssertEqual(digest.hexString, "6b3291cf4676ee313efc7a35adc889426847975aee8cebcac28e46df5a2f9bbe")
 
     }
@@ -31,7 +29,7 @@ class HMACTests: XCTestCase {
 
         // ~0.020 release
         measure {
-            let hmac = HMAC(SHA1.self, data)
+            let hmac = HMAC(.sha1, data)
             _ = try! hmac.authenticate(key: "42".bytes)
         }
     }

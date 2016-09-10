@@ -5,11 +5,10 @@ let package = Package(
     targets: [
         Target(name: "Essentials"),
         Target(name: "BCrypt", dependencies: ["Random"]),
-        Target(name: "MD5", dependencies: ["Essentials", "HMAC"]),
+        Target(name: "Hash", dependencies: ["Essentials", "Random"]),
         Target(name: "Random", dependencies: ["Essentials"]),
-        Target(name: "SHA1", dependencies: ["Essentials", "HMAC"]),
-        Target(name: "SHA2", dependencies: ["Essentials", "HMAC"]),
-        Target(name: "HMAC", dependencies: ["Essentials"]),
+        Target(name: "HMAC", dependencies: ["Essentials", "Random"]),
+        Target(name: "Cipher", dependencies: ["Essentials"]),
     ],
     dependencies: [
         .Package(url: "https://github.com/vapor/core.git", majorVersion: 0, minor: 5),

@@ -1,31 +1,6 @@
-import CLibreSSL
-import Essentials
 import Core
-
-/**
-    Types conforming to Authenticatable
-    can be passed to `HMAC` directly.
-*/
-public protocol Authenticatable {
-    static func method() -> Method
-}
-
-extension Authenticatable where Self: Hash {
-    public static func authenticate(_ message: Bytes, key: Bytes) throws -> Bytes {
-        return try HMAC(Self.self, message).authenticate(key: key)
-    }
-
-    public static func authenticate(_ message: ByteStream, key: Bytes) throws -> Bytes {
-        return try HMAC(Self.method(), message).authenticate(key: key)
-    }
-
-    public static func authenticate<
-        B1: BytesRepresentable,
-        B2: BytesRepresentable
-    >(_ message: B1, key: B2) throws -> Bytes {
-        return try authenticate(try message.makeBytes(), key: try key.makeBytes())
-    }
-}
+import Essentials
+import CLibreSSL
 
 /**
     Hashing method for calculating

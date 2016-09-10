@@ -17,6 +17,10 @@ public final class HMAC {
         method = m
     }
 
+    public enum Error: Swift.Error {
+        case unsupportedMethod
+    }
+
     /**
         Authenticates a message using the provided `Hash` algorithm
 
@@ -40,7 +44,7 @@ public final class HMAC {
         var digest = Bytes(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
         var length: UInt32 = 0
         HMAC_Final(&context, &digest, &length);
-
+        
         return Array(digest[0..<Int(length)])
     }
 }
@@ -66,24 +70,6 @@ extension HMAC {
     }
 
     /**
-        Create the hasher from an array
-        of bytes. This will internally
-        create a BasicByteStream.
-    */
-    public convenience init<A: Authenticatable>(_ auth: A.Type, _ bytes: Bytes) {
-        self.init(auth.method(), bytes)
-    }
-
-    /**
-        Create the hasher from something
-        representable as bytes. This will internally
-        create a BasicByteStream.
-    */
-    public convenience init<A: Authenticatable, B: BytesRepresentable>(_ auth: A.Type, _ bytes: B) throws {
-        self.init(auth, try bytes.makeBytes())
-    }
-
-    /**
         Authenticates a message using something
         that can be represented with bytes.
      
@@ -91,5 +77,21 @@ extension HMAC {
     */
     public func authenticate<B: BytesRepresentable>(key: B) throws -> Bytes {
         return try authenticate(key: try key.makeBytes())
+    }
+
+    /**
+        Convenience method for easily making
+        an HMAC digest.
+    */
+    public static func make(_ method: Method, _ bytes: Bytes, key: Bytes) throws -> Bytes {
+        return try HMAC(method, bytes).authenticate(key: key)
+    }
+
+    /**
+        Convenience method for easily making
+        an HMAC digest using Bytes representable.
+    */
+    public static func make<B1: BytesRepresentable, B2: BytesRepresentable>(_ method: Method, _ bytes: B1, key: B2) throws -> Bytes {
+        return try make(method, try bytes.makeBytes(), key: try key.makeBytes())
     }
 }
