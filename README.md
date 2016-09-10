@@ -20,17 +20,14 @@ Crypto is a collection of cryptography tools. It powers the hashing and encrypti
 
 ## 🚀 Features 
 
-- 100% test coverage (Goal)
+- 🔒LibreSSL 
 - Documented methods
-- Pure Swift
-- AES
+- Encryption (89 Ciphers)
+- Hashing (8 Algorithms)
+- HMAC (14 Algorithms)
 - BCrypt
-- HMAC
-- MD5
-- PBKDF2
-- Random
-- SHA1
-- SHA2
+- Random (3 Sources)
+- Tested
 
 ## 🌏 Environment
 
