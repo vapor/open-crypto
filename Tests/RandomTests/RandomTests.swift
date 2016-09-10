@@ -1,7 +1,6 @@
 import XCTest
 import Core
 @testable import Random
-import Hash
 
 class RandomTests: XCTestCase {
     static var allTests = [
@@ -23,10 +22,5 @@ class RandomTests: XCTestCase {
     func testPsuedoRandom() throws {
         let rand = URandom.int64
         print(rand)
-    }
-
-    func testRandomHash() throws {
-        let hash = try Hash.random(.sha1)
-        print(hash)
     }
 }

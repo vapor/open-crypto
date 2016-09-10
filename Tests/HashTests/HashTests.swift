@@ -101,4 +101,9 @@ class HashTests: XCTestCase {
             XCTAssertEqual(result, expected.lowercased())
         }
     }
+
+    func testRandom() throws {
+        let hash = try Hash.random(.sha1)
+        print(hash)
+    }
 }
