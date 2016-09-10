@@ -1,7 +1,7 @@
 import XCTest
 import Core
 @testable import Random
-import SHA1
+import Hash
 
 class RandomTests: XCTestCase {
     static var allTests = [
@@ -26,7 +26,7 @@ class RandomTests: XCTestCase {
     }
 
     func testRandomHash() throws {
-        let hash = try SHA1.random()
+        let hash = try Hash.random(.sha1)
         print(hash)
     }
 }
