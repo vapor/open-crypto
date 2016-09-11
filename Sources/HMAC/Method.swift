@@ -6,24 +6,26 @@ import CLibreSSL
     Hashing method for calculating
     the HMAC authentication.
 */
-public enum Method {
-    case sha1
-    case sha224
-    case sha256
-    case sha384
-    case sha512
-    case md4
-    case md5
-    case dss1
-    case ecdsa
-    case ripemd160
-    case whirlpool
-    case streebog256
-    case streebog512
-    case gostr341194
+extension HMAC {
+    public enum Method {
+        case sha1
+        case sha224
+        case sha256
+        case sha384
+        case sha512
+        case md4
+        case md5
+        case dss1
+        case ecdsa
+        case ripemd160
+        case whirlpool
+        case streebog256
+        case streebog512
+        case gostr341194
+    }
 }
 
-extension Method {
+extension HMAC.Method {
     /**
         The internal EVP pointer.
     */
