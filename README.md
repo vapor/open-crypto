@@ -1,7 +1,7 @@
 <p align="center">
-    <img 
-        src="http://project.unimarconi.it/talete/images/logo_crypto.png" 
-        align="center" 
+    <img
+        src="http://project.unimarconi.it/talete/images/logo_crypto.png"
+        align="center"
         alt="Crypto"
         width="250px"
     >
@@ -9,7 +9,7 @@
 
 # Crypto
 
-![Swift](https://img.shields.io/badge/swift-3_gm-brightgreen.svg)
+![Swift](http://img.shields.io/badge/swift-3.0-brightgreen.svg)
 [![Build Status](https://travis-ci.org/vapor/crypto.svg?branch=master)](https://travis-ci.org/vapor/crypto)
 [![CircleCI](https://circleci.com/gh/vapor/crypto.svg?style=shield)](https://circleci.com/gh/vapor/crypto)
 [![Code Coverage](https://codecov.io/gh/vapor/crypto/branch/master/graph/badge.svg)](https://codecov.io/gh/vapor/crypto)
@@ -18,37 +18,14 @@
 
 Crypto is a collection of cryptography tools. It powers the hashing and encryption in [Vapor](https://github.com/vapor/vapor).
 
-## 🚀 Features 
-
-- 🔒LibreSSL 
-- Documented methods
-- Encryption (89 Ciphers)
-- Hashing (8 Algorithms)
-- HMAC (14 Algorithms)
-- BCrypt
-- Random (3 Sources)
-- Tested
-
-## 🌏 Environment
-
-|Crypto|Xcode|Swift|
-|:-:|:-:|:-:|
-|0.3.x|8.0 GM|DEVELOPMENT-SNAPSHOT-2016-09-06-a|
-|0.2.x|8.0 Beta **6**|DEVELOPMENT-SNAPSHOT-2016-08-18-a|
-|0.1.x|8.0 Beta **6**|DEVELOPMENT-SNAPSHOT-2016-08-18-a|
-
 ## 📖 Documentation
 
-Visit the Vapor web framework's [documentation](http://docs.vapor.codes) for instructions on how to install Swift 3. 
+Visit the Vapor web framework's [documentation](http://docs.vapor.codes) for instructions on how to use this package.
 
 ## 💧 Community
 
-We pride ourselves on providing a diverse and welcoming community. Join your fellow Qutheory developers in [our slack](http://vapor.team) and take part in the conversation.
+Join the welcoming community of fellow Vapor developers in [slack](http://vapor.team).
 
 ## 🔧 Compatibility
 
-Crypto has been tested on OS X 10.11, Ubuntu 14.04, and Ubuntu 15.10.
-
-## 👥 Authors
-
-Made by [Joannis Orlandos](https://github.com/Joannis), [Tanner Nelson](https://twitter.com/tanner0101) and the hundreds of members of the Vapor community.
+This package has been tested on macOS and Ubuntu.
