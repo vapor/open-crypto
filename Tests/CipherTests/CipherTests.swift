@@ -1,6 +1,8 @@
 import XCTest
 import Core
 @testable import Cipher
+import Random
+import Hash
 
 class CipherTests: XCTestCase {
     static var allTests = [
@@ -26,5 +28,17 @@ class CipherTests: XCTestCase {
 
         let decrypted = try cipher.decrypt(encrypted)
         XCTAssertEqual(decrypted.string, secret)
+    }
+
+    func testOverflow() throws {
+        let key = "passwordpasswordpasswordpassword".bytes
+        let iv = "passwordpassword".bytes
+        let plaintext = URandom.bytes(65_536)
+
+        let cipher = try Cipher(.aes256(.cbc), key: key, iv: iv)
+        let encrypted = try cipher.encrypt(plaintext)
+        let decrypted = try cipher.decrypt(encrypted)
+
+        XCTAssertEqual(plaintext, decrypted)
     }
 }
