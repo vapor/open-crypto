@@ -98,16 +98,18 @@ public final class Cipher {
 
         var parsed: Bytes = []
 
-        let bufferLength = Int(1024 + EVP_MAX_BLOCK_LENGTH)
-        let buffer = UnsafeMutablePointer<Byte>.allocate(capacity: bufferLength)
-        defer {
-            buffer.deinitialize()
-            buffer.deallocate(capacity: bufferLength)
-        }
-
         while !stream.closed {
             var newLength: Int32 = 0
             let bytes = try stream.next()
+
+
+            let bufferLength = Int(bytes.count + EVP_MAX_BLOCK_LENGTH)
+            let buffer = UnsafeMutablePointer<Byte>.allocate(capacity: bufferLength)
+            defer {
+                buffer.deinitialize()
+                buffer.deallocate(capacity: bufferLength)
+            }
+
             guard update(&ctx, buffer, &newLength, bytes, Int32(bytes.count)) == 1 else {
                 throw Error.update
             }
@@ -115,6 +117,14 @@ public final class Cipher {
             let bufferPointer = UnsafeMutableBufferPointer(start: buffer, count: Int(newLength))
             let newParsed = Array(bufferPointer)
             parsed += newParsed
+
+        }
+
+        let bufferLength = Int(1024 + EVP_MAX_BLOCK_LENGTH)
+        let buffer = UnsafeMutablePointer<Byte>.allocate(capacity: bufferLength)
+        defer {
+            buffer.deinitialize()
+            buffer.deallocate(capacity: bufferLength)
         }
 
         var endLength: Int32 = 0
