@@ -30,7 +30,7 @@ class HMACTests: XCTestCase {
         // ~0.020 release
         measure {
             let hmac = HMAC(.sha1, data)
-            _ = try! hmac.authenticate(key: "42".bytes)
+            _ = try! hmac.authenticate(key: "42".makeBytes())
         }
     }
 }

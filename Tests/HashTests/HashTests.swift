@@ -18,7 +18,7 @@ class HashTests: XCTestCase {
         ]
 
         for (key, expected) in tests {
-            let result = try Hash.make(.sha1, key.bytes).hexString.lowercased()
+            let result = try Hash.make(.sha1, key.makeBytes()).hexString.lowercased()
             XCTAssertEqual(result, expected.lowercased())
         }
     }
@@ -41,7 +41,7 @@ class HashTests: XCTestCase {
         ]
 
         for (key, expected) in tests {
-            let result = try Hash.make(.sha224, key.bytes).hexString.lowercased()
+            let result = try Hash.make(.sha224, key.makeBytes()).hexString.lowercased()
             XCTAssertEqual(result, expected.lowercased())
         }
     }
@@ -55,7 +55,7 @@ class HashTests: XCTestCase {
         ]
 
         for (key, expected) in tests {
-            let result = try Hash.make(.sha256, key.bytes).hexString.lowercased()
+            let result = try Hash.make(.sha256, key.makeBytes()).hexString.lowercased()
             XCTAssertEqual(result, expected.lowercased())
         }
     }
@@ -69,7 +69,7 @@ class HashTests: XCTestCase {
         ]
 
         for (key, expected) in tests {
-            let result = try Hash.make(.sha384, key.bytes).hexString.lowercased()
+            let result = try Hash.make(.sha384, key.makeBytes()).hexString.lowercased()
             XCTAssertEqual(result, expected.lowercased())
         }
     }
@@ -83,7 +83,7 @@ class HashTests: XCTestCase {
         ]
 
         for (key, expected) in tests {
-            let result = try Hash.make(.sha512, key.bytes).hexString.lowercased()
+            let result = try Hash.make(.sha512, key.makeBytes()).hexString.lowercased()
             XCTAssertEqual(result, expected.lowercased())
         }
     }
@@ -97,7 +97,7 @@ class HashTests: XCTestCase {
         ]
 
         for (key, expected) in tests {
-            let result = try Hash.make(.md5, key.bytes).hexString.lowercased()
+            let result = try Hash.make(.md5, key.makeBytes()).hexString.lowercased()
             XCTAssertEqual(result, expected.lowercased())
         }
     }
