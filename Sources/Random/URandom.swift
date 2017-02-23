@@ -6,7 +6,7 @@ import libc
     /dev/urandom is a cryptographically secure random generator provided by the OS.
 */
 public final class URandom: Random {
-    private let file = fopen("/dev/urandom", "r")
+    private let file = fopen("/dev/urandom", "rb")
     
     /// Initialize URandom
     public init() {}
@@ -16,10 +16,13 @@ public final class URandom: Random {
     }
     
     private func read(numBytes: Int) -> [Int8] {
-        // Initialize an empty array with numBytes+1 for null terminated string
-        var bytes = [Int8](repeating: 0, count: numBytes + 1)
-        fgets(&bytes, numBytes + 1, file)
-        bytes.removeLast()
+        // Initialize an empty array with space for numBytes bytes
+        var bytes = [Int8](repeating: 0, count: numBytes)
+		guard fread(&bytes, 1, numBytes, file) == numBytes else {
+			// If the requested number of random bytes couldn't be read,
+			// we need to fail fast and hard.
+			abort()
+		}
         return bytes
     }
     
