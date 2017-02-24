@@ -3,9 +3,6 @@ import Core
 public protocol Random {
     init()
 
-    @available(*, deprecated, message: "Use the throwing method instead.")
-    func bytes(_ num: Int) -> Bytes
-
     /// Get a random array of Bytes
     func bytes(count: Int) throws -> Bytes
 }
@@ -13,6 +10,7 @@ public protocol Random {
 
 // MARK: - Deprecated non-throwing bytes method
 extension Random {
+    @available(*, deprecated, message: "Use the throwing method instead.")
     public func bytes(_ num: Int) -> Bytes {
         return try! bytes(count: num)
     }
