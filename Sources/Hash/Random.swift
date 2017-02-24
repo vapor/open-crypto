@@ -12,7 +12,7 @@ extension Hash {
     }
 
     public static func random<R: Random>(_ m: Method, _ r: R) throws -> Bytes {
-        let message = r.bytes(64)
+        let message = try r.bytes(count: 64)
         return try Hash.make(m, message)
     }
 }

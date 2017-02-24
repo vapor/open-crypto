@@ -2,127 +2,140 @@ import Core
 
 public protocol Random {
     init()
-    func bytes(_ num: Int) -> Bytes
+
+    /// Get a random array of Bytes
+    func bytes(count: Int) throws -> Bytes
 }
 
+
+// MARK: - Deprecated non-throwing bytes method
 extension Random {
-    /// Get a random int8
-    public var int8: Int8 {
-        return Int8(bitPattern: uint8)
-    }
-
-    /// Get a random uint8
-    public var uint8: UInt8 {
-        return bytes(1)[0]
-    }
-
-    /// Get a random int16
-    public var int16: Int16 {
-        let random = bytes(2)
-        return UnsafeMutableRawPointer(mutating: random)
-            .assumingMemoryBound(to: Int16.self)
-            .pointee
-    }
-
-    /// Get a random uint16
-    public var uint16: UInt16 {
-        return UInt16(bitPattern: int16)
-    }
-
-    /// Get a random int32
-    public var int32: Int32 {
-        let random = bytes(4)
-        return UnsafeMutableRawPointer(mutating: random)
-            .assumingMemoryBound(to: Int32.self)
-            .pointee
-    }
-
-    /// Get a random uint32
-    public var uint32: UInt32 {
-        return UInt32(bitPattern: int32)
-    }
-
-    /// Get a random int64
-    public var int64: Int64 {
-        let random = bytes(8)
-        return UnsafeMutableRawPointer(mutating: random)
-            .assumingMemoryBound(to: Int64.self)
-            .pointee
-    }
-
-    /// Get a random uint64
-    public var uint64: UInt64 {
-        return UInt64(bitPattern: int64)
-    }
-
-    /// Get a random int
-    public var int: Int {
-        let random = bytes(MemoryLayout<Int>.size)
-        return UnsafeMutableRawPointer(mutating: random)
-            .assumingMemoryBound(to: Int.self)
-            .pointee
-    }
-
-    /// Get a random uint
-    public var uint: UInt {
-        return UInt(bitPattern: int)
+    @available(*, deprecated, message: "Use the throwing method instead.")
+    public func bytes(_ num: Int) -> Bytes {
+        return try! bytes(count: num)
     }
 }
 
-// MARK: Static
 
+// MARK: - Throwing getter methods
 extension Random {
-    /// Get a random int8
-    public static var int8: Int8 {
-        return Self().int8
+    /// Get a random Int8
+    public func randInt8() throws -> Int8 {
+        return Int8(bitPattern: try randUInt8())
     }
 
-    /// Get a random uint8
-    public static var uint8: UInt8 {
-        return Self().uint8
+    /// Get a random UInt8
+    public func randUInt8() throws -> UInt8 {
+        return try bytes(count: 1)[0]
     }
 
-    /// Get a random int16
-    public static var int16: Int16 {
-        return Self().int16
+    /// Get a random Int16
+    public func randInt16() throws -> Int16 {
+        return Int16(bitPattern: try randUInt16())
     }
 
-    /// Get a random uint16
-    public static var uint16: UInt16 {
-        return Self().uint16
+    /// Get a random UInt16
+    public func randUInt16() throws -> UInt16 {
+        let random = try bytes(count: 2)
+        return UnsafeRawPointer(random)
+            .assumingMemoryBound(to: UInt16.self)
+            .pointee
     }
 
-    /// Get a random int32
-    public static var int32: Int32 {
-        return Self().int32
+    /// Get a random Int32
+    public func randInt32() throws -> Int32 {
+        return Int32(bitPattern: try randUInt32())
     }
 
-    /// Get a random uint32
-    public static var uint32: UInt32 {
-        return Self().uint32
+    /// Get a random UInt32
+    public func randUInt32() throws -> UInt32 {
+        let random = try bytes(count: 4)
+        return UnsafeRawPointer(random)
+            .assumingMemoryBound(to: UInt32.self)
+            .pointee
     }
 
-    /// Get a random int64
-    public static var int64: Int64 {
-        return Self().int64
+    /// Get a random Int64
+    public func randInt64() throws -> Int64 {
+        return Int64(bitPattern: try randUInt64())
     }
 
-    /// Get a random uint64
-    public static var uint64: UInt64 {
-        return Self().uint64
+    /// Get a random UInt64
+    public func randUInt64() throws -> UInt64 {
+        let random = try bytes(count: 8)
+        return UnsafeRawPointer(random)
+            .assumingMemoryBound(to: UInt64.self)
+            .pointee
     }
 
-    /// Get a random int
-    public static var int: Int {
-        return Self().int
+    /// Get a random Int
+    public func randInt() throws -> Int {
+        return Int(bitPattern: try randUInt())
     }
 
-    /// Get a random uint
-    public static var uint: UInt {
-        return Self().uint
+    /// Get a random UInt
+    public func randUInt() throws -> UInt {
+        let random = try bytes(count: MemoryLayout<UInt>.size)
+        return UnsafeRawPointer(random)
+            .assumingMemoryBound(to: UInt.self)
+            .pointee
+    }
+}
+
+
+// MARK: - Throwing static methods
+extension Random {
+    public static func bytes(count: Int) throws -> Bytes {
+        return try Self().bytes(count: count)
     }
 
-    public static func bytes(_ num: Int) -> Bytes {
-        return Self().bytes(num)
+    /// Get a random Int8
+    public static func randInt8() throws -> Int8 {
+        return try Self().randInt8()
+    }
+
+    /// Get a random UInt8
+    public static func randUInt8() throws -> UInt8 {
+        return try Self().randUInt8()
+    }
+
+    /// Get a random Int16
+    public static func randInt16() throws -> Int16 {
+        return try Self().randInt16()
+    }
+
+    /// Get a random UInt16
+    public static func randUInt16() throws -> UInt16 {
+        return try Self().randUInt16()
+    }
+
+    /// Get a random Int32
+    public static func randInt32() throws -> Int32 {
+        return try Self().randInt32()
+    }
+
+    /// Get a random UInt32
+    public static func randUInt32() throws -> UInt32 {
+        return try Self().randUInt32()
+    }
+
+    /// Get a random Int64
+    public static func randInt64() throws -> Int64 {
+        return try Self().randInt64()
+    }
+
+    /// Get a random UInt64
+    public static func randUInt64() throws -> UInt64 {
+        return try Self().randUInt64()
+    }
+
+    /// Get a random Int
+    public static func randInt() throws -> Int {
+        return try Self().randInt()
+    }
+
+    /// Get a random UInt
+    public static func randUInt() throws -> UInt {
+        return try Self().randUInt()
     }
 }
