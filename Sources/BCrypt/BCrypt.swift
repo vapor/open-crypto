@@ -600,10 +600,19 @@ public struct BCryptSalt {
      Creates a new random salt with the specified cost factor. Default cost factor of 10, which is probably
      ~100 ms to hash a password on a modern CPU.
      */
+    @available(*, deprecated, message: "Use `init(costFactor: Int) throws` instead.")
     public init(cost: Int = 10) {
+        try! self.init(costFactor: cost)
+    }
+
+    /**
+    Creates a new random salt with the specified cost factor. Default cost factor of 10, which is probably
+    ~100 ms to hash a password on a modern CPU.
+    */
+    public init(costFactor: Int = 10) throws {
         self.scheme = "2a"
-        self.cost = cost
-        self.data = BCrypt.random.bytes(16)
+        self.cost = costFactor
+        self.data = try BCrypt.random.bytes(count: 16)
     }
 }
 
