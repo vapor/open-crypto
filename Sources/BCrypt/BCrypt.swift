@@ -332,10 +332,22 @@ public class BCrypt {
     private let plen: Int = 18
     private let slen: Int = 1024
 
+
     /**
      Hashes the password (using the UTF8 encoding) with the specified salt.
      */
+    @available(*, deprecated, message: "Use `digest` instead.")
     public static func hash(password: String, salt: BCryptSalt = BCryptSalt()) -> String {
+        return try! digest(password: password, salt: salt)
+    }
+
+    /**
+     Hashes the password (using the UTF8 encoding) with the specified salt.
+     */
+    public static func digest(password: String, salt saltOrNil: BCryptSalt? = nil) throws -> String {
+        // Construct the salt in the body as the init can throw
+        let salt = try saltOrNil ?? BCryptSalt(costFactor: nil)
+
         let bCrypt = BCrypt()
         let minor: Character = salt.scheme.characters.count == 2 ? salt.scheme[1] : "\0"
 
@@ -362,7 +374,7 @@ public class BCrypt {
      Validates that the password matches the hash.
      */
     public static func verify(password: String, matchesHash hash: String) throws -> Bool {
-        return try BCrypt.hash(password: password, salt: BCryptSalt(string: hash)) == hash
+        return try digest(password: password, salt: BCryptSalt(string: hash)) == hash
     }
 
     private static func streamToWordWithData(data: UnsafeMutablePointer<Int8>, ofLength length: Int, off offp: inout Int32) -> Int32 {
@@ -600,7 +612,7 @@ public struct BCryptSalt {
      Creates a new random salt with the specified cost factor. Default cost factor of 10, which is probably
      ~100 ms to hash a password on a modern CPU.
      */
-    @available(*, deprecated, message: "Use `init(costFactor: Int) throws` instead.")
+    @available(*, deprecated, message: "Use `init(costFactor: Int?) throws` instead.")
     public init(cost: Int = 10) {
         try! self.init(costFactor: cost)
     }
@@ -609,9 +621,9 @@ public struct BCryptSalt {
     Creates a new random salt with the specified cost factor. Default cost factor of 10, which is probably
     ~100 ms to hash a password on a modern CPU.
     */
-    public init(costFactor: Int = 10) throws {
+    public init(costFactor: Int?) throws {
         self.scheme = "2a"
-        self.cost = costFactor
+        self.cost = costFactor ?? 10
         self.data = try BCrypt.random.bytes(count: 16)
     }
 }
