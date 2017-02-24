@@ -7,8 +7,8 @@ import libc
 */
 public final class URandom: Random {
     public enum Error: Swift.Error {
-        case open(errno_t)
-        case read(errno_t)
+        case open(Int32)
+        case read(Int32)
     }
 
     private let file = fopen("/dev/urandom", "rb")
