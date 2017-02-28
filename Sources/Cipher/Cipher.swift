@@ -103,7 +103,7 @@ public final class Cipher {
             let bytes = try stream.next()
 
 
-            let bufferLength = Int(bytes.count + EVP_MAX_BLOCK_LENGTH)
+            let bufferLength = bytes.count + Int(EVP_MAX_BLOCK_LENGTH)
             let buffer = UnsafeMutablePointer<Byte>.allocate(capacity: bufferLength)
             defer {
                 buffer.deinitialize()
