@@ -12,17 +12,17 @@ class RandomTests: XCTestCase {
     ]
 
     func testURandom() throws {
-        let rand = try URandom.randInt8()
+        let rand = try URandom.makeInt8()
         print(rand)
     }
 
     func testCryptoRandom() throws {
-        let rand = try CryptoRandom.randUInt32()
+        let rand = try CryptoRandom.makeUInt32()
         print(rand)
     }
 
     func testPseudoRandom() throws {
-        let rand = try PseudoRandom.randInt64()
+        let rand = try PseudoRandom.makeInt64()
         print(rand)
     }
 

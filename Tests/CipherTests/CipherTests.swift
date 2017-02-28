@@ -31,15 +31,9 @@ class CipherTests: XCTestCase {
     }
 
     func testOverflow() throws {
-<<<<<<< HEAD
         let key = "passwordpasswordpasswordpassword".bytes
         let iv = "passwordpassword".bytes
-        let plaintext = URandom.bytes(65_536)
-=======
-        let key = "passwordpasswordpasswordpassword".makeBytes()
-        let iv = "passwordpassword".makeBytes()
         let plaintext = try URandom.bytes(count: 65_536)
->>>>>>> 4158f60... Added throwing variants of Random methods and deprecated non-throwing versions
 
         let cipher = try Cipher(.aes256(.cbc), key: key, iv: iv)
         let encrypted = try cipher.encrypt(plaintext)

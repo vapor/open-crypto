@@ -31,7 +31,7 @@ public class LibreSSLError: Swift.Error, CustomStringConvertible {
 
 
 /// Generates cryptographically secure random data using LibreSSL
-public final class CryptoRandom: Random {
+public final class CryptoRandom: Random, EmptyInitializable {
     public init() {}
 
     public func bytes(count: Int) throws -> Bytes {

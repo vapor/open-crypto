@@ -6,7 +6,7 @@ extension Hash {
         return try random(m, CryptoRandom.self)
     }
 
-    public static func random<R: Random>(_ m: Method, _ r: R.Type) throws -> Bytes {
+    public static func random<R: Random & EmptyInitializable>(_ m: Method, _ r: R.Type) throws -> Bytes {
         let r = r.init()
         return try random(m, r)
     }
