@@ -47,7 +47,7 @@ public final class CryptoRandom: Random, EmptyInitializable {
 
 
 /// Generates non-secure pseudorandom data using LibreSSL
-public final class PseudoRandom: Random {
+public final class PseudoRandom: Random, EmptyInitializable {
     public init() {}
 
     public func bytes(count: Int) throws -> Bytes {
@@ -64,12 +64,4 @@ public final class PseudoRandom: Random {
 
 // Class name has typo ('e' and 'u' reversed)
 @available(*, deprecated, renamed: "PseudoRandom")
-public final class PsuedoRandom: Random {
-    let prng = PseudoRandom()
-
-    public init() {}
-
-    public func bytes(count: Int) throws -> Bytes {
-        return try prng.bytes(count: count)
-    }
-}
+typealias PsuedoRandom = PseudoRandom
