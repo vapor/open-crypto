@@ -3,9 +3,9 @@ extension BCryptSalt {
      Creates a new random salt with the specified cost factor. Default cost factor of 10, which is probably
      ~100 ms to hash a password on a modern CPU.
      */
-    @available(*, deprecated, message: "Use `init(costFactor: Int?) throws` instead.")
+    @available(*, deprecated, message: "Use `init(workFactor: Int?) throws` instead.")
     public init(cost: Int = 10) {
-        try! self.init(costFactor: cost)
+        try! self.init(workFactor: cost)
     }
 }
 

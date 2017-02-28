@@ -337,7 +337,7 @@ public class BCrypt {
      */
     public static func digest(password: String, salt saltOrNil: BCryptSalt? = nil) throws -> String {
         // Construct the salt in the body as the init can throw
-        let salt = try saltOrNil ?? BCryptSalt(costFactor: nil)
+        let salt = try saltOrNil ?? BCryptSalt(workFactor: nil)
 
         let bCrypt = BCrypt()
         let minor: Character = salt.scheme.characters.count == 2 ? salt.scheme[1] : "\0"
@@ -603,9 +603,9 @@ public struct BCryptSalt {
     Creates a new random salt with the specified cost factor. Default cost factor of 10, which is probably
     ~100 ms to hash a password on a modern CPU.
     */
-    public init(costFactor: Int?) throws {
+    public init(workFactor: Int? = nil) throws {
         self.scheme = "2a"
-        self.cost = costFactor ?? 10
+        self.cost = workFactor ?? 10
         self.data = try BCrypt.random.bytes(count: 16)
     }
 }
