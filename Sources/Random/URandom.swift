@@ -18,7 +18,7 @@ public final class URandom: Random {
     private func read(numBytes: Int) -> [Int8] {
         // Initialize an empty array with numBytes+1 for null terminated string
         var bytes = [Int8](repeating: 0, count: numBytes + 1)
-        fgets(&bytes, numBytes + 1, file)
+        fgets(&bytes, Int32(numBytes) + 1, file)
         bytes.removeLast()
         return bytes
     }
