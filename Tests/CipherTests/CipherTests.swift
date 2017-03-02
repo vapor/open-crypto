@@ -33,7 +33,7 @@ class CipherTests: XCTestCase {
     func testOverflow() throws {
         let key = "passwordpasswordpasswordpassword".bytes
         let iv = "passwordpassword".bytes
-        let plaintext = URandom.bytes(65_536)
+        let plaintext = try URandom.bytes(count: 65_536)
 
         let cipher = try Cipher(.aes256(.cbc), key: key, iv: iv)
         let encrypted = try cipher.encrypt(plaintext)

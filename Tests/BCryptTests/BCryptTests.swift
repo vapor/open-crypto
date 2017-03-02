@@ -68,9 +68,9 @@ class BCryptTests: XCTestCase {
         }
     }
     
-    func testBCryptGeneratesSalts() {
-        let salt = BCryptSalt()
-        let salt12 = BCryptSalt(cost: 12)
+    func testBCryptGeneratesSalts() throws {
+        let salt = try BCryptSalt(workFactor: nil)
+        let salt12 = try BCryptSalt(workFactor: 12)
         
         XCTAssert(salt.string.hasPrefix("$2a$10"), "The prefix should be $2a (for BCrypt) and $10 (iterations)")
         XCTAssertEqual(salt.string.characters.count, 29, "The salt should always be 29 characters")
@@ -81,7 +81,7 @@ class BCryptTests: XCTestCase {
     
     func testBCryptHashesPasswordsProperly() throws {
         for test in tests {
-            XCTAssertEqual(try BCrypt.hash(password: test.0, salt: BCryptSalt(string: test.1)), test.2, "The hashed password should match the precomputed hash")
+            XCTAssertEqual(try BCrypt.digest(password: test.0, salt: BCryptSalt(string: test.1)), test.2, "The hashed password should match the precomputed hash")
         }
     }
     
