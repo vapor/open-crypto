@@ -603,7 +603,7 @@ public struct BCryptSalt {
     Creates a new random salt with the specified cost factor. Default cost factor of 10, which is probably
     ~100 ms to hash a password on a modern CPU.
     */
-    public init(workFactor: Int? = nil) throws {
+    public init(workFactor: Int?) throws {
         self.scheme = "2a"
         self.cost = workFactor ?? 10
         self.data = try BCrypt.random.bytes(count: 16)
