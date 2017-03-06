@@ -7,18 +7,16 @@ public final class Cipher {
     public let key: Bytes
     public let iv: Bytes?
 
-    /**
-        Creates a cipher for encrypting and decrypting
-        byte streams using the supplied key and optionally
-        initialization vector.
-     
-        - method: The cipher method to use
-        - key: The crypto key
-        - iv: Optional initialization vector, defaults to the key if `useIV` is true.
-     
-        Note: Some cipher methods may require an intialization vector
-        to work properly.
-    */
+    /// Creates a cipher for encrypting and decrypting
+    /// byte streams using the supplied key and optionally
+    /// initialization vector.
+    ///
+    /// - method: The cipher method to use
+    /// - key: The crypto key
+    /// - iv: Optional initialization vector, defaults to the key if `useIV` is true.
+    ///
+    /// Note: Some cipher methods may require an intialization vector
+    /// to work properly.
     public init(
         _ method: Method,
         key: Bytes,

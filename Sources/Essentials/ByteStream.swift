@@ -1,29 +1,21 @@
 import Core
 
-/**
-    Represents a stream of bytes that
-    can be passed to cryptographic
-    processes like hashers.
-*/
+/// Represents a stream of bytes that
+/// can be passed to cryptographic
+/// processes like hashers.
 public protocol ByteStream {
-    /**
-        When the stream is closed,
-        the crypto process will
-        stop requesting bytes.
-    */
+    /// When the stream is closed,
+    /// the crypto process will
+    /// stop requesting bytes.
     var closed: Bool { get }
 
-    /**
-        Called by crypto processes in
-        a loop until the stream closes.
-    */
+    /// Called by crypto processes in
+    /// a loop until the stream closes.
     func next() throws -> Bytes
 }
 
-/**
-    The most basic ByteStream consists
-    of an array of bytes.
-*/
+/// The most basic ByteStream consists
+/// of an array of bytes.
 public final class BasicByteStream: ByteStream {
     let bytes: Bytes
 

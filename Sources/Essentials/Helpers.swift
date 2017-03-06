@@ -5,11 +5,9 @@ public protocol SequenceInitializable: Sequence {
     init(_ sequence: [Iterator.Element])
 }
 
-/**
-    Provides access to hexStrings
-
-    Move to vapor/core
-*/
+/// Provides access to hexStrings
+///
+/// Move to vapor/core
 extension SequenceInitializable where Iterator.Element == Byte {
     
     public init(hexString: String) {

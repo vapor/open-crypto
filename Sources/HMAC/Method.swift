@@ -2,10 +2,8 @@ import Core
 import Essentials
 import CLibreSSL
 
-/**
-    Hashing method for calculating
-    the HMAC authentication.
-*/
+/// Hashing method for calculating
+/// the HMAC authentication.
 extension HMAC {
     public enum Method {
         case sha1
@@ -26,9 +24,7 @@ extension HMAC {
 }
 
 extension HMAC.Method {
-    /**
-        The internal EVP pointer.
-    */
+    /// The internal EVP pointer.
     var evp: UnsafePointer<EVP_MD> {
         switch self {
         case .sha1:
