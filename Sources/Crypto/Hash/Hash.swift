@@ -1,18 +1,14 @@
-import Essentials
-import Core
 import CLibreSSL
 
 public final class Hash {
     public let method: Method
     public let stream: ByteStream
 
-    /**
-        Creates a hasher from a
-        stream of bytes.
-     
-        The most basic byte stream is
-        just an array of bytes called BasicByteStream.
-    */
+    /// Creates a hasher from a
+    /// stream of bytes.
+    ///
+    /// The most basic byte stream is
+    /// just an array of bytes called BasicByteStream.
     public init(_ method: Method, _ stream: ByteStream) {
         self.method = method
         self.stream = stream
@@ -24,10 +20,8 @@ public final class Hash {
         case finalize
     }
 
-    /**
-        Creates the message digest
-        as an array of bytes.
-    */
+    /// Creates the message digest
+    /// as an array of bytes.
     public func hash() throws -> Bytes {
         switch method {
         case .sha1:
@@ -126,39 +120,30 @@ public final class Hash {
 }
 
 extension Hash {
-
-    /**
-        Create the hasher from an array
-        of bytes. This will internally
-        create a BasicByteStream.
-    */
+    /// Create the hasher from an array
+    /// of bytes. This will internally
+    /// create a BasicByteStream.
     public convenience init(_ method: Method, _ bytes: Bytes) {
         let inputStream = BasicByteStream(bytes)
         self.init(method, inputStream)
     }
 
-    /**
-        Create the hasher from something
-        representable as bytes. This will internally
-        create a BasicByteStream.
-    */
+    /// Create the hasher from something
+    /// representable as bytes. This will internally
+    /// create a BasicByteStream.
     public convenience init<B: BytesRepresentable>(_ method: Method, _ bytes: B) throws {
         self.init(method, try bytes.makeBytes())
     }
 
-    /**
-        Hash an array of bytes without
-        initializing a hasher.
-    */
+    /// Hash an array of bytes without
+    /// initializing a hasher.
     public static func make(_ method: Method, _ bytes: Bytes) throws -> Bytes {
         let hasher = Hash(method, bytes)
         return try hasher.hash()
     }
 
-    /**
-        Hash an array of something representable
-        as bytes without initializing a hasher.
-    */
+    /// Hash an array of something representable
+    /// as bytes without initializing a hasher.
     public static func make<B: BytesRepresentable>(_ method: Method, _ bytes: B) throws -> Bytes {
         return try make(method, try bytes.makeBytes())
     }

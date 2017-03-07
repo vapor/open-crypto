@@ -1,7 +1,5 @@
-/**
-    Hashing method for calculating
-    the HMAC authentication.
-*/
+/// Hashing method for calculating
+/// the HMAC authentication.
 extension Hash {
     public enum Method {
         case sha1

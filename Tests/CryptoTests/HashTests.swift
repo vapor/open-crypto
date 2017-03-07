@@ -1,6 +1,6 @@
 import XCTest
-import Core
-@testable import Hash
+import Crypto
+import CLibreSSL
 
 class HashTests: XCTestCase {
     static var allTests = [

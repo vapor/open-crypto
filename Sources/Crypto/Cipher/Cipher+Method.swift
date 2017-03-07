@@ -34,7 +34,7 @@ extension Cipher {
             case ede3(EDE3Mode)
             public enum EDE3Mode {
                 case none
-                case cfb1
+                // case cfb1 // unstable https://github.com/01org/luv-yocto/blob/master/meta/recipes-connectivity/openssl/openssl/fix-cipher-des-ede3-cfb1.patch
                 case cfb8
                 case cfb64
                 case ofb
@@ -82,13 +82,13 @@ extension Cipher {
         public enum AES128Mode {
             case ecb
             case cbc
-            case cbcHMACSHA1
+            // case cbcHMACSHA1 // crashes
             case cfb1
             case cfb8
             case cfb128
             case ofb
             case ctr
-            case gcm
+            // case gcm // https://github.com/vapor/crypto/issues/16
             case xts
         }
 
@@ -101,20 +101,20 @@ extension Cipher {
             case cfb128
             case ofb
             case ctr
-            case gcm
+            // case gcm // https://github.com/vapor/crypto/issues/16
         }
 
         case aes256(AES256Mode)
         public enum AES256Mode {
             case ecb
             case cbc
-            case cbcHMACSHA1
+            // case cbcHMACSHA1 // crashes
             case cfb1
             case cfb8
             case cfb128
             case ofb
             case ctr
-            case gcm
+            // case gcm // https://github.com/vapor/crypto/issues/16
             case xts
         }
 
@@ -158,7 +158,7 @@ extension Cipher {
 }
 
 extension Cipher.Method {
-    var evp: UnsafePointer<EVP_CIPHER> {
+    public var evp: UnsafePointer<EVP_CIPHER> {
         switch self {
         case .blowfish(let mode):
             switch mode {
@@ -205,8 +205,8 @@ extension Cipher.Method {
                 switch submode {
                 case .none:
                     return EVP_des_ede3()
-                case .cfb1:
-                    return EVP_des_ede3_cfb1()
+                //case .cfb1:
+                //    return EVP_des_ede3_cfb1()
                 case .cfb8:
                     return EVP_des_ede3_cfb8()
                 case .cfb64:
@@ -273,8 +273,8 @@ extension Cipher.Method {
                 return EVP_aes_128_ecb()
             case .cbc:
                 return EVP_aes_128_cbc()
-            case .cbcHMACSHA1:
-                return EVP_aes_128_cbc_hmac_sha1()
+            //case .cbcHMACSHA1:
+            //    return EVP_aes_128_cbc_hmac_sha1()
             case .cfb1:
                 return EVP_aes_128_cfb1()
             case .cfb8:
@@ -285,8 +285,8 @@ extension Cipher.Method {
                 return EVP_aes_128_ofb()
             case .ctr:
                 return EVP_aes_128_ctr()
-            case .gcm:
-                return EVP_aes_128_gcm()
+            //case .gcm:
+            //    return EVP_aes_128_gcm()
             case .xts:
                 return EVP_aes_128_xts()
             }
@@ -306,8 +306,8 @@ extension Cipher.Method {
                 return EVP_aes_192_ofb()
             case .ctr:
                 return EVP_aes_192_ctr()
-            case .gcm:
-                return EVP_aes_192_gcm()
+            //case .gcm:
+            //    return EVP_aes_192_gcm()
             }
         case .aes256(let mode):
             switch mode {
@@ -315,8 +315,8 @@ extension Cipher.Method {
                 return EVP_aes_256_ecb()
             case .cbc:
                 return EVP_aes_256_cbc()
-            case .cbcHMACSHA1:
-                return EVP_aes_256_cbc_hmac_sha1()
+            //case .cbcHMACSHA1:
+            //    return EVP_aes_256_cbc_hmac_sha1()
             case .cfb1:
                 return EVP_aes_256_cfb1()
             case .cfb8:
@@ -327,8 +327,8 @@ extension Cipher.Method {
                 return EVP_aes_256_ofb()
             case .ctr:
                 return EVP_aes_256_ctr()
-            case .gcm:
-                return EVP_aes_256_gcm()
+            //case .gcm:
+            //    return EVP_aes_256_gcm()
             case .xts:
                 return EVP_aes_256_xts()
             }
