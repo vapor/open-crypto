@@ -1,5 +1,4 @@
 import Foundation
-import Core
 
 public protocol SequenceInitializable: Sequence {
     init(_ sequence: [Iterator.Element])

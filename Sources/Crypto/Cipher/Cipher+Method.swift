@@ -158,7 +158,7 @@ extension Cipher {
 }
 
 extension Cipher.Method {
-    var evp: UnsafePointer<EVP_CIPHER> {
+    public var evp: UnsafePointer<EVP_CIPHER> {
         switch self {
         case .blowfish(let mode):
             switch mode {

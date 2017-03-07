@@ -1,14 +1,11 @@
 import XCTest
-import Core
-@testable import Cipher
-import Random
-import Hash
+import Crypto
 import CLibreSSL
 
-fileprivate let random = URandom()
+fileprivate let random = OSRandom()
 
 class CipherTests: XCTestCase {
-    private let plainText = try! random.bytes(count: 65_536)
+    private let plainText = random.bytes(count: 65_536)
 
     static var allTests = [
         ("testBlowfish", testBlowfish),
@@ -50,13 +47,8 @@ class CipherTests: XCTestCase {
         let keyLen = Int(EVP_CIPHER_key_length(method.evp))
         let ivLen = Int(EVP_CIPHER_iv_length(method.evp))
 
-        guard let key = try? random.bytes(count: keyLen) else {
-            fatalError("Failed to generate \(keyLen) bytes for a random key")
-        }
-        
-        guard let iv = try? random.bytes(count: ivLen) else {
-            fatalError("Failed to generate \(keyLen) bytes for a random IV")
-        }
+        let key = random.bytes(count: keyLen) 
+        let iv = random.bytes(count: ivLen)
 
         let cipher: Cipher
 

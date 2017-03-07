@@ -1,5 +1,3 @@
-import Core
-import Essentials
 import CLibreSSL
 
 /// Used to authenticate messages using the `Hash` algorithm

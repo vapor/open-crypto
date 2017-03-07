@@ -1,6 +1,6 @@
 import XCTest
-import Core
-@testable import HMAC
+import Crypto
+import CLibreSSL
 
 class HMACTests: XCTestCase {
     static var allTests = [

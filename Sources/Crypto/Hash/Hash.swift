@@ -1,5 +1,3 @@
-import Essentials
-import Core
 import CLibreSSL
 
 public final class Hash {
