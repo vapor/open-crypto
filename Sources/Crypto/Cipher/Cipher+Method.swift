@@ -1,4 +1,4 @@
-import CLibreSSL
+import CTLS
 
 extension Cipher {
     public enum Method {
@@ -67,8 +67,6 @@ extension Cipher {
             case cbc
             case cfb64
         }
-
-        case chacha20
 
         case cast5(CAST5Mode)
         public enum CAST5Mode {
@@ -146,13 +144,6 @@ extension Cipher {
             case cfb8
             case cfb128
             case ofb
-        }
-
-        case gost2814789(GOST2814789Mode)
-        public enum GOST2814789Mode {
-            case ecb
-            case cfb64
-            case cnt
         }
     }
 }
@@ -254,8 +245,6 @@ extension Cipher.Method {
             case .cfb64:
                 return EVP_idea_cfb64()
             }
-        case .chacha20:
-            return EVP_chacha20()
         case .cast5(let mode):
             switch mode {
             case .ecb:
@@ -376,15 +365,6 @@ extension Cipher.Method {
                 return EVP_camellia_256_cfb128()
             case .ofb:
                 return EVP_camellia_256_ofb()
-            }
-        case .gost2814789(let mode):
-            switch mode {
-            case .ecb:
-                return EVP_gost2814789_ecb()
-            case .cfb64:
-                return EVP_gost2814789_cfb64()
-            case .cnt:
-                return EVP_gost2814789_cnt()
             }
         }
     }

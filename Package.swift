@@ -7,6 +7,6 @@ let package = Package(
         .Package(url: "https://github.com/vapor/random.git", majorVersion: 0),
 
         // LibreSSL wrapped in a Swift package.
-        .Package(url: "https://github.com/vapor/clibressl.git", majorVersion: 1)
+        .Package(url: "https://github.com/tanner0101/ctls.git", majorVersion: 0)
     ]
 )

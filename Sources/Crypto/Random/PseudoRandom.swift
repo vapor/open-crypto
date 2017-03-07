@@ -1,4 +1,4 @@
-import CLibreSSL
+import CTLS
 
 /// Generates non-secure pseudorandom data using LibreSSL
 public final class PseudoRandom: RandomProtocol, EmptyInitializable {

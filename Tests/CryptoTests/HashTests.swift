@@ -1,6 +1,6 @@
 import XCTest
 import Crypto
-import CLibreSSL
+import CTLS
 
 class HashTests: XCTestCase {
     static var allTests = [
