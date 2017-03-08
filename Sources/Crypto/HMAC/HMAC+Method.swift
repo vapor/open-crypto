@@ -1,4 +1,4 @@
-import CLibreSSL
+import CTLS
 
 /// Hashing method for calculating
 /// the HMAC authentication.
@@ -15,9 +15,6 @@ extension HMAC {
         case ecdsa
         case ripemd160
         case whirlpool
-        case streebog256
-        case streebog512
-        case gostr341194
     }
 }
 
@@ -47,12 +44,6 @@ extension HMAC.Method {
             return EVP_ripemd160()
         case .whirlpool:
             return EVP_whirlpool()
-        case .streebog256:
-            return EVP_streebog256()
-        case .streebog512:
-            return EVP_streebog512()
-        case .gostr341194:
-            return EVP_gostr341194()
         }
     }
 }

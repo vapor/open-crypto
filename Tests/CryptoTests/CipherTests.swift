@@ -1,6 +1,6 @@
 import XCTest
 import Crypto
-import CLibreSSL
+import CTLS
 
 fileprivate let random = OSRandom()
 
@@ -24,19 +24,17 @@ class CipherTests: XCTestCase {
     }
 
     func testCipherStability() {
-        var methods: [Cipher.Method] = [.chacha20]
+        var methods: [Cipher.Method] = []
         methods.append(contentsOf: [.cbc, .ecb, .ofb, .cfb64].map { .blowfish($0) })
         methods.append(contentsOf: [.cbc, .cfb1, .cfb128, .cfb8, .ctr, .ecb, .ofb, .xts].map { .aes128($0) })
         methods.append(contentsOf: [.cbc, .cfb1, .cfb128, .cfb8, .ctr, .ecb, .ofb].map { .aes192($0) })
         methods.append(contentsOf: [.cbc, .cfb1, .cfb128, .cfb8, .ctr, .ecb, .ofb, .xts].map { .aes256($0) })
         methods.append(contentsOf: [.ecb, .ofb, .cbc, .cfb64, .fortyCBC, .sixtyFourCBC].map { .rc2($0) })
         methods.append(contentsOf: [.none, .forty, .hmacMD5].map { .rc4($0) })
-        methods.append(contentsOf: [.ecb, .ofb, .cbc, .cfb64].map { .idea($0) })
         methods.append(contentsOf: [.ecb, .ofb, .cbc, .cfb64].map { .cast5($0) })
         methods.append(contentsOf: [.ecb, .cbc, .cfb1, .cfb8, .cfb128].map { .camellia128($0) })
         methods.append(contentsOf: [.ecb, .cbc, .cfb1, .cfb8, .cfb128].map { .camellia192($0) })
         methods.append(contentsOf: [.ecb, .cbc, .cfb1, .cfb8, .cfb128].map { .camellia256($0) })
-        methods.append(contentsOf: [.ecb, .cfb64, .cnt].map { .gost2814789($0) })
         methods.append(contentsOf: [.cfb1, .cfb8, .cfb64, .ofb, .ecb, .cbc].map { .des(.none($0)) })
         methods.append(contentsOf: [.none, .cfb64, .ofb, .ecb, .cbc].map { .des(.ede($0)) })
         methods.append(contentsOf: [.none, .cfb8, .cfb64, .ofb, .ecb, .cbc].map { .des(.ede3($0)) })

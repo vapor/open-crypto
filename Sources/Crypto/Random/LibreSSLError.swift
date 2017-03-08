@@ -1,4 +1,4 @@
-import CLibreSSL
+import CTLS
 
 /// Represents an error returned by a LibreSSL function
 public class LibreSSLError: Swift.Error, CustomStringConvertible {

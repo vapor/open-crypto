@@ -9,7 +9,7 @@
 
 # Crypto
 
-![Swift](http://img.shields.io/badge/swift-3.0-brightgreen.svg)
+![Swift](http://img.shields.io/badge/swift-3.1-brightgreen.svg)
 [![Build Status](https://travis-ci.org/vapor/crypto.svg?branch=master)](https://travis-ci.org/vapor/crypto)
 [![CircleCI](https://circleci.com/gh/vapor/crypto.svg?style=shield)](https://circleci.com/gh/vapor/crypto)
 [![Code Coverage](https://codecov.io/gh/vapor/crypto/branch/master/graph/badge.svg)](https://codecov.io/gh/vapor/crypto)
