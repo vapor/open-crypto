@@ -31,7 +31,6 @@ class CipherTests: XCTestCase {
         methods.append(contentsOf: [.cbc, .cfb1, .cfb128, .cfb8, .ctr, .ecb, .ofb, .xts].map { .aes256($0) })
         methods.append(contentsOf: [.ecb, .ofb, .cbc, .cfb64, .fortyCBC, .sixtyFourCBC].map { .rc2($0) })
         methods.append(contentsOf: [.none, .forty, .hmacMD5].map { .rc4($0) })
-        methods.append(contentsOf: [.ecb, .ofb, .cbc, .cfb64].map { .idea($0) })
         methods.append(contentsOf: [.ecb, .ofb, .cbc, .cfb64].map { .cast5($0) })
         methods.append(contentsOf: [.ecb, .cbc, .cfb1, .cfb8, .cfb128].map { .camellia128($0) })
         methods.append(contentsOf: [.ecb, .cbc, .cfb1, .cfb8, .cfb128].map { .camellia192($0) })

@@ -60,14 +60,6 @@ extension Cipher {
             case hmacMD5
         }
 
-        case idea(IDEAMode)
-        public enum IDEAMode {
-            case ecb
-            case ofb
-            case cbc
-            case cfb64
-        }
-
         case cast5(CAST5Mode)
         public enum CAST5Mode {
             case ecb
@@ -233,17 +225,6 @@ extension Cipher.Method {
                 return EVP_rc4_40()
             case .hmacMD5:
                 return EVP_rc4_hmac_md5()
-            }
-        case .idea(let mode):
-            switch mode {
-            case .ecb:
-                return EVP_idea_ecb()
-            case .ofb:
-                return EVP_idea_ofb()
-            case .cbc:
-                return EVP_idea_cbc()
-            case .cfb64:
-                return EVP_idea_cfb64()
             }
         case .cast5(let mode):
             switch mode {
