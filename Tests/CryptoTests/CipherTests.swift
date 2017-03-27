@@ -20,7 +20,7 @@ class CipherTests: XCTestCase {
         XCTAssertEqual(encrypted.hexString, "7168725af0b510be")
 
         let decrypted = try cipher.decrypt(encrypted)
-        XCTAssertEqual(decrypted.string, secret)
+        XCTAssertEqual(decrypted.makeString(), secret)
     }
 
     func testCipherStability() {
