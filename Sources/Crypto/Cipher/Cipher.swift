@@ -121,6 +121,8 @@ public final class Cipher {
         defer {
             buffer.deinitialize()
             buffer.deallocate(capacity: bufferLength)
+
+            EVP_CIPHER_CTX_cleanup(&ctx)
         }
 
         var endLength: Int32 = 0
