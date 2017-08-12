@@ -1,3 +1,4 @@
+import Bits
 import Core
 
 /// Represents a stream of bytes that

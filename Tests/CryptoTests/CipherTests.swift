@@ -1,6 +1,8 @@
-import XCTest
+import Bits
 import Crypto
 import CTLS
+import Random
+import XCTest
 
 fileprivate let random = OSRandom()
 

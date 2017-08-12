@@ -1,4 +1,7 @@
+import Bits
+import Core
 import CTLS
+import Random
 
 /// Generates non-secure pseudorandom data using LibreSSL
 public final class PseudoRandom: RandomProtocol, EmptyInitializable {

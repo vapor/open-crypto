@@ -1,6 +1,7 @@
-import XCTest
-import Crypto
+import Bits
 import CTLS
+import Crypto
+import XCTest
 
 class HashTests: XCTestCase {
     static var allTests = [

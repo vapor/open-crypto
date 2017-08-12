@@ -1,6 +1,7 @@
-import XCTest
+import Bits
 import Crypto
 import CTLS
+import XCTest
 
 class HMACTests: XCTestCase {
     static var allTests = [

@@ -1,3 +1,7 @@
+import Bits
+import Core
+import Random
+
 extension Hash {
     public static func random(_ m: Method) throws -> Bytes {
         return try random(m, Random.self)

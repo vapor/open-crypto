@@ -1,3 +1,4 @@
+import Bits
 import CTLS
 
 /// Used to authenticate messages using the `Hash` algorithm

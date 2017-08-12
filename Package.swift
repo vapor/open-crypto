@@ -1,13 +1,23 @@
-// swift-tools-version:3.0
+// swift-tools-version:4.0
 import PackageDescription
 
 let package = Package(
     name: "Crypto",
+    products: [
+        .library(name: "Crypto", targets: ["Crypto"]),
+    ],
     dependencies: [
+        // Core types and helpers.
+        .package(url: "https://github.com/vapor/core.git", .branch("beta")),
+
         // Module for generating random bytes and numbers.
-        .Package(url: "https://github.com/vapor/random.git", majorVersion: 1),
+        .package(url: "https://github.com/vapor/random.git", .branch("beta")),
 
         // LibreSSL / OpenSSL module map for Swift.
-        .Package(url: "https://github.com/vapor/ctls.git", majorVersion: 1),
+        .package(url: "https://github.com/vapor/ctls.git", .upToNextMajor(from: "1.1.0")),
+    ],
+    targets: [
+        .target(name: "Crypto", dependencies: ["Core", "Random"]),
+        .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
     ]
 )

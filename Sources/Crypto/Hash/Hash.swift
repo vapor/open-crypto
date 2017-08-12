@@ -1,3 +1,4 @@
+import Bits
 import CTLS
 
 public final class Hash {
