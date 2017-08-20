@@ -7,7 +7,7 @@ public enum PBKDF2Error: Error {
     case keySizeTooBig(Int)
 }
 
-public final class PBKDF2_HMAC<Variant: Hash> {
+public final class PBKDF2<Variant: Hash> {
     /// Derives a key from a given set of parameters
     ///
     /// - parameter password: The password to hash
