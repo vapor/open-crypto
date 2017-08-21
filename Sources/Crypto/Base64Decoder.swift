@@ -97,17 +97,32 @@ public final class Base64Encoder : Stream {
         return (inputPosition == buffer.count, outputPosition, inputPosition)
     }
     
+    public static func encode(bytes: [UInt8]) throws -> [UInt8] {
+        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bytes.count)
+        
+        pointer.assign(from: bytes, count: bytes.count)
+        
+        let buffer = try encode(buffer: ByteBuffer(start: pointer, count: bytes.count))
+        
+        pointer.deinitialize(count: bytes.count)
+        pointer.deallocate(capacity: bytes.count)
+        
+        defer { buffer.dealloc() }
+        
+        return Array(buffer)
+    }
+    
     public static func encode(string: String) throws -> String {
-        let string = [UInt8](string.utf8)
+        let bytes = [UInt8](string.utf8)
         
-        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: string.count)
+        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bytes.count)
         
-        pointer.assign(from: string, count: string.count)
+        pointer.assign(from: bytes, count: bytes.count)
         
-        let buffer = try encode(buffer: ByteBuffer(start: pointer, count: string.count))
+        let buffer = try encode(buffer: ByteBuffer(start: pointer, count: bytes.count))
         
-        pointer.deinitialize(count: string.count)
-        pointer.deallocate(capacity: string.count)
+        pointer.deinitialize(count: bytes.count)
+        pointer.deallocate(capacity: bytes.count)
         
         defer { buffer.dealloc() }
         
