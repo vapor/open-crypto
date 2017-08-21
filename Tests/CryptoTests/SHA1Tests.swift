@@ -42,19 +42,19 @@ class SHA1Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = SHA1.hash([UInt8](test.key.utf8)).hexString.lowercased()
+            let result = SHA1.hash(Data(test.key.utf8)).hexString.lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
     
     func testPerformance() {
         measure {
-            _ = SHA1.hash([UInt8]("kaas".utf8))
+            _ = SHA1.hash(Data("kaas".utf8))
         }
     }
     
     func testNotCrashing() {
-        let data = [UInt8](repeating: 0x02, count: 263)
+        let data = Data(repeating: 0x02, count: 263)
         
         _ = SHA1.hash(data)
     }
@@ -75,8 +75,8 @@ class SHA1Tests: XCTestCase {
 
         for test in tests {
             let result = HMAC<SHA1>.authenticate(
-                [UInt8](test.message.utf8),
-                withKey: [UInt8](test.key.utf8)
+                Data(test.message.utf8),
+                withKey: Data(test.key.utf8)
                 ).hexString.lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }

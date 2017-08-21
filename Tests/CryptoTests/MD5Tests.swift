@@ -21,13 +21,13 @@ class MD5Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = MD5.hash([UInt8](test.0.utf8)).hexString.lowercased()
+            let result = MD5.hash(Data(test.0.utf8)).hexString.lowercased()
             XCTAssertEqual(result, test.1.lowercased())
         }
     }
 
     func testPerformance() {
-        let data = [UInt8](repeating: 0x63, count: 10_000_000)
+        let data = Data(repeating: 0x63, count: 10_000_000)
 
         // ~0.121 release
         measure {
@@ -51,8 +51,8 @@ class MD5Tests: XCTestCase {
 
         for test in tests {
             let result = HMAC<MD5>.authenticate(
-                [UInt8](test.message.utf8),
-                withKey: [UInt8](test.key.utf8)
+                Data(test.message.utf8),
+                withKey: Data(test.key.utf8)
                 ).hexString.lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }

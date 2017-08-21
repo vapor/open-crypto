@@ -1,3 +1,5 @@
+import Foundation
+
 public class HMAC<Variant: Hash> {
     /// Authenticates a message using the provided `Hash` algorithm
     ///
@@ -5,7 +7,7 @@ public class HMAC<Variant: Hash> {
     /// - parameter key: The key to authenticate with
     ///
     /// - returns: The authenticated message
-    public static func authenticate(_ message: [UInt8], withKey key: [UInt8]) -> [UInt8] {
+    public static func authenticate(_ message: Data, withKey key: Data) -> Data {
         var key = key
         
         // If it's too long, hash it first
@@ -15,12 +17,12 @@ public class HMAC<Variant: Hash> {
         
         // Add padding
         if key.count < Variant.chunkSize {
-            key = key + [UInt8](repeating: 0, count: Variant.chunkSize - key.count)
+            key = key + Data(repeating: 0, count: Variant.chunkSize - key.count)
         }
         
         // XOR the information
-        var outerPadding = [UInt8](repeating: 0x5c, count: Variant.chunkSize)
-        var innerPadding = [UInt8](repeating: 0x36, count: Variant.chunkSize)
+        var outerPadding = Data(repeating: 0x5c, count: Variant.chunkSize)
+        var innerPadding = Data(repeating: 0x36, count: Variant.chunkSize)
         
         for i in 0..<key.count {
             outerPadding[i] = key[i] ^ outerPadding[i]
@@ -31,8 +33,8 @@ public class HMAC<Variant: Hash> {
         }
         
         // Hash the information
-        let innerPaddingHash: [UInt8] = Variant.hash(innerPadding + message)
-        let outerPaddingHash: [UInt8] = Variant.hash(outerPadding + innerPaddingHash)
+        let innerPaddingHash: Data = Variant.hash(innerPadding + message)
+        let outerPaddingHash: Data = Variant.hash(outerPadding + innerPaddingHash)
         
         return outerPaddingHash
     }

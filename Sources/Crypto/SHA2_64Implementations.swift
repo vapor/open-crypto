@@ -1,3 +1,5 @@
+import Foundation
+
 public final class SHA512 : SHA2_64 {
     public static let littleEndian = false
     public static let digestSize = 64
@@ -11,22 +13,25 @@ public final class SHA512 : SHA2_64 {
         self.remainder.deallocate(capacity: 127)
     }
     
-    public var hash: [UInt8] {
-        var buffer = [UInt8]()
+    public var hash: Data {
+        var buffer = Data()
         buffer.reserveCapacity(32)
         
-        func convert(_ int: UInt64) -> [UInt8] {
+        var data = Data(repeating: 0, count: 8)
+        
+        func convert(_ int: UInt64) -> Data {
             let int = int.bigEndian
-            return [
-                UInt8(int & 0xff),
-                UInt8((int >> 8) & 0xff),
-                UInt8((int >> 16) & 0xff),
-                UInt8((int >> 24) & 0xff),
-                UInt8((int >> 32) & 0xff),
-                UInt8((int >> 40) & 0xff),
-                UInt8((int >> 48) & 0xff),
-                UInt8((int >> 56) & 0xff),
-            ]
+            
+            data[0] = UInt8(int & 0xff)
+            data[1] = UInt8((int >> 8) & 0xff)
+            data[2] = UInt8((int >> 16) & 0xff)
+            data[3] = UInt8((int >> 24) & 0xff)
+            data[4] = UInt8((int >> 32) & 0xff)
+            data[5] = UInt8((int >> 40) & 0xff)
+            data[6] = UInt8((int >> 48) & 0xff)
+            data[7] = UInt8((int >> 56) & 0xff)
+            
+            return data
         }
         
         buffer.append(contentsOf: convert(h0))
@@ -89,22 +94,25 @@ public final class SHA384: SHA2_64 {
         self.remainder.deallocate(capacity: 127)
     }
     
-    public var hash: [UInt8] {
-        var buffer = [UInt8]()
+    public var hash: Data {
+        var buffer = Data()
         buffer.reserveCapacity(32)
         
-        func convert(_ int: UInt64) -> [UInt8] {
+        var data = Data(repeating: 0, count: 8)
+        
+        func convert(_ int: UInt64) -> Data {
             let int = int.bigEndian
-            return [
-                UInt8(int & 0xff),
-                UInt8((int >> 8) & 0xff),
-                UInt8((int >> 16) & 0xff),
-                UInt8((int >> 24) & 0xff),
-                UInt8((int >> 32) & 0xff),
-                UInt8((int >> 40) & 0xff),
-                UInt8((int >> 48) & 0xff),
-                UInt8((int >> 56) & 0xff),
-            ]
+            
+            data[0] = UInt8(int & 0xff)
+            data[1] = UInt8((int >> 8) & 0xff)
+            data[2] = UInt8((int >> 16) & 0xff)
+            data[3] = UInt8((int >> 24) & 0xff)
+            data[4] = UInt8((int >> 32) & 0xff)
+            data[5] = UInt8((int >> 40) & 0xff)
+            data[6] = UInt8((int >> 48) & 0xff)
+            data[7] = UInt8((int >> 56) & 0xff)
+            
+            return data
         }
         
         buffer.append(contentsOf: convert(h0))

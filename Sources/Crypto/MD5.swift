@@ -73,18 +73,18 @@ public final class MD5 : Hash {
         remainder.initialize(to: 0, count: 64)
     }
     
-    public var hash: [UInt8] {
-        var buffer = [UInt8]()
+    public var hash: Data {
+        var buffer = Data()
         buffer.reserveCapacity(16)
         
-        func convert(_ int: UInt32) -> [UInt8] {
+        func convert(_ int: UInt32) -> Data {
             let int = int.littleEndian
-            return [
+            return Data([
                 UInt8(int & 0xff),
                 UInt8((int >> 8) & 0xff),
                 UInt8((int >> 16) & 0xff),
                 UInt8((int >> 24) & 0xff)
-            ]
+            ])
         }
         
         buffer.append(contentsOf: convert(a0))

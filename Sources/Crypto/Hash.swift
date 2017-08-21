@@ -3,21 +3,29 @@ import Foundation
 public protocol Hash: class {
     /// The amount of processed bytes per chunk
     static var chunkSize: Int { get }
+    
+    /// The amount of bytes returned in the hash
     static var digestSize: Int { get }
+    
+    /// If `true`, treat the bitlength in the padding at littleEndian, bigEndian otherwise
     static var littleEndian: Bool { get }
     
     /// The current length of hashes bytes in bits
     var totalLength: UInt64 { get set }
     
     /// The resulting hash
-    var hash: [UInt8] { get }
+    var hash: Data { get }
     
+    /// The amount of bytes currently inside the `remainder` pointer
     var containedRemainder: Int { get set }
+    
+    /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full
     var remainder: UnsafeMutablePointer<UInt8> { get }
     
     /// Updates the hash using exactly one `chunkSize` of bytes referenced by a pointer
     func update(pointer: UnsafePointer<UInt8>)
     
+    /// Resets the hash's context to it's original state (reusing the context class)
     func reset()
     
     init()
@@ -28,14 +36,14 @@ extension Hash {
         return Self.chunkSize &- 8
     }
     
-    public static func hash(_ buffer: UnsafeBufferPointer<UInt8>) -> [UInt8] {
+    public static func hash(_ buffer: UnsafeBufferPointer<UInt8>) -> Data {
         let hash = Self()
         hash.finalize(buffer)
         return hash.hash
     }
     
-    public static func hash(_ array: [UInt8]) -> [UInt8] {
-        return array.withUnsafeBufferPointer { buffer in
+    public static func hash<S: Sequence>(_ sequence: S) -> Data where S.Element == UInt8 {
+        return Array(sequence).withUnsafeBufferPointer { buffer in
             return hash(buffer)
         }
     }
@@ -67,7 +75,7 @@ extension Hash {
             length.reverse()
         }
         
-        let lastBlocks = Array(buffer) + [0x80] + [UInt8](repeating: 0, count: zeroes) + length
+        let lastBlocks = Array(buffer) + [0x80] + Data(repeating: 0, count: zeroes) + length
         var offset = 0
         
         lastBlocks.withUnsafeBufferPointer { buffer in
@@ -80,8 +88,8 @@ extension Hash {
         }
     }
     
-    public func finalize(array: inout [UInt8]) {
-        return array.withUnsafeBufferPointer { buffer in
+    public func finalize<S: Sequence>(_ sequence: S) where S.Element == UInt8 {
+        return Array(sequence).withUnsafeBufferPointer { buffer in
             self.finalize(buffer)
         }
     }
@@ -129,8 +137,8 @@ extension Hash {
         containedRemainder = bufferSize
     }
     
-    public func update(array: inout [UInt8]) {
-        array.withUnsafeBufferPointer { buffer in
+    public func update<S: Sequence>(sequence: inout S) where S.Element == UInt8 {
+        Array(sequence).withUnsafeBufferPointer { buffer in
             update(buffer)
         }
     }

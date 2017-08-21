@@ -1,3 +1,5 @@
+import Foundation
+
 public final class SHA1 : Hash {
     public static let digestSize = 20
     public static let chunkSize = 64
@@ -37,18 +39,18 @@ public final class SHA1 : Hash {
         self.remainder.deallocate(capacity: 63)
     }
     
-    public var hash: [UInt8] {
-        var buffer = [UInt8]()
+    public var hash: Data {
+        var buffer = Data()
         buffer.reserveCapacity(20)
         
-        func convert(_ int: UInt32) -> [UInt8] {
+        func convert(_ int: UInt32) -> Data {
             let int = int.bigEndian
-            return [
+            return Data([
                 UInt8(int & 0xff),
                 UInt8((int >> 8) & 0xff),
                 UInt8((int >> 16) & 0xff),
                 UInt8((int >> 24) & 0xff)
-            ]
+            ])
         }
         
         buffer.append(contentsOf: convert(h0))

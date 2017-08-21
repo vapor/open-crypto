@@ -30,7 +30,7 @@ class SHA2Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = SHA224.hash([UInt8](test.key.utf8)).hexString.lowercased()
+            let result = SHA224.hash(Data(test.key.utf8)).hexString.lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
@@ -52,7 +52,7 @@ class SHA2Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = SHA256.hash([UInt8](test.key.utf8)).hexString.lowercased()
+            let result = SHA256.hash(Data(test.key.utf8)).hexString.lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
@@ -74,7 +74,7 @@ class SHA2Tests: XCTestCase {
         ]
 
         for test in tests {
-            let result = SHA384.hash([UInt8](test.key.utf8)).hexString.lowercased()
+            let result = SHA384.hash(Data(test.key.utf8)).hexString.lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
@@ -96,32 +96,32 @@ class SHA2Tests: XCTestCase {
         ]
 
         for test in tests {
-            let result = SHA512.hash([UInt8](test.key.utf8)).hexString.lowercased()
+            let result = SHA512.hash(Data(test.key.utf8)).hexString.lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
 
     func testSHA224Performance() throws {
         measure {
-            _ = SHA224.hash([UInt8]("kaas".utf8))
+            _ = SHA224.hash(Data("kaas".utf8))
         }
     }
     
     func testSHA256Performance() throws {
         measure {
-            _ = SHA256.hash([UInt8]("kaas".utf8))
+            _ = SHA256.hash(Data("kaas".utf8))
         }
     }
     
     func testSHA384Performance() throws {
         measure {
-            _ = SHA384.hash([UInt8]("kaas".utf8))
+            _ = SHA384.hash(Data("kaas".utf8))
         }
     }
 
     func testSHA512Performance() throws {
         measure {
-            _ = SHA512.hash([UInt8]("kaas".utf8))
+            _ = SHA512.hash(Data("kaas".utf8))
         }
     }
 }

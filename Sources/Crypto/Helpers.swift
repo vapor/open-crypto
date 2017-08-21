@@ -3,7 +3,7 @@ import Foundation
 extension Swift.Collection where Iterator.Element == UInt8, IndexDistance == Int {
     /// The 12 bytes represented as 24-character hex-string
     public var hexString: String {
-        var bytes = [UInt8]()
+        var bytes = Data()
         bytes.reserveCapacity(self.count * 2)
         
         for byte in self {

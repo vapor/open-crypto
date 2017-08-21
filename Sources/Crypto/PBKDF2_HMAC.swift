@@ -2,8 +2,8 @@ import Foundation
 
 public enum PBKDF2Error: Error {
     case cannotIterateZeroTimes
-    case cannotDeriveFromPassword([UInt8])
-    case cannotDeriveFromSalt([UInt8])
+    case cannotDeriveFromPassword(Data)
+    case cannotDeriveFromSalt(Data)
     case keySizeTooBig(Int)
 }
 
@@ -20,13 +20,11 @@ public final class PBKDF2<Variant: Hash> {
     /// - throws: Too little iterations
     ///
     /// - returns: The derived key bytes
-    public static func derive(fromPassword password: [UInt8], saltedWith salt: [UInt8], iterating iterations: Int = 10_000, derivedKeyLength keySize: Int? = nil) throws -> [UInt8] {
+    public static func derive(fromPassword password: Data, saltedWith salt: Data, iterating iterations: Int = 10_000, derivedKeyLength keySize: Int? = nil) throws -> Data {
         let hash = Variant()
-        var helperBuffer = [UInt8]()
-        
         // Used to create a block number to append to the salt before deriving
-        func integerBytes(blockNum block: UInt32) -> [UInt8] {
-            var bytes = [UInt8](repeating: 0, count: 4)
+        func integerBytes(blockNum block: UInt32) -> Data {
+            var bytes = Data(repeating: 0, count: 4)
             bytes[0] = UInt8((block >> 24) & 0xFF)
             bytes[1] = UInt8((block >> 16) & 0xFF)
             bytes[2] = UInt8((block >> 8) & 0xFF)
@@ -34,18 +32,16 @@ public final class PBKDF2<Variant: Hash> {
             return bytes
         }
         
-        func hashBuffer() -> [UInt8] {
+        func hashBuffer(_ data: Data) -> Data {
             hash.reset()
-            hash.finalize(array: &helperBuffer)
+            hash.finalize(data)
             return hash.hash
         }
         
         // Authenticated using HMAC with precalculated keys (saves 50% performance)
-        func authenticate(innerPadding: [UInt8], outerPadding: [UInt8], message: [UInt8]) throws -> [UInt8] {
-            helperBuffer = innerPadding + message
-            let innerPaddingHash = hashBuffer()
-            helperBuffer = outerPadding + innerPaddingHash
-            let outerPaddingHash = hashBuffer()
+        func authenticate(innerPadding: Data, outerPadding: Data, message: Data) throws -> Data {
+            let innerPaddingHash = hashBuffer(innerPadding + message)
+            let outerPaddingHash = hashBuffer(outerPadding + innerPaddingHash)
             
             return outerPaddingHash
         }
@@ -74,18 +70,17 @@ public final class PBKDF2<Variant: Hash> {
         
         // If the key is too long, hash it first
         if password.count > Variant.chunkSize {
-            helperBuffer = password
-            password = hashBuffer()
+            password = hashBuffer(password)
         }
         
         // Add padding
         if password.count < Variant.chunkSize {
-            password = password + [UInt8](repeating: 0, count: Variant.chunkSize - password.count)
+            password = password + Data(repeating: 0, count: Variant.chunkSize - password.count)
         }
         
         // XOR the information
-        var outerPadding = [UInt8](repeating: 0x5c, count: Variant.chunkSize)
-        var innerPadding = [UInt8](repeating: 0x36, count: Variant.chunkSize)
+        var outerPadding = Data(repeating: 0x5c, count: Variant.chunkSize)
+        var innerPadding = Data(repeating: 0x36, count: Variant.chunkSize)
         
         for i in 0..<password.count {
             outerPadding[i] = password[i] ^ outerPadding[i]
@@ -97,7 +92,7 @@ public final class PBKDF2<Variant: Hash> {
         
         // This is where all the processing happens
         let blocks = UInt32((keySize + Variant.digestSize - 1) / Variant.digestSize)
-        var response = [UInt8]()
+        var response = Data()
         
         // Loop over all blocks
         for block in 1...blocks {
@@ -117,17 +112,17 @@ public final class PBKDF2<Variant: Hash> {
             response.append(contentsOf: ui)
         }
         
-        return Array(response[0..<keySize])
+        return Data(response[0..<keySize])
     }
     
-    public static func validate(_ password: [UInt8], saltedWith salt: [UInt8], against: [UInt8], iterating iterations: Int) throws -> Bool {
+    public static func validate(_ password: Data, saltedWith salt: Data, against: Data, iterating iterations: Int) throws -> Bool {
         let newHash = try derive(fromPassword: password, saltedWith: salt, iterating: iterations, derivedKeyLength: against.count)
         
         return newHash == against
     }
 }
 
-fileprivate func xor(_ lhs: inout [UInt8], _ rhs: [UInt8]) {
+fileprivate func xor(_ lhs: inout Data, _ rhs: Data) {
     assert(lhs.count == rhs.count)
     
     for i in 0..<lhs.count {
