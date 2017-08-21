@@ -23,7 +23,13 @@ extension UnsafeMutableBufferPointer where Element == UInt8 {
         self.baseAddress?.deallocate(capacity: self.count)
     }
     
-    public func string() -> String? {
-        return String(bytes: self, encoding: .utf8)
+    public func string(encoding: String.Encoding = .utf8) -> String? {
+        return String(bytes: self, encoding: encoding)
+    }
+}
+
+extension UnsafeBufferPointer where Element == UInt8 {
+    public func string(encoding: String.Encoding = .utf8) -> String? {
+        return String(bytes: self, encoding: encoding)
     }
 }
