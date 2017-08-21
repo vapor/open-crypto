@@ -57,7 +57,7 @@ public final class Base64Encoder : Stream {
             return true
         }
         
-        while inputPosition < buffer.count, outputPosition &+ 4 < capacity, finishable() {
+        while inputPosition < buffer.count, outputPosition &+ 3 < capacity, finishable() {
             defer {
                 inputPosition = inputPosition &+ 3
                 outputPosition = outputPosition &+ 4
@@ -97,8 +97,29 @@ public final class Base64Encoder : Stream {
         return (inputPosition == buffer.count, outputPosition, inputPosition)
     }
     
+    public static func encode(string: String) throws -> String {
+        let string = [UInt8](string.utf8)
+        
+        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: string.count)
+        
+        pointer.assign(from: string, count: string.count)
+        
+        let buffer = try encode(buffer: ByteBuffer(start: pointer, count: string.count))
+        
+        pointer.deinitialize(count: string.count)
+        pointer.deallocate(capacity: string.count)
+        
+        defer { buffer.dealloc() }
+        
+        guard let result = buffer.string() else {
+            throw UnknownFailure()
+        }
+        
+        return result
+    }
+    
     public static func encode(buffer: ByteBuffer) throws -> MutableByteBuffer {
-        let allocatedCapacity = (buffer.count * 4) / 3
+        let allocatedCapacity = ((buffer.count / 3) * 4) &+ ((buffer.count % 3 > 0) ? 4 : 0)
         
         let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: allocatedCapacity)
         pointer.initialize(to: 0, count: allocatedCapacity)
@@ -120,9 +141,14 @@ public final class Base64Encoder : Stream {
     var remainder = [UInt8]()
     
     public init(allocatedCapacity: Int = 65_507) {
-        self.allocatedCapacity = (allocatedCapacity * 4) / 3
+        self.allocatedCapacity = (allocatedCapacity / 3) * 4 &+ ((allocatedCapacity % 3 > 0) ? 1 : 0)
         self.pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: self.allocatedCapacity)
         self.pointer.initialize(to: 0, count: self.allocatedCapacity)
+    }
+    
+    deinit {
+        self.pointer.deinitialize(count: self.allocatedCapacity)
+        self.pointer.deallocate(capacity: self.allocatedCapacity)
     }
     
     public func inputStream(_ input: ByteBuffer) {
@@ -145,20 +171,28 @@ public final class Base64Encoder : Stream {
         }
         
         guard remainder.count == 0 else {
-            guard let inputPointer = input.baseAddress else {
-                return
-            }
-            
             let newPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: remainder.count &+ input.count)
             newPointer.initialize(to: 0, count: remainder.count &+ input.count)
             
-            newPointer.assign(from: remainder, count: remainder.count)
-            newPointer.advanced(by: remainder.count).assign(from: inputPointer, count: input.count)
+            if input.count > 0 {
+                guard let inputPointer = input.baseAddress else {
+                    return
+                }
+                
+                newPointer.assign(from: remainder, count: remainder.count)
+                newPointer.advanced(by: remainder.count).assign(from: inputPointer, count: input.count)
+            }
             
             process()
             return
         }
         
         process()
+    }
+    
+    public func finishStream() {
+        if remainder.count > 0 {
+            self.inputStream(ByteBuffer(start: nil, count: 0))
+        }
     }
 }
