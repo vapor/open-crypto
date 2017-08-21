@@ -164,7 +164,11 @@ public final class Base64Encoder : Stream {
         return (inputPosition == buffer.count, outputPosition, inputPosition)
     }
     
-    public static func encode(bytes: [UInt8]) throws -> [UInt8] {
+    /// Encodes the incoming data
+    ///
+    /// - parameter data: The data to encode
+    /// - returns: A base64 encoded string as Data
+    public static func encode(data: Data) throws -> Data {
         let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bytes.count)
         
         pointer.assign(from: bytes, count: bytes.count)
@@ -179,6 +183,10 @@ public final class Base64Encoder : Stream {
         return Array(buffer)
     }
     
+    /// Encodes the incoming string as UTF-8 to Base64
+    ///
+    /// - parameter data: The string of which the UTF-8 representation will be encoded
+    /// - returns: A base64 encoded string
     public static func encode(string: String) throws -> String {
         let bytes = [UInt8](string.utf8)
         
@@ -200,7 +208,13 @@ public final class Base64Encoder : Stream {
         return result
     }
     
-    public static func encode(buffer: ByteBuffer) throws -> MutableByteBuffer {
+    /// Encodes the incoming buffer into a new buffer as Base64
+    ///
+    /// Requires
+    ///
+    /// - parameter buffer: The buffer to encode
+    /// - parameter handle: The closure to execute with the Base64 encoded buffer
+    public static func encode(buffer: ByteBuffer, _ handle: ((MutableByteBuffer) throws -> ())) throws {
         let allocatedCapacity = ((buffer.count / 3) * 4) &+ ((buffer.count % 3 > 0) ? 4 : 0)
         
         let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: allocatedCapacity)
@@ -208,20 +222,33 @@ public final class Base64Encoder : Stream {
         
         let result = Base64Encoder.encode(buffer, toPointer: pointer, capacity: allocatedCapacity, finish: true)
         
-        guard result.complete else {
+        defer {
             pointer.deinitialize(count: allocatedCapacity)
             pointer.deallocate(capacity: allocatedCapacity)
+        }
+        
+        guard result.complete else {
             throw UnknownFailure()
         }
         
-        return MutableByteBuffer(start: pointer, count: allocatedCapacity)
+        handle(MutableByteBuffer(start: pointer, count: allocatedCapacity))
     }
     
-    let allocatedCapacity: Int
+    /// The capacity currently used in the pointer
     var currentCapacity = 0
+    
+    /// The total capacity of the pointer
+    let allocatedCapacity: Int
+    
+    /// The pointer for containing the base64 encoded data
     let pointer: UnsafeMutablePointer<UInt8>
+    
+    /// The bytes that couldn't be parsed from the previous buffer
     var remainder = [UInt8]()
     
+    /// Creates a new Base64 encoder
+    ///
+    /// - parameter allocatedCapacity: The expected (maximum) size of each buffer inputted into this stream
     public init(allocatedCapacity: Int = 65_507) {
         self.allocatedCapacity = (allocatedCapacity / 3) * 4 &+ ((allocatedCapacity % 3 > 0) ? 1 : 0)
         self.pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: self.allocatedCapacity)
@@ -233,6 +260,9 @@ public final class Base64Encoder : Stream {
         self.pointer.deallocate(capacity: self.allocatedCapacity)
     }
     
+    /// Processed the `input`'s `ByteBuffer` by Base64-encoding it
+    ///
+    /// Calls the `OutputHandler` with the Base64-encoded data
     public func inputStream(_ input: ByteBuffer) {
         var input = input
         
@@ -272,6 +302,7 @@ public final class Base64Encoder : Stream {
         process()
     }
     
+    /// Completes the stream, flushing all remaining bytes by encoding them
     public func finishStream() {
         if remainder.count > 0 {
             self.inputStream(ByteBuffer(start: nil, count: 0))

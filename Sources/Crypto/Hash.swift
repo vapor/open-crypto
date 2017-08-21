@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol Hash : class {
+public protocol Hash: class {
     /// The amount of processed bytes per chunk
     static var chunkSize: Int { get }
     static var digestSize: Int { get }
