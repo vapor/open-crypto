@@ -29,6 +29,8 @@ public final class SHA1 : Hash {
         h2 = 0x98BADCFE
         h3 = 0x10325476
         h4 = 0xC3D2E1F0
+        containedRemainder = 0
+        totalLength = 0
     }
     
     deinit {

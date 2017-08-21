@@ -65,6 +65,8 @@ public final class MD5 : Hash {
         b0 = 0xefcdab89
         c0 = 0x98badcfe
         d0 = 0x10325476
+        containedRemainder = 0
+        totalLength = 0
     }
     
     public init() {

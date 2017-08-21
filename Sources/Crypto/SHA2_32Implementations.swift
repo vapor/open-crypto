@@ -57,6 +57,8 @@ public final class SHA256 : SHA2_32 {
         h5 = 0x9b05688c
         h6 = 0x1f83d9ab
         h7 = 0x5be0cd19
+        containedRemainder = 0
+        totalLength = 0
     }
     
     var a: UInt32 = 0
@@ -91,6 +93,8 @@ public final class SHA224 : SHA2_32 {
         h5 = 0x68581511
         h6 = 0x64f98fa7
         h7 = 0xbefa4fa4
+        containedRemainder = 0
+        totalLength = 0
     }
     
     public var hash: [UInt8] {
