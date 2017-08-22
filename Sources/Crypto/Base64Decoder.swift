@@ -209,8 +209,6 @@ public final class Base64Encoder : Core.Stream {
         }
         
         return try encode(buffer: ByteBuffer(start: pointer, count: bytes.count)) { buffer in
-            defer { buffer.dealloc() }
-            
             guard let result = buffer.string() else {
                 throw UnknownFailure()
             }
