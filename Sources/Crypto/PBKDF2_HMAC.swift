@@ -21,7 +21,6 @@ public final class PBKDF2<Variant: Hash> {
     ///
     /// - returns: The derived key bytes
     public static func derive(fromPassword password: Data, saltedWith salt: Data, iterating iterations: Int = 10_000, derivedKeyLength keySize: Int? = nil) throws -> Data {
-        let hash = Variant()
         // Used to create a block number to append to the salt before deriving
         func integerBytes(blockNum block: UInt32) -> Data {
             var bytes = Data(repeating: 0, count: 4)
@@ -32,15 +31,10 @@ public final class PBKDF2<Variant: Hash> {
             return bytes
         }
         
-        func hashBuffer(_ data: Data) -> Data {
-            hash.reset()
-            return hash.finalize(data)
-        }
-        
         // Authenticated using HMAC with precalculated keys (saves 50% performance)
         func authenticate(innerPadding: Data, outerPadding: Data, message: Data) throws -> Data {
-            let innerPaddingHash = hashBuffer(innerPadding + message)
-            let outerPaddingHash = hashBuffer(outerPadding + innerPaddingHash)
+            let innerPaddingHash = Variant.hash(innerPadding + message)
+            let outerPaddingHash = Variant.hash(outerPadding + innerPaddingHash)
             
             return outerPaddingHash
         }
@@ -69,7 +63,7 @@ public final class PBKDF2<Variant: Hash> {
         
         // If the key is too long, hash it first
         if password.count > Variant.chunkSize {
-            password = hashBuffer(password)
+            password = Variant.hash(password)
         }
         
         // Add padding
@@ -128,3 +122,4 @@ fileprivate func xor(_ lhs: inout Data, _ rhs: Data) {
         lhs[i] = lhs[i] ^ rhs[i]
     }
 }
+

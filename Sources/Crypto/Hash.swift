@@ -40,16 +40,30 @@ extension Hash {
     /// Hashes the contents of this byte sequence
     ///
     /// Doesn't finalize the hash and thus doesn't return the data
-    public static func hash<S: Sequence>(_ sequence: S) -> Data where S.Element == UInt8 {
-        return Array(sequence).withUnsafeBufferPointer { buffer in
-            return hash(buffer)
+    public static func hash(_ data: Data) -> Data {
+        let h = Self()
+        
+        return Array(data).withUnsafeBufferPointer { buffer in
+            h.finalize(buffer)
+            return h.hash
+        }
+    }
+    
+    /// Hashes the contents of this byte sequence
+    ///
+    /// Doesn't finalize the hash and thus doesn't return the data
+    public func finalize(_ data: Data) {
+        let h = Self()
+        
+        Array(data).withUnsafeBufferPointer { buffer in
+            h.finalize(buffer)
         }
     }
     
     /// Finalizes the hash by appending a `0x80` and `0x00` until there are 64 bits left. Then appends a `UInt64` with little or big endian as defined in the protocol implementation
-    public func finalize(_ buffer: UnsafeBufferPointer<UInt8>) {
-        let totalRemaining = containedRemainder + buffer.count + 1
-        totalLength = totalLength &+ (UInt64(buffer.count) &* 8)
+    public func finalize(_ buffer: UnsafeBufferPointer<UInt8>? = nil) {
+        let totalRemaining = containedRemainder + (buffer?.count ?? 0) + 1
+        totalLength = totalLength &+ (UInt64(buffer?.count ?? 0) &* 8)
         
         // Append zeroes
         var zeroes = lastChunkSize &- (totalRemaining % Self.chunkSize)
@@ -76,7 +90,16 @@ extension Hash {
             length.reverse()
         }
         
-        let lastBlocks = Array(buffer) + [0x80] + Data(repeating: 0, count: zeroes) + length
+        var lastBlocks: [UInt8]
+        
+        if let buffer = buffer {
+            lastBlocks = Array(buffer)
+        } else {
+            lastBlocks = []
+        }
+        
+        lastBlocks = lastBlocks + [0x80] + Data(repeating: 0, count: zeroes) + length
+        
         var offset = 0
         
         lastBlocks.withUnsafeBufferPointer { buffer in
@@ -86,15 +109,6 @@ extension Hash {
                 defer { offset = offset &+ Self.chunkSize }
                 self.update(pointer: pointer.advanced(by: offset))
             }
-        }
-    }
-    
-    /// Hashes the contents of this byte sequence
-    ///
-    /// Finalizes the hash and returns the data
-    public func finalize<S: Sequence>(_ sequence: S) -> Data where S.Element == UInt8 {
-        return Array(sequence).withUnsafeBufferPointer { buffer in
-            self.finalize(buffer)
         }
     }
     

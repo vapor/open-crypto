@@ -27,7 +27,7 @@ class MD5Tests: XCTestCase {
     }
 
     func testPerformance() {
-        let data = Data(repeating: 0x63, count: 10_000_000)
+        let data = Data(repeating: 0x63, count: 100_000)
 
         // ~0.121 release
         measure {
