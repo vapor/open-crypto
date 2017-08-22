@@ -43,7 +43,7 @@ class PBKDF2Tests: XCTestCase {
     func testPerformance() {
         // ~0.137 release
         measure {
-            _ = try! PBKDF2<SHA1>.derive(fromPassword: Data("p".utf8), saltedWith: Data("somewhatlongsaltstringthatIwanttotest".utf8), iterating: 100_000, derivedKeyLength: SHA1.digestSize)
+            _ = try! PBKDF2<SHA1>.derive(fromPassword: Data("p".utf8), saltedWith: Data("somewhatlongsaltstringthatIwanttotest".utf8), iterating: 10_000, derivedKeyLength: SHA1.digestSize)
         }
     }
 }
