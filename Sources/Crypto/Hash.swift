@@ -16,10 +16,10 @@ public protocol Hash: class {
     /// The resulting hash
     var hash: Data { get }
     
-    /// The amount of bytes currently inside the `remainder` pointer
+    /// The amount of bytes currently inside the `remainder` pointer.
     var containedRemainder: Int { get set }
     
-    /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full
+    /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.  Size *must* be `chunkSize - 1`
     var remainder: UnsafeMutablePointer<UInt8> { get }
     
     /// Updates the hash using exactly one `chunkSize` of bytes referenced by a pointer
@@ -28,6 +28,7 @@ public protocol Hash: class {
     /// Resets the hash's context to it's original state (reusing the context class)
     func reset()
     
+    /// Creates a new empty hash
     init()
 }
 
@@ -36,18 +37,16 @@ extension Hash {
         return Self.chunkSize &- 8
     }
     
-    public static func hash(_ buffer: UnsafeBufferPointer<UInt8>) -> Data {
-        let hash = Self()
-        hash.finalize(buffer)
-        return hash.hash
-    }
-    
+    /// Hashes the contents of this byte sequence
+    ///
+    /// Doesn't finalize the hash and thus doesn't return the data
     public static func hash<S: Sequence>(_ sequence: S) -> Data where S.Element == UInt8 {
         return Array(sequence).withUnsafeBufferPointer { buffer in
             return hash(buffer)
         }
     }
     
+    /// Finalizes the hash by appending a `0x80` and `0x00` until there are 64 bits left. Then appends a `UInt64` with little or big endian as defined in the protocol implementation
     public func finalize(_ buffer: UnsafeBufferPointer<UInt8>) {
         let totalRemaining = containedRemainder + buffer.count + 1
         totalLength = totalLength &+ (UInt64(buffer.count) &* 8)
@@ -60,6 +59,7 @@ extension Hash {
             zeroes = (Self.chunkSize &+ (lastChunkSize &- zeroes)) &+ zeroes
         }
         
+        // If there isn't enough room, add another big chunk of zeroes until there is room
         if zeroes < 0 {
             zeroes =  (8 &+ zeroes) + lastChunkSize
         }
@@ -71,6 +71,7 @@ extension Hash {
             memcpy(length.baseAddress!, &totalLength, 8)
         }
         
+        // Little endian is reversed
         if !Self.littleEndian {
             length.reverse()
         }
@@ -88,17 +89,24 @@ extension Hash {
         }
     }
     
-    public func finalize<S: Sequence>(_ sequence: S) where S.Element == UInt8 {
+    /// Hashes the contents of this byte sequence
+    ///
+    /// Finalizes the hash and returns the data
+    public func finalize<S: Sequence>(_ sequence: S) -> Data where S.Element == UInt8 {
         return Array(sequence).withUnsafeBufferPointer { buffer in
             self.finalize(buffer)
         }
     }
     
+    /// Updates the hash using the contents of this buffer
+    ///
+    /// Doesn't finalize the hash
     public func update(_ buffer: UnsafeBufferPointer<UInt8>) {
         totalLength = totalLength &+ UInt64(buffer.count)
         
         var buffer = buffer
         
+        // If there was data from a previous chunk that needs to be processed, process that with this buffer, first
         if containedRemainder > 0 {
             let needed = Self.chunkSize &- containedRemainder
             
@@ -117,13 +125,15 @@ extension Hash {
             }
         }
         
+        // The buffer *must* have a baseAddress to read from
         guard var bufferPointer = buffer.baseAddress else {
-            assertionFailure("Invalid buffer provided")
+            assertionFailure("Invalid hashing buffer provided")
             return
         }
         
         var bufferSize = buffer.count
         
+        // Process the input in chunks of `chunkSize`
         while bufferSize >= Self.chunkSize {
             defer {
                 bufferPointer = bufferPointer.advanced(by: Self.chunkSize)
@@ -133,10 +143,14 @@ extension Hash {
             update(pointer: bufferPointer)
         }
         
+        // Append the remaining data to the internal remainder buffer
         memcpy(remainder, bufferPointer, bufferSize)
         containedRemainder = bufferSize
     }
     
+    /// Updates the hash with the contents of this byte sequence
+    ///
+    /// Does not finalize
     public func update<S: Sequence>(sequence: inout S) where S.Element == UInt8 {
         Array(sequence).withUnsafeBufferPointer { buffer in
             update(buffer)

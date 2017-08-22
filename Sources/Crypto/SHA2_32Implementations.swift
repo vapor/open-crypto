@@ -1,18 +1,29 @@
 import Foundation
 
 public final class SHA256 : SHA2_32 {
+    /// If `true`, treat the bitlength in the padding at littleEndian, bigEndian otherwise
     public static let littleEndian = false
+    
+    /// The amount of bytes returned in the hash
     public static let digestSize = 32
+    
+    /// The amount of processed bytes per chunk
     public static let chunkSize = 64
     
+    /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.  Size *must* be `chunkSize - 1`
     public var remainder = UnsafeMutablePointer<UInt8>.allocate(capacity: 63)
+    
+    /// The amount of bytes currently inside the `remainder` pointer.
     public var containedRemainder = 0
+    
+    /// The current length of hashes bytes in bits
     public var totalLength: UInt64 = 0
     
     deinit {
         self.remainder.deallocate(capacity: 63)
     }
     
+    /// The resulting hash
     public var hash: Data {
         var buffer = Data()
         buffer.reserveCapacity(32)
@@ -40,6 +51,8 @@ public final class SHA256 : SHA2_32 {
     }
     
     public init() {    }
+    
+    /// MARK - The standard hash settings hash
     
     var h0: UInt32 = 0x6a09e667
     var h1: UInt32 = 0xbb67ae85
@@ -74,31 +87,29 @@ public final class SHA256 : SHA2_32 {
 }
 
 public final class SHA224 : SHA2_32 {
+    /// If `true`, treat the bitlength in the padding at littleEndian, bigEndian otherwise
     public static let littleEndian = false
+    
+    /// The amount of bytes returned in the hash
     public static let digestSize = 28
+    
+    /// The amount of processed bytes per chunk
     public static let chunkSize = 64
     
+    /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.  Size *must* be `chunkSize - 1`
     public var remainder = UnsafeMutablePointer<UInt8>.allocate(capacity: 63)
+    
+    /// The amount of bytes currently inside the `remainder` pointer.
     public var containedRemainder = 0
+    
+    /// The current length of hashes bytes in bits
     public var totalLength: UInt64 = 0
     
     deinit {
         self.remainder.deallocate(capacity: 63)
     }
     
-    public func reset() {
-        h0 = 0xc1059ed8
-        h1 = 0x367cd507
-        h2 = 0x3070dd17
-        h3 = 0xf70e5939
-        h4 = 0xffc00b31
-        h5 = 0x68581511
-        h6 = 0x64f98fa7
-        h7 = 0xbefa4fa4
-        containedRemainder = 0
-        totalLength = 0
-    }
-    
+    /// The resulting hash
     public var hash: Data {
         var buffer = Data()
         buffer.reserveCapacity(28)
@@ -125,6 +136,21 @@ public final class SHA224 : SHA2_32 {
     }
     
     public init() {    }
+    
+    /// MARK - The standard hash settings hash
+    
+    public func reset() {
+        h0 = 0xc1059ed8
+        h1 = 0x367cd507
+        h2 = 0x3070dd17
+        h3 = 0xf70e5939
+        h4 = 0xffc00b31
+        h5 = 0x68581511
+        h6 = 0x64f98fa7
+        h7 = 0xbefa4fa4
+        containedRemainder = 0
+        totalLength = 0
+    }
     
     var h0: UInt32 = 0xc1059ed8
     var h1: UInt32 = 0x367cd507

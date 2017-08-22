@@ -34,8 +34,7 @@ public final class PBKDF2<Variant: Hash> {
         
         func hashBuffer(_ data: Data) -> Data {
             hash.reset()
-            hash.finalize(data)
-            return hash.hash
+            return hash.finalize(data)
         }
         
         // Authenticated using HMAC with precalculated keys (saves 50% performance)

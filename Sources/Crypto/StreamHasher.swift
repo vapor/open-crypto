@@ -20,9 +20,7 @@ public class ByteStreamHasher<H: Hash> : Core.Stream {
             context.reset()
         }
         
-        context.finalize([])
-        
-        return context.hash
+        return context.finalize([])
     }
     
     /// `ByteStreamHasher` accepts byte streams
