@@ -1,3 +1,4 @@
+import Core
 import Foundation
 
 public final class SHA1 : Hash {
@@ -21,7 +22,7 @@ public final class SHA1 : Hash {
     var k: UInt32 = 0
     var temp: UInt32 = 0
     
-    public var remainder = UnsafeMutablePointer<UInt8>.allocate(capacity: 63)
+    public var remainder = MutableBytesPointer.allocate(capacity: 63)
     public var containedRemainder = 0
     public var totalLength: UInt64 = 0
     
@@ -64,7 +65,7 @@ public final class SHA1 : Hash {
     
     public init() {}
     
-    public func update(pointer: UnsafePointer<UInt8>) {
+    public func update(pointer: BytesPointer) {
         var w = pointer.withMemoryRebound(to: UInt32.self, capacity: 16, { pointer in
             return [
                 pointer[0].bigEndian, pointer[1].bigEndian, pointer[2].bigEndian, pointer[3].bigEndian,

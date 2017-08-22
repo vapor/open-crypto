@@ -1,4 +1,5 @@
 import Foundation
+import Debugging
 
 public enum PBKDF2Error: Error {
     case cannotIterateZeroTimes
@@ -108,16 +109,16 @@ public final class PBKDF2<Variant: Hash> {
         return Data(response[0..<keySize])
     }
     
+    /// Validates a password using HMAC based PBKDF2<Variant>
     public static func validate(_ password: Data, saltedWith salt: Data, against: Data, iterating iterations: Int) throws -> Bool {
         let newHash = try derive(fromPassword: password, saltedWith: salt, iterating: iterations, derivedKeyLength: against.count)
         
         return newHash == against
     }
 }
-
+ 
+/// Xors two data buffers
 fileprivate func xor(_ lhs: inout Data, _ rhs: Data) {
-    assert(lhs.count == rhs.count)
-    
     for i in 0..<lhs.count {
         lhs[i] = lhs[i] ^ rhs[i]
     }

@@ -76,7 +76,7 @@ public final class Base64Encoder : Core.Stream {
     /// - parameter capacity: The capacity of the output pointer
     /// - parameter finish: If `true`, this base64 string will be completed
     /// - returns: If the base64 encoded string is complete. The capacity of the pointer used, and the amount of input bytes consumed
-    fileprivate static func encode(_ buffer: ByteBuffer, toPointer pointer: UnsafeMutablePointer<UInt8>, capacity: Int, finish: Bool) -> (complete: Bool, filled: Int, consumed: Int) {
+    fileprivate static func encode(_ buffer: ByteBuffer, toPointer pointer: MutableBytesPointer, capacity: Int, finish: Bool) -> (complete: Bool, filled: Int, consumed: Int) {
         // If the buffer is empty, ignore the buffer
         guard let input = buffer.baseAddress else {
             return (true, 0, 0)
@@ -176,7 +176,7 @@ public final class Base64Encoder : Core.Stream {
                 throw UnknownFailure()
             }
             
-            let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bytes.count)
+            let pointer = MutableBytesPointer.allocate(capacity: bytes.count)
             
             defer {
                 pointer.deinitialize(count: bytes.count)
@@ -199,7 +199,7 @@ public final class Base64Encoder : Core.Stream {
     public static func encode(string: String) throws -> String {
         let bytes = [UInt8](string.utf8)
         
-        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bytes.count)
+        let pointer = MutableBytesPointer.allocate(capacity: bytes.count)
         
         pointer.assign(from: bytes, count: bytes.count)
         
@@ -226,7 +226,7 @@ public final class Base64Encoder : Core.Stream {
     public static func encode<T>(buffer: ByteBuffer, _ handle: ((MutableByteBuffer) throws -> (T))) throws -> T {
         let allocatedCapacity = ((buffer.count / 3) * 4) &+ ((buffer.count % 3 > 0) ? 4 : 0)
         
-        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: allocatedCapacity)
+        let pointer = MutableBytesPointer.allocate(capacity: allocatedCapacity)
         pointer.initialize(to: 0, count: allocatedCapacity)
         
         let result = Base64Encoder.encode(buffer, toPointer: pointer, capacity: allocatedCapacity, finish: true)
@@ -250,7 +250,7 @@ public final class Base64Encoder : Core.Stream {
     let allocatedCapacity: Int
     
     /// The pointer for containing the base64 encoded data
-    let pointer: UnsafeMutablePointer<UInt8>
+    let pointer: MutableBytesPointer
     
     /// The bytes that couldn't be parsed from the previous buffer
     var remainder = [UInt8]()
@@ -260,7 +260,7 @@ public final class Base64Encoder : Core.Stream {
     /// - parameter allocatedCapacity: The expected (maximum) size of each buffer inputted into this stream
     public init(allocatedCapacity: Int = 65_507) {
         self.allocatedCapacity = (allocatedCapacity / 3) * 4 &+ ((allocatedCapacity % 3 > 0) ? 1 : 0)
-        self.pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: self.allocatedCapacity)
+        self.pointer = MutableBytesPointer.allocate(capacity: self.allocatedCapacity)
         self.pointer.initialize(to: 0, count: self.allocatedCapacity)
     }
     
@@ -292,7 +292,7 @@ public final class Base64Encoder : Core.Stream {
         }
         
         guard remainder.count == 0 else {
-            let newPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: remainder.count &+ input.count)
+            let newPointer = MutableBytesPointer.allocate(capacity: remainder.count &+ input.count)
             newPointer.initialize(to: 0, count: remainder.count &+ input.count)
             
             if input.count > 0 {

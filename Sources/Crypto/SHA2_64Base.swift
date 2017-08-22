@@ -1,3 +1,5 @@
+import Core
+
 fileprivate let k: [UInt64] = [ 0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc, 0x3956c25bf348b538,
                       0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118, 0xd807aa98a3030242, 0x12835b0145706fbe,
                       0x243185be4ee4b28c, 0x550c7dc3d5ffb4e2, 0x72be5d74f27b896f, 0x80deb1fe3b1696b1, 0x9bdc06a725c71235,
@@ -36,7 +38,7 @@ internal protocol SHA2_64 : Hash {
 }
 
 extension SHA2_64 {
-    public func update(pointer: UnsafePointer<UInt8>) {
+    public func update(pointer: BytesPointer) {
         var w = pointer.withMemoryRebound(to: UInt64.self, capacity: 16, { pointer in
             return [
                 pointer[0].bigEndian, pointer[1].bigEndian, pointer[2].bigEndian, pointer[3].bigEndian,

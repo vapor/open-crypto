@@ -5,6 +5,7 @@
 //  Created by Joannis Orlandos on 06/08/2017.
 //
 
+import Core
 import Foundation
 
 fileprivate let s: [UInt32] = [ 7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
@@ -52,7 +53,7 @@ public final class MD5 : Hash {
     var g: Int = 0
     var Mg: UInt32 = 0
     
-    public var remainder = UnsafeMutablePointer<UInt8>.allocate(capacity: 63)
+    public var remainder = MutableBytesPointer.allocate(capacity: 63)
     public var containedRemainder = 0
     public var totalLength: UInt64 = 0
     
@@ -95,7 +96,7 @@ public final class MD5 : Hash {
         return buffer
     }
     
-    public func update(pointer: UnsafePointer<UInt8>) {
+    public func update(pointer: BytesPointer) {
         a1 = a0
         b1 = b0
         c1 = c0

@@ -1,3 +1,4 @@
+import Core
 import Foundation
 
 public protocol Hash: class {
@@ -20,10 +21,10 @@ public protocol Hash: class {
     var containedRemainder: Int { get set }
     
     /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.  Size *must* be `chunkSize - 1`
-    var remainder: UnsafeMutablePointer<UInt8> { get }
+    var remainder: MutableBytesPointer { get }
     
     /// Updates the hash using exactly one `chunkSize` of bytes referenced by a pointer
-    func update(pointer: UnsafePointer<UInt8>)
+    func update(pointer: BytesPointer)
     
     /// Resets the hash's context to it's original state (reusing the context class)
     func reset()
@@ -61,7 +62,7 @@ extension Hash {
     }
     
     /// Finalizes the hash by appending a `0x80` and `0x00` until there are 64 bits left. Then appends a `UInt64` with little or big endian as defined in the protocol implementation
-    public func finalize(_ buffer: UnsafeBufferPointer<UInt8>? = nil) {
+    public func finalize(_ buffer: ByteBuffer? = nil) {
         let totalRemaining = containedRemainder + (buffer?.count ?? 0) + 1
         totalLength = totalLength &+ (UInt64(buffer?.count ?? 0) &* 8)
         
@@ -115,7 +116,7 @@ extension Hash {
     /// Updates the hash using the contents of this buffer
     ///
     /// Doesn't finalize the hash
-    public func update(_ buffer: UnsafeBufferPointer<UInt8>) {
+    public func update(_ buffer: ByteBuffer) {
         totalLength = totalLength &+ UInt64(buffer.count)
         
         var buffer = buffer

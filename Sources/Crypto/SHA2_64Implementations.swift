@@ -1,3 +1,4 @@
+import Core
 import Foundation
 
 public final class SHA512 : SHA2_64 {
@@ -11,7 +12,7 @@ public final class SHA512 : SHA2_64 {
     public static let chunkSize = 128
     
     /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.  Size *must* be `chunkSize - 1`
-    public var remainder = UnsafeMutablePointer<UInt8>.allocate(capacity: 127)
+    public var remainder = MutableBytesPointer.allocate(capacity: 127)
     
     /// The amount of bytes currently inside the `remainder` pointer.
     public var containedRemainder = 0
@@ -105,7 +106,7 @@ public final class SHA384: SHA2_64 {
     public static let chunkSize = 128
     
     /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.  Size *must* be `chunkSize - 1`
-    public var remainder = UnsafeMutablePointer<UInt8>.allocate(capacity: 127)
+    public var remainder = MutableBytesPointer.allocate(capacity: 127)
     
     /// The amount of bytes currently inside the `remainder` pointer.
     public var containedRemainder = 0
