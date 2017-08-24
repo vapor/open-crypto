@@ -2,7 +2,8 @@ import XCTest
 @testable import CryptoTests
 
 XCTMain([
-    testCase(CipherTests.allTests),
-    testCase(HashTests.allTests),
-    testCase(HMACTests.allTests),
+    testCase(MD5Tests.allTests),
+    testCase(PBKDF2Tests.allTests),
+    testCase(SHA1Tests.allTests),
+    testCase(SHA2Tests.allTests),
 ])

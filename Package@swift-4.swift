@@ -7,13 +7,11 @@ let package = Package(
         .library(name: "Crypto", targets: ["Crypto"]),
     ],
     dependencies: [
-        // Module for generating random bytes and numbers.
-        .package(url: "https://github.com/vapor/random.git", .upToNextMajor(from: "1.2.0")),
-
-        // LibreSSL / OpenSSL module map for Swift.
-        .package(url: "https://github.com/vapor/ctls.git", .upToNextMajor(from: "1.1.0")),
+        // Core extensions, type-aliases, and functions that facilitate common tasks.
+        .package(url: "https://github.com/vapor/core.git", .revision("beta")),
     ],
     targets: [
-        .target(name: "Crypto", dependencies: ["Random"]),
+        .target(name: "Crypto", dependencies: ["Core"]),
+        .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
     ]
 )
