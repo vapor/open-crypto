@@ -44,13 +44,6 @@ fileprivate let encodeTable = Data("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr
 ///     // this will possibly stream the final 4 bytes if the input wasn't depleted yet
 ///     encoder.finishStream()
 ///     // after finishing the stream, the encoder will return to the start and will be reuable for the next incoming data
-///
-/// Encoding of a buffer
-///
-///     let buffer: ByteBuffer
-///     let encodedBuffer = try Base64Encoder.encode(buffer: buffer)
-///     // These kinds of buffers do need deallocation, otherwise you'll get memory leaks
-///     defer { encodedBuffer.dealloc() }
 public final class Base64Encoder : Core.Stream {
     /// Accepts byte streams
     public typealias Input = ByteBuffer
@@ -185,8 +178,6 @@ public final class Base64Encoder : Core.Stream {
             
             pointer.assign(from: input, count: bytes.count)
             return try encode(buffer: ByteBuffer(start: pointer, count: bytes.count)) { buffer in
-                defer { buffer.dealloc() }
-                
                 return Data(buffer)
             }
         }
