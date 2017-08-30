@@ -14,6 +14,6 @@ let package = Package(
         .package(url: "https://github.com/vapor/ctls.git", .upToNextMajor(from: "1.1.0")),
     ],
     targets: [
-        .target(name: "Crypto", dependencies: ["Random"]),
+        .target(name: "Crypto", dependencies: ["CTLS", "Random"]),
     ]
 )
