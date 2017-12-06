@@ -12,7 +12,7 @@ extension SequenceInitializable where Iterator.Element == Byte {
     public init(hexString: String) {
         var data = Bytes()
         
-        var gen = hexString.characters.makeIterator()
+        var gen = hexString.makeIterator()
         while let c1 = gen.next(), let c2 = gen.next() {
             let s = String([c1, c2])
             
