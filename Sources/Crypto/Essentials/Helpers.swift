@@ -12,7 +12,7 @@ extension SequenceInitializable where Iterator.Element == Byte {
     public init(hexString: String) {
         var data = Bytes()
         
-        var gen = hexString.makeIterator()
+        var gen = hexString.toCharacterSequence().makeIterator()
         while let c1 = gen.next(), let c2 = gen.next() {
             let s = String([c1, c2])
             
@@ -25,6 +25,19 @@ extension SequenceInitializable where Iterator.Element == Byte {
         
         self.init(data)
     }
+
+}
+
+extension String {
+    #if swift(>=4.0)
+    internal func toCharacterSequence() -> String {
+        return string
+    }
+    #else
+    internal func toCharacterSequence() -> CharacterView {
+        return self.characters
+    }
+    #endif    
 }
 
 extension Sequence where Iterator.Element == Byte {
