@@ -1,151 +1,196 @@
 import Bits
-import CTLS
+import Foundation
 
-public final class Hash {
-    public let method: Method
-    public let stream: ByteStream
-
-    /// Creates a hasher from a
-    /// stream of bytes.
-    ///
-    /// The most basic byte stream is
-    /// just an array of bytes called BasicByteStream.
-    public init(_ method: Method, _ stream: ByteStream) {
-        self.method = method
-        self.stream = stream
-    }
-
-    public enum Error: Swift.Error {
-        case initialize
-        case updating
-        case finalize
-    }
-
-    /// Creates the message digest
-    /// as an array of bytes.
-    public func hash() throws -> Bytes {
-        switch method {
-        case .sha1:
-            return try hashLibre(
-                context: SHA_CTX(),
-                initialize: SHA1_Init,
-                update: SHA1_Update,
-                final: SHA1_Final,
-                length: SHA_DIGEST_LENGTH
-            )
-        case .sha224:
-            return try hashLibre(
-                context: SHA256_CTX(),
-                initialize: SHA224_Init,
-                update: SHA224_Update,
-                final: SHA224_Final,
-                length: SHA224_DIGEST_LENGTH
-            )
-        case .sha256:
-            return try hashLibre(
-                context: SHA256_CTX(),
-                initialize: SHA256_Init,
-                update: SHA256_Update,
-                final: SHA256_Final,
-                length: SHA256_DIGEST_LENGTH
-            )
-        case .sha384:
-            return try hashLibre(
-                context: SHA512_CTX(),
-                initialize: SHA384_Init,
-                update: SHA384_Update,
-                final: SHA384_Final,
-                length: SHA384_DIGEST_LENGTH
-            )
-        case .sha512:
-            return try hashLibre(
-                context: SHA512_CTX(),
-                initialize: SHA512_Init,
-                update: SHA512_Update,
-                final: SHA512_Final,
-                length: SHA512_DIGEST_LENGTH
-            )
-        case .md5:
-            return try hashLibre(
-                context: MD5_CTX(),
-                initialize: MD5_Init,
-                update: MD5_Update,
-                final: MD5_Final,
-                length: MD5_DIGEST_LENGTH
-            )
-        case .md4:
-            return try hashLibre(
-                context: MD4_CTX(),
-                initialize: MD4_Init,
-                update: MD4_Update,
-                final: MD4_Final,
-                length: MD4_DIGEST_LENGTH
-            )
-        case .ripemd160:
-            return try hashLibre(
-                context: RIPEMD160_CTX(),
-                initialize: RIPEMD160_Init,
-                update: RIPEMD160_Update,
-                final: RIPEMD160_Final,
-                length: RIPEMD160_DIGEST_LENGTH
-            )
-        }
-    }
-
-    private func hashLibre<T>(
-        context: T,
-        initialize: (UnsafeMutablePointer<T>) -> Int32,
-        update: (UnsafeMutablePointer<T>, UnsafeRawPointer, Int) -> Int32,
-        final: (UnsafeMutablePointer<UInt8>, UnsafeMutablePointer<T>) -> Int32,
-        length: Int32
-    ) throws -> Bytes{
-        var context = context
-        guard initialize(&context) == 1 else {
-            throw Error.initialize
-        }
-
-        while !stream.closed {
-            let bytes = try stream.next()
-            guard update(&context, bytes, bytes.count) == 1 else {
-                throw Error.updating
-            }
-        }
-
-        var digest = Bytes(repeating: 0, count: Int(length))
-        guard final(&digest, &context) == 1 else {
-            throw Error.finalize
-        }
-        
-        return digest
-    }
+/// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/)
+public protocol Hash: class {
+    /// The amount of processed bytes per chunk
+    static var chunkSize: Int { get }
+    
+    /// The amount of bytes returned in the hash
+    static var digestSize: Int { get }
+    
+    /// If `true`, treat the bitlength in the padding at littleEndian, bigEndian otherwise
+    static var littleEndian: Bool { get }
+    
+    /// The current length of hashes bytes in bits
+    var totalLength: UInt64 { get set }
+    
+    /// The resulting hash
+    var hash: Data { get }
+    
+    /// The amount of bytes currently inside the `remainder` pointer.
+    var containedRemainder: Int { get set }
+    
+    /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.
+    var remainder: MutableBytesPointer { get }
+    
+    /// Updates the hash using exactly one `chunkSize` of bytes referenced by a pointer
+    func update(pointer: BytesPointer)
+    
+    /// Resets the hash's context to it's original state (reusing the context class)
+    func reset()
+    
+    /// Creates a new empty hash
+    init()
 }
 
 extension Hash {
-    /// Create the hasher from an array
-    /// of bytes. This will internally
-    /// create a BasicByteStream.
-    public convenience init(_ method: Method, _ bytes: Bytes) {
-        let inputStream = BasicByteStream(bytes)
-        self.init(method, inputStream)
+    fileprivate var lastChunkSize: Int {
+        return Self.chunkSize &- 8
     }
-
-    /// Create the hasher from something
-    /// representable as bytes. This will internally
-    /// create a BasicByteStream.
-    public convenience init<B: BytesRepresentable>(_ method: Method, _ bytes: B) throws {
-        self.init(method, try bytes.makeBytes())
+    
+    /// Processes the contents of this `Data` and returns the resulting hash
+    ///
+    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#hashing-blobs-of-data)
+    public static func hash(_ data: Data) -> Data {
+        let h = Self()
+        
+        return Array(data).withUnsafeBufferPointer { buffer in
+            h.finalize(buffer)
+            return h.hash
+        }
     }
-
-    /// Hash an array of bytes without
-    /// initializing a hasher.
-    public static func make(_ method: Method, _ bytes: Bytes) throws -> Bytes {
-        let hasher = Hash(method, bytes)
-        return try hasher.hash()
+    
+    /// Processes the contents of this ByteBuffer and returns the resulting hash
+    ///
+    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#hashing-blobs-of-data)
+    public static func hash(_ data: ByteBuffer) -> Data {
+        let h = Self()
+        
+        h.finalize(data)
+        return h.hash
     }
-
-    /// Hash an array of something representable
-    /// as bytes without initializing a hasher.
-    public static func make<B: BytesRepresentable>(_ method: Method, _ bytes: B) throws -> Bytes {
-        return try make(method, try bytes.makeBytes())
+    
+    /// Processes the contents of this byte sequence
+    ///
+    /// Doesn't finalize the hash and thus doesn't return any results
+    ///
+    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
+    public func finalize(_ data: Data) {
+        Array(data).withUnsafeBufferPointer { buffer in
+            self.finalize(buffer)
+        }
+    }
+    
+    /// Finalizes the hash by appending a `0x80` and `0x00` until there are 64 bits left.
+    /// Then appends a `UInt64` with little or big endian as defined in the protocol implementation
+    ///
+    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
+    public func finalize(_ buffer: ByteBuffer? = nil) {
+        let totalRemaining = containedRemainder + (buffer?.count ?? 0) + 1
+        totalLength = totalLength &+ (UInt64(buffer?.count ?? 0) &* 8)
+        
+        // Append zeroes
+        var zeroes = lastChunkSize &- (totalRemaining % Self.chunkSize)
+        
+        if zeroes > lastChunkSize {
+            // Append another chunk of zeroes if we have more than 448 bits
+            zeroes = (Self.chunkSize &+ (lastChunkSize &- zeroes)) &+ zeroes
+        }
+        
+        // If there isn't enough room, add another big chunk of zeroes until there is room
+        if zeroes < 0 {
+            zeroes =  (8 &+ zeroes) + lastChunkSize
+        }
+        
+        var length = [UInt8](repeating: 0, count: 8)
+        
+        // Append UInt64 length in bits
+        _ = length.withUnsafeMutableBytes { length in
+            memcpy(length.baseAddress!, &totalLength, 8)
+        }
+        
+        // Little endian is reversed
+        if !Self.littleEndian {
+            length.reverse()
+        }
+        
+        var lastBlocks = [UInt8]()
+        
+        if containedRemainder > 0 {
+            lastBlocks += Array(ByteBuffer(start: remainder, count: containedRemainder))
+        }
+        
+        if let buffer = buffer {
+            lastBlocks = Array(buffer)
+        }
+        
+        lastBlocks = lastBlocks + [0x80] + [UInt8](repeating: 0, count: zeroes) + length
+        
+        var offset = 0
+        
+        lastBlocks.withUnsafeBufferPointer { buffer in
+            let pointer = buffer.baseAddress!
+            
+            while offset < buffer.count {
+                defer { offset = offset &+ Self.chunkSize }
+                self.update(pointer: pointer.advanced(by: offset))
+            }
+        }
+    }
+    
+    /// Updates the hash using the contents of this buffer
+    ///
+    /// Doesn't finalize the hash
+    ///
+    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
+    public func update(_ buffer: ByteBuffer) {
+        totalLength = totalLength &+ (UInt64(buffer.count) &* 8)
+        
+        var buffer = buffer
+        
+        // If there was data from a previous chunk that needs to be processed, process that with this buffer, first
+        if containedRemainder > 0 {
+            let needed = Self.chunkSize &- containedRemainder
+            
+            guard let bufferPointer = buffer.baseAddress else {
+                assertionFailure("Invalid buffer provided")
+                return
+            }
+            
+            if buffer.count >= needed {
+                memcpy(remainder.advanced(by: containedRemainder), bufferPointer, needed)
+                
+                buffer = UnsafeBufferPointer(start: bufferPointer.advanced(by: needed), count: buffer.count &- needed)
+                update(pointer: remainder)
+                containedRemainder = 0
+            } else {
+                memcpy(remainder.advanced(by: containedRemainder), bufferPointer, buffer.count)
+                return
+            }
+        }
+        
+        // The buffer *must* have a baseAddress to read from
+        guard var bufferPointer = buffer.baseAddress else {
+            assertionFailure("Invalid hashing buffer provided")
+            return
+        }
+        
+        var bufferSize = buffer.count
+        
+        // Process the input in chunks of `chunkSize`
+        while bufferSize >= Self.chunkSize {
+            defer {
+                bufferPointer = bufferPointer.advanced(by: Self.chunkSize)
+                bufferSize = bufferSize &- Self.chunkSize
+            }
+            
+            update(pointer: bufferPointer)
+        }
+        
+        // Append the remaining data to the internal remainder buffer
+        memcpy(remainder, bufferPointer, bufferSize)
+        containedRemainder = bufferSize
+    }
+    
+    /// Updates the hash with the contents of this byte sequence
+    ///
+    /// Does not finalize the hash
+    ///
+    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
+    public func update<S: Sequence>(sequence: inout S) where S.Element == UInt8 {
+        Array(sequence).withUnsafeBufferPointer { buffer in
+            update(buffer)
+        }
     }
 }

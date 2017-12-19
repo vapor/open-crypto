@@ -5,19 +5,22 @@ let package = Package(
     name: "Crypto",
     products: [
         .library(name: "Crypto", targets: ["Crypto"]),
+        .library(name: "Pufferfish", targets: ["Pufferfish"]),
+        .library(name: "Random", targets: ["Random"]),
     ],
     dependencies: [
-        // Core types and helpers.
+        // Swift Promises, Futures, and Streams.
+        .package(url: "https://github.com/vapor/async.git", .branch("beta")),
+
+        // Core extensions, type-aliases, and functions that facilitate common tasks.
         .package(url: "https://github.com/vapor/core.git", .branch("beta")),
-
-        // Module for generating random bytes and numbers.
-        .package(url: "https://github.com/vapor/random.git", .branch("beta")),
-
-        // LibreSSL / OpenSSL module map for Swift.
-        .package(url: "https://github.com/vapor/ctls.git", .upToNextMajor(from: "1.1.0")),
     ],
     targets: [
-        .target(name: "Crypto", dependencies: ["Core", "Random"]),
+        .target(name: "Crypto", dependencies: ["Async", "Bits", "COperatingSystem", "Debugging"]),
         .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
+        .target(name: "Pufferfish"),
+        .testTarget(name: "PufferfishTests", dependencies: ["Pufferfish"]),
+        .target(name: "Random", dependencies: ["Bits"]),
+        .testTarget(name: "RandomTests", dependencies: ["Random"]),
     ]
 )
