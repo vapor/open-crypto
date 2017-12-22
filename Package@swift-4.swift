@@ -15,5 +15,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "Crypto", dependencies: ["CTLS", "Random"]),
+        .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
     ]
 )
