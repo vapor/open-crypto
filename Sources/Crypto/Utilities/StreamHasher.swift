@@ -16,9 +16,6 @@ public final class ByteStreamHasher<Hash>: Async.InputStream where Hash: Crypto.
 
     /// Any errors that have arisen while hashing
     private var error: Error?
-
-    /// The current output request
-    private var upstream: ConnectionContext?
     
     /// Creates a new ByteStreamHasher that can hash a stream of bytes
     public init() {}
@@ -33,13 +30,10 @@ public final class ByteStreamHasher<Hash>: Async.InputStream where Hash: Crypto.
     public func input(_ event: InputEvent<ByteBuffer>) {
         switch event {
         case .close: context.reset()
-        case .connect(let upstream):
-            self.upstream = upstream
-            upstream.request()
         case .error(let error): self.error = error
-        case .next(let input):
+        case .next(let input, let ready):
             context.update(input)
-            upstream?.request()
+            ready.complete()
         }
     }
 }

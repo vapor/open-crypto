@@ -2,7 +2,7 @@ import Async
 import Bits
 import Foundation
 
-public final class Base64Stream: Async.Stream, ConnectionContext {
+public final class Base64Stream: Async.Stream {
     /// Accepts Base64 encoded byte streams
     public typealias Input = ByteBuffer
 
@@ -18,34 +18,11 @@ public final class Base64Stream: Async.Stream, ConnectionContext {
     /// The bytes that couldn't be parsed from the previous buffer
     private var remainder: Data
 
-    /// Upstream output stream outputting byte buffers
-    private var upstream: ConnectionContext?
-
-    /// Current state
-    private var state: Base64StreamState
-
-    /// Remaining output requested
-    private var remainingOutputRequested: UInt
-
     /// Creates a Base64 coder with default buffer size and encoding
     init(base64: Base64) {
         self.base64 = base64
         remainder = .init()
-        state = .open
-        remainingOutputRequested = 0
         self.remainder.reserveCapacity(4)
-    }
-
-    public func connection(_ event: ConnectionEvent) {
-        switch event {
-        case .cancel:
-            upstream?.cancel()
-            remainingOutputRequested = 0
-        case .request(let count):
-            let isSuspended = remainingOutputRequested == 0
-            remainingOutputRequested += count
-            if isSuspended { update() }
-        }
     }
 
     public func input(_ event: InputEvent<ByteBuffer>) {
@@ -53,17 +30,14 @@ public final class Base64Stream: Async.Stream, ConnectionContext {
         case .close:
             do {
                 try complete()
-                update()
+                downstream?.close()
             } catch {
                 downstream?.error(error)
             }
-        case .connect(let upstream):
-            self.upstream = upstream
         case .error(let error): downstream?.error(error)
-        case .next(let input):
+        case .next(let input, let ready):
             do {
-                try processIncludingRemainder(input: input)
-                update()
+                try processIncludingRemainder(input: input, ready: ready)
             } catch {
                 downstream?.error(error)
             }
@@ -73,30 +47,12 @@ public final class Base64Stream: Async.Stream, ConnectionContext {
     /// See OutputStream.onOutput
     public func output<I>(to inputStream: I) where I: Async.InputStream, ByteBuffer == I.Input {
         downstream = AnyInputStream(inputStream)
-        inputStream.connect(to: self)
-    }
-
-
-    private func update() {
-        // if we have reminaing output, request more.
-        // otherwise, suspend
-        if remainingOutputRequested > 0 {
-            switch state {
-            case .open: upstream!.request()
-            case .closing(let buffer):
-                downstream?.next(buffer)
-                remainingOutputRequested -= 1
-                state = .closed
-            case .closed:
-                downstream?.close()
-            }
-        }
     }
 
     /// Processed the `input`'s `ByteBuffer` by Base64-encoding it
     ///
     /// Calls the `OutputHandler` with the Base64-encoded data
-    private func processIncludingRemainder(input: ByteBuffer) throws {
+    private func processIncludingRemainder(input: ByteBuffer, ready: Promise<Void>) throws {
         // If the remainder from previous processing attempts is not empty
         if remainder.count != 0 {
             // Create a new buffer for the input + the remainder
@@ -119,13 +75,13 @@ public final class Base64Stream: Async.Stream, ConnectionContext {
                 memcpy(newPointer.advanced(by: remainder.count), inputPointer, input.count)
             }
 
-            try process(input: ByteBuffer(start: newPointer, count: newPointerLength))
+            try process(input: ByteBuffer(start: newPointer, count: newPointerLength), ready: ready)
         } else {
-            try process(input: input)
+            try process(input: input, ready: ready)
         }
     }
 
-    private func process(input: ByteBuffer) throws {
+    private func process(input: ByteBuffer, ready: Promise<Void>) throws {
         self.remainder = Data()
 
         // Process the bytes into the local buffer `pointer`
@@ -138,8 +94,9 @@ public final class Base64Stream: Async.Stream, ConnectionContext {
 
         // Write the output buffer to the output stream
         if writeBuffer.count > 0 {
-            downstream?.next(writeBuffer)
-            remainingOutputRequested -= 1
+            downstream?.next(writeBuffer, ready)
+        } else {
+            ready.complete()
         }
 
         // If processing is complete
@@ -158,6 +115,7 @@ public final class Base64Stream: Async.Stream, ConnectionContext {
     ///
     /// Any data after this will reopen the stream
     private func complete() throws {
+        print(#function)
         if remainder.count > 0 {
             let buffer: ByteBuffer = try remainder.withUnsafeBytes { (pointer: BytesPointer) in
                 let buffer = ByteBuffer(start: pointer, count: remainder.count)
@@ -168,15 +126,9 @@ public final class Base64Stream: Async.Stream, ConnectionContext {
                 /// Create an output buffer (having to force cast an always-success case)
                 return ByteBuffer(start: base64.pointer, count: capacity)
             }
-            state = .closing(buffer)
-        } else {
-            state = .closed
+
+            // ignore next ready since we are closing
+            _ = downstream?.next(buffer)
         }
     }
-}
-
-fileprivate enum Base64StreamState {
-    case open
-    case closing(ByteBuffer)
-    case closed
 }
