@@ -15,36 +15,33 @@ class Base64Tests: XCTestCase {
     }
     
     func testStreaminingEncoding() throws {
-        let input = EmitterStream<ByteBuffer>()
+        let input = PushStream(ByteBuffer.self)
         var buffer = ""
         
         let encoderStream = Base64Encoder(bufferCapacity: 100).stream()
 
-        var upstream: ConnectionContext?
-        input.stream(to: encoderStream).drain { req in
-            upstream = req
-            req.request()
-        }.output { bytes in
+        input.stream(to: encoderStream).drain { bytes in
             buffer += String(bytes: bytes, encoding: .utf8)!
-            upstream!.request()
         }.catch { err in
             XCTFail("\(err)")
         }.finally {
             // done
         }
-        
+
+        XCTAssertEqual(buffer, "")
         Data("tes".utf8).withUnsafeBytes { (pointer: BytesPointer) in
-            input.emit(ByteBuffer(start: pointer, count: 1))
-            input.emit(ByteBuffer(start: pointer.advanced(by: 1), count: 2))
+            input.push(ByteBuffer(start: pointer, count: 1))
+            input.push(ByteBuffer(start: pointer.advanced(by: 1), count: 2))
         }
-        
+
+        XCTAssertEqual(buffer, "")
         Data("t1".utf8).withUnsafeBytes { (pointer: BytesPointer) in
-            input.emit(ByteBuffer(start: pointer, count: 1))
-            input.emit(ByteBuffer(start: pointer.advanced(by: 1), count: 1))
+            input.push(ByteBuffer(start: pointer, count: 1))
+            input.push(ByteBuffer(start: pointer.advanced(by: 1), count: 1))
         }
-        
+
+        XCTAssertEqual(buffer, "dGVz")
         input.close()
-        
         XCTAssertEqual(buffer, "dGVzdDE=")
     }
     
