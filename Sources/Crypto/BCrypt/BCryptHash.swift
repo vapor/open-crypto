@@ -41,11 +41,11 @@ public final class BCrypt {
     }
     
     deinit {
-        p.deinitialize()
-        p.deallocate(capacity: Key.p.count)
+        p.deinitialize(count: Key.p.count)
+        p.deallocate()
         
-        s.deinitialize()
-        s.deallocate(capacity: Key.s.count)
+        s.deinitialize(count: Key.s.count)
+        s.deallocate()
     }
     
     func digest(message: inout Data) -> Data {
@@ -167,9 +167,9 @@ public final class BCrypt {
         var lr: [UInt32] = [0, 0]
         let plen: Int = 18
         let slen: Int = 1024
-        
+
+        let keyLength = key.count
         key.withUnsafeMutableBytes { (keyPointer: MutableBytesPointer) in
-            let keyLength = key.count
             
             for i in 0..<plen {
                 p[i] = p[i] ^ streamToWord(with: keyPointer, length: keyLength, off: &koffp)
@@ -200,12 +200,12 @@ public final class BCrypt {
         var doffp: UInt32 = 0
         
         var lr: [UInt32] = [0, 0]
-        
+
+        let keyLength: Int = key.count
+        let dataLength: Int = data.count
+
         key.withUnsafeMutableBytes { (keyPointer: MutableBytesPointer) in
-            let keyLength: Int = key.count
             data.withUnsafeMutableBytes { (dataPointer: MutableBytesPointer) in
-                let dataLength: Int = data.count
-                
                 for i in 0..<Key.p.count {
                     p[i] = p[i] ^ streamToWord(with: keyPointer, length: keyLength, off: &koffp)
                 }

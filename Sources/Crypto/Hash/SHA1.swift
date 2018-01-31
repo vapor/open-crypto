@@ -37,7 +37,7 @@ public final class SHA1 : Hash {
     }
     
     deinit {
-        self.remainder.deallocate(capacity: 63)
+        self.remainder.deallocate()
     }
     
     public var hash: Data {

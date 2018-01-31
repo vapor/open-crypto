@@ -21,7 +21,7 @@ public final class SHA512 : SHA2_64 {
     public var totalLength: UInt64 = 0
     
     deinit {
-        self.remainder.deallocate(capacity: 127)
+        self.remainder.deallocate()
     }
     
     /// The resulting hash
@@ -111,7 +111,7 @@ public final class SHA384: SHA2_64 {
     public var totalLength: UInt64 = 0
     
     deinit {
-        self.remainder.deallocate(capacity: 127)
+        self.remainder.deallocate()
     }
     
     /// The resulting hash
