@@ -147,12 +147,12 @@ public final class Base64Encoder: Base64 {
         self.encoding = encoding
         self.allocatedCapacity = (bufferCapacity / 3) * 4 &+ ((bufferCapacity % 3 > 0) ? 1 : 0)
         self.pointer = MutableBytesPointer.allocate(capacity: self.allocatedCapacity)
-        self.pointer.initialize(to: 0, count: self.allocatedCapacity)
+        self.pointer.initialize(repeating: 0, count: self.allocatedCapacity)
     }
     
     deinit {
         self.pointer.deinitialize(count: self.allocatedCapacity)
-        self.pointer.deallocate(capacity: self.allocatedCapacity)
+        self.pointer.deallocate()
     }
     
     /// Encodes the incoming data
@@ -169,7 +169,7 @@ public final class Base64Encoder: Base64 {
             
             defer {
                 pointer.deinitialize(count: bytes.count)
-                pointer.deallocate(capacity: bytes.count)
+                pointer.deallocate()
             }
             
             memcpy(pointer, input, bytes.count)
@@ -193,7 +193,7 @@ public final class Base64Encoder: Base64 {
         
         defer {
             pointer.deinitialize(count: characters)
-            pointer.deallocate(capacity: characters)
+            pointer.deallocate()
         }
         
         return encode(buffer: ByteBuffer(start: pointer, count: characters)) { buffer in
@@ -215,13 +215,13 @@ public final class Base64Encoder: Base64 {
         let allocatedCapacity = ((buffer.count / 3) * 4) &+ ((buffer.count % 3 > 0) ? 4 : 0)
         
         let pointer = MutableBytesPointer.allocate(capacity: allocatedCapacity)
-        pointer.initialize(to: 0, count: allocatedCapacity)
+        pointer.initialize(repeating: 0, count: allocatedCapacity)
         
         let result = process(buffer, toPointer: pointer, capacity: allocatedCapacity, finish: true)
         
         defer {
             pointer.deinitialize(count: allocatedCapacity)
-            pointer.deallocate(capacity: allocatedCapacity)
+            pointer.deallocate()
         }
         
         return try handle(MutableByteBuffer(start: pointer, count: result.filled))

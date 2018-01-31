@@ -1,6 +1,6 @@
 import Foundation
 
-extension Swift.Collection where Iterator.Element == UInt8, IndexDistance == Int {
+extension Swift.Collection where Self.Iterator.Element == UInt8 {
     /// Transforms 
     public var hexString: String {
         var bytes = Data()
@@ -21,7 +21,7 @@ extension UnsafeMutableBufferPointer where Element == UInt8 {
     /// Deallocates this buffer
     public func dealloc() {
         self.baseAddress?.deinitialize(count: self.count)
-        self.baseAddress?.deallocate(capacity: self.count)
+        self.baseAddress?.deallocate()
     }
     
     /// Creates a string from this buffer

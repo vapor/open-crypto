@@ -58,11 +58,11 @@ public final class Base64Stream: Async.Stream {
             // Create a new buffer for the input + the remainder
             let newPointerLength = remainder.count &+ input.count
             let newPointer = MutableBytesPointer.allocate(capacity: newPointerLength)
-            newPointer.initialize(to: 0, count: newPointerLength)
+            newPointer.initialize(repeating: 0, count: newPointerLength)
 
             defer {
                 newPointer.deinitialize(count: newPointerLength)
-                newPointer.deallocate(capacity: newPointerLength)
+                newPointer.deallocate()
             }
 
             // Set the remainder

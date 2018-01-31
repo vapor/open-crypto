@@ -21,7 +21,7 @@ public final class SHA256 : SHA2_32 {
     public var totalLength: UInt64 = 0
     
     deinit {
-        self.remainder.deallocate(capacity: 63)
+        self.remainder.deallocate()
     }
     
     /// The resulting hash
@@ -106,7 +106,7 @@ public final class SHA224 : SHA2_32 {
     public var totalLength: UInt64 = 0
     
     deinit {
-        self.remainder.deallocate(capacity: 63)
+        self.remainder.deallocate()
     }
     
     /// The resulting hash
