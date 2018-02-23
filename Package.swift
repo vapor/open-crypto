@@ -1,13 +1,26 @@
-// swift-tools-version:3.0
+// swift-tools-version:4.0
 import PackageDescription
 
 let package = Package(
     name: "Crypto",
+    products: [
+        .library(name: "Crypto", targets: ["Crypto"]),
+        .library(name: "Pufferfish", targets: ["Pufferfish"]),
+        .library(name: "Random", targets: ["Random"]),
+    ],
     dependencies: [
-        // Module for generating random bytes and numbers.
-        .Package(url: "https://github.com/vapor/random.git", majorVersion: 1),
+        // ⏱ Promises and reactive-streams in Swift built for high-performance and scalability.
+        .package(url: "https://github.com/vapor/async.git", from: "1.0.0-rc"),
 
-        // LibreSSL / OpenSSL module map for Swift.
-        .Package(url: "https://github.com/vapor/ctls.git", majorVersion: 1),
+        // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
+        .package(url: "https://github.com/vapor/core.git", from: "3.0.0-rc"),
+    ],
+    targets: [
+        .target(name: "Crypto", dependencies: ["Async", "Bits", "COperatingSystem", "Debugging"]),
+        .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
+        .target(name: "Pufferfish"),
+        .testTarget(name: "PufferfishTests", dependencies: ["Pufferfish"]),
+        .target(name: "Random", dependencies: ["Bits"]),
+        .testTarget(name: "RandomTests", dependencies: ["Random"]),
     ]
 )
