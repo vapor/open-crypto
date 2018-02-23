@@ -1,9 +1,9 @@
 <p align="center">
-    <img src="https://cloud.githubusercontent.com/assets/1977704/25426268/dd56bcba-2a6e-11e7-9d84-f447ba94b1a8.png" width="320" alt="Crypto">
+    <img src="https://user-images.githubusercontent.com/1342803/36575535-7278593c-1819-11e8-8104-69c10892a317.png" height="64" alt="Crypto">
     <br>
     <br>
     <a href="https://docs.vapor.codes/3.0/crypto/getting-started/">
-        <img src="http://img.shields.io/badge/read_the-docs-92A8D1.svg" alt="Documentation">
+        <img src="http://img.shields.io/badge/read_the-docs-2196f3.svg" alt="Documentation">
     </a>
     <a href="http://vapor.team">
         <img src="http://vapor.team/badge.svg" alt="Slack Team">
@@ -15,6 +15,6 @@
         <img src="https://circleci.com/gh/vapor/crypto.svg?style=shield" alt="Continuous Integration">
     </a>
     <a href="https://swift.org">
-        <img src="http://img.shields.io/badge/swift-4.0-brightgreen.svg" alt="Swift 4.0">
+        <img src="http://img.shields.io/badge/swift-4.1-brightgreen.svg" alt="Swift 4.1">
     </a>
 </p>
