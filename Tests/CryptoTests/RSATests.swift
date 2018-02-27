@@ -3,21 +3,27 @@ import Bits
 import Crypto
 
 class RSATests: XCTestCase {
-    func testBasic() throws {
+    func testPrivateKey() throws {
         let privateKey = try Base64Decoder(encoding: .base64).decode(string: privateKeyString)
-        let publicKey = try Base64Decoder(encoding: .base64).decode(string: publicKeyString)
         let plaintext = Data("vapor".utf8)
-        let rsa = RSA(privateKey: privateKey, publicKey: publicKey)
-        let sig = try rsa.makeCiphertext(from: plaintext)
-        let matches = try rsa.verifyCiphertext(sig, matches: plaintext)
-        XCTAssertEqual(matches, true)
+        let rsa = RSA(key: .private2048(privateKey))
+        try XCTAssertTrue(rsa.verify(signature: rsa.sign(plaintext), matches: plaintext))
     }
 
+    func testPublicKey() throws {
+        let publicKey = try Base64Decoder(encoding: .base64).decode(string: publicKeyString)
+        let plaintext = Data("vapor".utf8)
+        let rsa = RSA(key: .public2048(publicKey))
+        try XCTAssertTrue(rsa.verify(signature: testSignature, matches: plaintext))
+    }
 
     static var allTests = [
-        ("testBasic", testBasic),
+        ("testPrivateKey", testPrivateKey),
+        ("testPublicKey", testPublicKey),
     ]
 }
+
+let testSignature = Data([89, 214, 169, 236, 21, 246, 207, 217, 142, 28, 105, 179, 141, 64, 202, 250, 90, 130, 245, 201, 158, 123, 23, 75, 95, 235, 116, 103, 240, 91, 211, 185, 117, 143, 222, 94, 247, 165, 211, 71, 97, 251, 23, 3, 160, 69, 127, 22, 112, 251, 111, 196, 212, 36, 255, 229, 91, 79, 220, 158, 241, 117, 253, 95, 23, 196, 41, 54, 96, 191, 42, 126, 249, 32, 110, 147, 165, 231, 108, 29, 231, 75, 80, 104, 217, 157, 134, 198, 138, 111, 188, 235, 171, 100, 59, 21, 244, 33, 176, 234, 22, 77, 202, 164, 38, 50, 183, 16, 45, 106, 225, 228, 20, 136, 87, 204, 192, 243, 177, 208, 157, 151, 194, 252, 223, 152, 165, 34, 143, 125, 162, 51, 162, 86, 203, 191, 216, 170, 184, 67, 145, 6, 75, 46, 66, 203, 47, 54, 106, 98, 136, 143, 190, 234, 233, 113, 132, 217, 61, 25, 73, 202, 30, 210, 185, 5, 52, 153, 165, 119, 215, 196, 79, 118, 83, 79, 184, 142, 255, 54, 209, 12, 227, 247, 63, 228, 84, 92, 109, 84, 238, 132, 29, 8, 175, 156, 97, 156, 176, 67, 24, 95, 182, 27, 191, 44, 117, 163, 89, 253, 105, 212, 81, 80, 130, 217, 24, 99, 34, 21, 103, 225, 60, 201, 54, 16, 132, 15, 22, 139, 41, 96, 74, 173, 224, 128, 63, 9, 238, 59, 102, 250, 44, 63, 66, 13, 82, 98, 93, 163, 73, 142, 74, 125, 172, 247])
 
 let privateKeyString = """
 MIIEpAIBAAKCAQEAk+dWlCTQIr85rtUi56yD6FT6vuG68Q9xJ4B9bAo4wys+ndlP
