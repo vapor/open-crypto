@@ -3,37 +3,68 @@
 import Foundation
 import COpenSSL
 
+extension RSAHashAlgorithm {
+    var opensslHash: Int32 {
+        switch self {
+        case .sha1: return NID_sha1
+        case .sha224: return NID_sha224
+        case .sha256: return NID_sha256
+        case .sha384: return NID_sha384
+        case .sha512: return NID_sha512
+        }
+    }
+}
+
 struct OpenSSLRSA {
     static func sign(_ input: Data, for rsa: RSA) throws -> Data {
         let key = try rsa.key.makeOpenSSLKey()
 
-        // verify private
-
         var siglen: UInt32 = 0
-        var sig = [UInt8](
+        var sig = Data(
             repeating: 0,
             count: Int(RSA_size(key.cKey))
         )
 
-        let digest = try Hash(hashMethod.method, message).hash()
+        switch rsa.paddingScheme {
+        case .pkcs1: break
+        case .pss: throw RSAError(identifier: "paddingScheme", reason: "RSA PSS not yet supported on Linux. Use PKCS#1.")
+        }
+
+        var input = input
+
+        switch rsa.inputFormat {
+        case .digest: break // leave input as is
+        case .message:
+            switch rsa.hashAlgorithm {
+            case .sha1: input = SHA1.hash(input)
+            case .sha224: input = SHA224.hash(input)
+            case .sha256: input = SHA256.hash(input)
+            case .sha384: input = SHA384.hash(input)
+            case .sha512: input = SHA512.hash(input)
+            }
+        }
 
         let ret = RSA_sign(
-            hashMethod.type,
-            digest,
-            UInt32(digest.count),
-            &sig,
+            rsa.hashAlgorithm.opensslHash,
+            input.withUnsafeBytes { $0 },
+            UInt32(input.count),
+            sig.withUnsafeMutableBytes { $0 },
             &siglen,
-            cKey
+            key.cKey
         )
 
         guard ret == 1 else {
-            let reason: UnsafeMutablePointer<Int8>? = nil
-            ERR_error_string(ERR_get_error(), reason)
-            if let reason = reason {
-                let string = String(validatingUTF8: reason) ?? ""
-                print("[JWT] Signing error: \(string)")
+            let errmsg: UnsafeMutablePointer<Int8>? = nil
+            ERR_error_string(ERR_get_error(), errmsg)
+
+            let reason: String
+            if let e = errmsg {
+                reason = String(validatingUTF8: e) ?? "unknown (invalid error message UTF8)"
+            } else {
+                reason = "unknown"
             }
-            throw JWTError.signing
+
+            throw RSAError(identifier: "paddingScheme", reason: "RSA signing error: \(reason).")
         }
 
         return sig
@@ -41,14 +72,36 @@ struct OpenSSLRSA {
 
     static func verify(signature: Data, matches input: Data, for rsa: RSA) throws -> Bool {
         let key = try rsa.key.makeOpenSSLKey()
+        var input = input
 
+        switch rsa.inputFormat {
+        case .digest: break // leave input as is
+        case .message:
+            switch rsa.hashAlgorithm {
+            case .sha1: input = SHA1.hash(input)
+            case .sha224: input = SHA224.hash(input)
+            case .sha256: input = SHA256.hash(input)
+            case .sha384: input = SHA384.hash(input)
+            case .sha512: input = SHA512.hash(input)
+            }
+        }
+
+        let result = RSA_verify(
+            rsa.hashAlgorithm.opensslHash,
+            input.withUnsafeBytes { $0 },
+            UInt32(input.count),
+            signature.withUnsafeBytes { $0 },
+            UInt32(signature.count),
+            key.cKey
+        )
+        return result == 1
     }
 }
 
 final class CRSAKey {
-    let cKey: UnsafeMutablePointer<RSA>
+    let cKey: UnsafeMutablePointer<rsa_st>
 
-    init(cKey: UnsafeMutablePointer<RSA>) {
+    init(cKey: UnsafeMutablePointer<rsa_st>) {
         self.cKey = cKey
     }
 
@@ -59,16 +112,14 @@ final class CRSAKey {
 
 extension RSAKey {
     func makeOpenSSLKey() throws -> CRSAKey {
-        let maybeKey = data.withUnsafeBufferPointer { ptr -> UnsafeMutablePointer<RSA>? in
-            var base = ptr.baseAddress
+        let cKey = data.withUnsafeBytes { (ptr: UnsafePointer<UInt8>?) -> UnsafeMutablePointer<rsa_st> in
+            var vptr = ptr
+            let key: UnsafeMutablePointer<rsa_st>
             switch type {
-            case .public: return d2i_RSA_PUBKEY(nil, &base, data.count)
-            case .private: return d2i_RSAPrivateKey(nil, &base, data.count)
+            case .public: key = d2i_RSA_PUBKEY(nil, &vptr, data.count)
+            case .private: key = d2i_RSAPrivateKey(nil, &vptr, data.count)
             }
-        }
-
-        guard let cKey = maybeKey else {
-            fatalError()
+            return key
         }
         return CRSAKey(cKey: cKey)
     }

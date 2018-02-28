@@ -16,9 +16,9 @@ struct AppleRSA {
     static func sign(_ input: Data, for rsa: RSA) throws -> Data {
         if #available(OSX 10.12, *) {
             let key = try rsa.makeSecKey()
-            let algorithm: SecKeyAlgorithm = rsa.secAlgorithm
+            let algorithm: SecKeyAlgorithm = try rsa.secAlgorithm()
             guard SecKeyIsAlgorithmSupported(key, .sign, algorithm) else {
-                fatalError()
+                throw RSAError(identifier: "sign", reason: "The chosen key and algorithm are not suitable for RSA signing.")
             }
 
             var error: Unmanaged<CFError>?
@@ -33,7 +33,7 @@ struct AppleRSA {
 
             return signature
         } else {
-            fatalError("macOS 10.12 or later required for RSA")
+            throw RSAError(identifier: "sign", reason: "macOS 10.12 or later required for RSA signing.")
         }
     }
 
@@ -44,9 +44,9 @@ struct AppleRSA {
         case .public:
             if #available(OSX 10.12, *) {
                 let key = try rsa.makeSecKey()
-                let algorithm: SecKeyAlgorithm = rsa.secAlgorithm
+                let algorithm: SecKeyAlgorithm = try rsa.secAlgorithm()
                 guard SecKeyIsAlgorithmSupported(key, .verify, algorithm) else {
-                    fatalError()
+                    throw RSAError(identifier: "verify", reason: "The chosen key and algorithm are not suitable for RSA verification.")
                 }
 
                 var error: Unmanaged<CFError>?
@@ -57,12 +57,13 @@ struct AppleRSA {
                     signature as CFData,
                     &error
                 )
-                if let error = error?.takeRetainedValue() {
-                    throw error as Error
+                if error == nil {
+                    return value
+                } else {
+                    return false
                 }
-                return value
             } else {
-                fatalError("macOS 10.12 or later required for RSA")
+                throw RSAError(identifier: "verify", reason: "macOS 10.12 or later required for RSA verification.")
             }
         }
     }
@@ -88,7 +89,7 @@ extension RSA {
     }
 
     @available(OSX 10.12, *)
-    var secAlgorithm: SecKeyAlgorithm {
+    func secAlgorithm() throws -> SecKeyAlgorithm {
         switch inputFormat {
         case .digest:
             switch paddingScheme {
@@ -110,7 +111,7 @@ extension RSA {
                     case .sha512: return .rsaSignatureDigestPSSSHA512
                     }
                 } else {
-                    fatalError()
+                    throw RSAError(identifier: "secAlgorithm", reason: "macOS 10.13 or later required for RSA PSS.")
                 }
             }
         case .message:
@@ -133,7 +134,7 @@ extension RSA {
                     case .sha512: return .rsaSignatureMessagePSSSHA512
                     }
                 } else {
-                    fatalError()
+                    throw RSAError(identifier: "secAlgorithm", reason: "macOS 10.13 or later required for RSA PSS.")
                 }
             }
         }

@@ -1,3 +1,4 @@
+import Debugging
 import Foundation
 
 /// Represents an in-memory RSA key.
@@ -107,17 +108,26 @@ public struct RSA {
         #if os(macOS)
         return try AppleRSA.sign(input, for: self)
         #else
-        fatalError("Only macOS supported.")
+        return try OpenSSLRSA.sign(input, for: self)
         #endif
     }
 
     /// Verifies a signature *created using RSA with identical hash and padding settings)
     /// matches supplied input (in format specified by `inputFormat`).
-    public func verify(signature: Data, matches input: Data) throws -> Bool {
+    public func verify(_ signature: Data, signs input: Data) throws -> Bool {
         #if os(macOS)
         return try AppleRSA.verify(signature: signature, matches: input, for: self)
         #else
-        fatalError("Only macOS supported.")
+        return try OpenSSLRSA.verify(signature: signature, matches: input, for: self)
         #endif
     }
+}
+
+/// An error encountered while working with RSA ciphers.
+public struct RSAError: Debuggable {
+    /// See `Debuggable.identifier`
+    public var identifier: String
+
+    /// See `Debuggable.reason`
+    public var reason: String
 }

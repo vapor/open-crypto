@@ -7,19 +7,27 @@ class RSATests: XCTestCase {
         let privateKey = try Base64Decoder(encoding: .base64).decode(string: privateKeyString)
         let plaintext = Data("vapor".utf8)
         let rsa = RSA(key: .private2048(privateKey))
-        try XCTAssertTrue(rsa.verify(signature: rsa.sign(plaintext), matches: plaintext))
+        try XCTAssertTrue(rsa.verify(rsa.sign(plaintext), signs: plaintext))
     }
 
     func testPublicKey() throws {
         let publicKey = try Base64Decoder(encoding: .base64).decode(string: publicKeyString)
         let plaintext = Data("vapor".utf8)
         let rsa = RSA(key: .public2048(publicKey))
-        try XCTAssertTrue(rsa.verify(signature: testSignature, matches: plaintext))
+        try XCTAssertTrue(rsa.verify(testSignature, signs: plaintext))
+    }
+
+    func testFailure() throws {
+        let plaintext = Data("vapor".utf8)
+        let publicKey = try Base64Decoder(encoding: .base64).decode(string: publicKeyString)
+        let rsa = RSA(key: .public2048(publicKey))
+        try XCTAssertFalse(rsa.verify(Data("fake".utf8), signs: plaintext))
     }
 
     static var allTests = [
         ("testPrivateKey", testPrivateKey),
         ("testPublicKey", testPublicKey),
+        ("testFailure", testFailure),
     ]
 }
 

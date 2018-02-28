@@ -16,7 +16,6 @@ let package = Package(
         .package(url: "https://github.com/vapor/core.git", from: "3.0.0-rc"),
     ],
     targets: [
-        .target(name: "Crypto", dependencies: ["Async", "Bits", "COperatingSystem", "Debugging"]),
         .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
         .target(name: "Pufferfish"),
         .testTarget(name: "PufferfishTests", dependencies: ["Pufferfish"]),
@@ -24,3 +23,10 @@ let package = Package(
         .testTarget(name: "RandomTests", dependencies: ["Random"]),
     ]
 )
+
+#if os(macOS)
+package.targets.append(.target(name: "Crypto", dependencies: ["Async", "Bits", "COperatingSystem", "Debugging"]))
+#else
+package.dependencies.append(.package(url: "https://github.com/vapor/copenssl.git", from: "1.0.0-rc"))
+package.targets.append(.target(name: "Crypto", dependencies: ["Async", "Bits", "COperatingSystem", "COpenSSL", "Debugging"]))
+#endif
