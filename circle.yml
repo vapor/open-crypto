@@ -12,6 +12,8 @@ jobs:
     docker:
       - image: norionomura/swift:swift-4.1-branch
     steps:
+      - run: apt-get update
+      - run: apt-get install -yq libssl-dev
       - checkout
       - run: swift build
       - run: swift test
