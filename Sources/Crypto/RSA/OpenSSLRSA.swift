@@ -17,6 +17,11 @@ extension RSAHashAlgorithm {
 
 struct OpenSSLRSA {
     static func sign(_ input: Data, for rsa: RSA) throws -> Data {
+        switch rsa.key.type {
+        case .public: throw RSAError(identifier: "sign", reason: "Cannot create RSA signature with a public key. A private key is required.")
+        case .private: break
+        }
+
         let key = try rsa.key.makeOpenSSLKey()
 
         var siglen: UInt32 = 0
