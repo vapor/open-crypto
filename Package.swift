@@ -5,7 +5,6 @@ let package = Package(
     name: "Crypto",
     products: [
         .library(name: "Crypto", targets: ["Crypto"]),
-        .library(name: "Pufferfish", targets: ["Pufferfish"]),
         .library(name: "Random", targets: ["Random"]),
     ],
     dependencies: [
@@ -17,8 +16,6 @@ let package = Package(
     ],
     targets: [
         .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
-        .target(name: "Pufferfish"),
-        .testTarget(name: "PufferfishTests", dependencies: ["Pufferfish"]),
         .target(name: "Random", dependencies: ["Bits"]),
         .testTarget(name: "RandomTests", dependencies: ["Random"]),
     ]
