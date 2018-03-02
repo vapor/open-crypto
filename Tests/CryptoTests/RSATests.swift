@@ -4,14 +4,14 @@ import Crypto
 
 class RSATests: XCTestCase {
     func testPrivateKey() throws {
-        let privateKey = Base64.regular.decode(Data(privateKeyString.utf8))
+        let privateKey = privateKeyString.base64Decoded()
         let plaintext = Data("vapor".utf8)
         let rsa = RSA(key: .private2048(privateKey))
         try XCTAssertTrue(rsa.verify(rsa.sign(plaintext), signs: plaintext))
     }
 
     func testPublicKey() throws {
-        let publicKey = Base64.regular.decode(Data(publicKeyString.utf8))
+        let publicKey = publicKeyString.base64Decoded()
         let plaintext = Data("vapor".utf8)
         let rsa = RSA(key: .public2048(publicKey))
         try XCTAssertTrue(rsa.verify(testSignature, signs: plaintext))
@@ -19,7 +19,7 @@ class RSATests: XCTestCase {
 
     func testFailure() throws {
         let plaintext = Data("vapor".utf8)
-        let publicKey = Base64.regular.decode(Data(publicKeyString.utf8))
+        let publicKey = publicKeyString.base64Decoded()
         let rsa = RSA(key: .public2048(publicKey))
         try XCTAssertFalse(rsa.verify(Data("fake".utf8), signs: plaintext))
     }
