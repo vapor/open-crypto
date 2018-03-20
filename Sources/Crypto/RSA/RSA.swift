@@ -33,7 +33,7 @@ public struct RSA {
     /// returning signature data.
     public func sign(_ input: DataRepresentable) throws -> Data {
         switch key.type {
-        case .public: throw RSAError(identifier: "sign", reason: "Cannot create RSA signature with a public key. A private key is required.")
+        case .public: throw CryptoError(identifier: "rsaSign", reason: "Cannot create RSA signature with a public key. A private key is required.")
         case .private: break
         }
 
@@ -45,7 +45,7 @@ public struct RSA {
 
         switch paddingScheme {
         case .pkcs1: break
-        case .pss: throw RSAError(identifier: "paddingScheme", reason: "RSA PSS not yet supported on Linux. Use PKCS#1.")
+        case .pss: throw CryptoError(identifier: "rsaPaddingScheme", reason: "RSA PSS not yet supported on Linux. Use PKCS#1.")
         }
 
         var input = try input.makeData()
@@ -72,7 +72,7 @@ public struct RSA {
         )
 
         guard ret == 1 else {
-            throw RSAError.c(identifier: "sign", reason: "Signature creation failed")
+            throw CryptoError.openssl(identifier: "rsaSign", reason: "RSA signature creation failed")
         }
 
         return sig

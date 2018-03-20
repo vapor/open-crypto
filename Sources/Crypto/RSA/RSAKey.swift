@@ -64,7 +64,7 @@ final class CRSAKey {
 
         if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
-                throw RSAError.c(identifier: "x509", reason: "Key creation from certificate failed")
+                throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
             }
 
             defer { X509_free(x509) }
@@ -77,13 +77,12 @@ final class CRSAKey {
         }
 
         guard let pkey = maybePkey else {
-            print("type: \(type) x509: \(x509)")
-            throw RSAError.c(identifier: "pkeynull", reason: "Key creation failed")
+            throw CryptoError.openssl(identifier: "rsaPkeyNull", reason: "RSA key creation failed")
         }
         defer { EVP_PKEY_free(pkey) }
 
         guard let rsa = EVP_PKEY_get1_RSA(pkey) else {
-            throw RSAError.c(identifier: "pkeyget1", reason: "Key creation failed")
+            throw CryptoError.openssl(identifier: "rsaPkeyGet1", reason: "RSA key creation failed")
         }
         return .init(rsa)
     }

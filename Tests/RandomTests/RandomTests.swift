@@ -18,17 +18,17 @@ class RandomTests: XCTestCase {
     func testOSRandom() throws {
         let rand = try OSRandom().makeInt64()
         print(rand)
-        let bytes = OSRandom().bytes(count: 32)
+        let bytes = OSRandom().generateData(count: 32)
         print(String(data: bytes, encoding: .utf8) ?? "n/a")
     }
 
     func testURandomCount() throws {
-        let rand = try URandom().bytes(count: 65_536)
+        let rand = try URandom().generateData(count: 65_536)
         XCTAssertEqual(rand.count, 65_536)
     }
 
     func testForTrailingZeros() throws {
-        let rand = try URandom().bytes(count: 65_536)
+        let rand = try URandom().generateData(count: 65_536)
         let tail = Bytes(rand.suffix(8))
         let zeros = Bytes(repeating: 0, count: 8)
         XCTAssertNotEqual(tail, zeros)

@@ -15,7 +15,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "1.0.0"),
     ],
     targets: [
-        .target(name: "Crypto", dependencies: ["Async", "Bits", "COperatingSystem", "Debugging", "NIOOpenSSL"]),
+        .target(name: "Crypto", dependencies: ["Async", "Bits", "COperatingSystem", "Debugging", "NIOOpenSSL", "Random"]),
         .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
         .target(name: "Random", dependencies: ["Bits"]),
         .testTarget(name: "RandomTests", dependencies: ["Random"]),

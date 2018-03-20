@@ -7,7 +7,7 @@ extension Array {
         }
         
         let random = OSRandom()
-            .bytes(count: MemoryLayout<UInt>.size)
+            .generateData(count: MemoryLayout<UInt>.size)
             .cast(to: UInt.self)
         
         let index = random % UInt(count)

@@ -49,6 +49,13 @@ class RSATests: XCTestCase {
         try XCTAssertTrue(rsaPublic.verify(rsaPrivate.sign(plaintext), signs: plaintext))
     }
 
+    func testRand() throws {
+        let rand = CryptoRandom()
+        let data1 = try rand.generateData(count: 4)
+        let data2 = try rand.generateData(count: 4)
+        XCTAssertNotEqual(data1.hexDebug, data2.hexDebug)
+    }
+
     static var allTests = [
         ("testPrivateKey", testPrivateKey),
         ("testPublicKey", testPublicKey),
@@ -57,6 +64,7 @@ class RSATests: XCTestCase {
         ("testKey2048", testKey2048),
         ("testKey4096", testKey4096),
         ("testKeyCert", testKeyCert),
+        ("testRand", testRand),
     ]
 }
 

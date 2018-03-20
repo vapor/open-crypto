@@ -1,8 +1,9 @@
 import Foundation
+import Random
 
 extension BCrypt {
     public struct Salt {
-        public static var defaultRandom: RandomProtocol = OSRandom()
+        public static var defaultRandom: DataGenerator = OSRandom()
         public static var defaultCost: UInt = 12
         
         public enum Version {
@@ -21,7 +22,7 @@ extension BCrypt {
         var bytes: Data
         
         public init(_ version: Version = .two(.y), cost: UInt = Salt.defaultCost, bytes: Data? = nil) throws {
-            let bytes = try bytes ?? Salt.defaultRandom.data(count: 16)
+            let bytes = try bytes ?? Salt.defaultRandom.generateData(count: 16)
             
             guard bytes.count == 16 else {
                 throw Error.invalidSaltByteCount

@@ -39,7 +39,7 @@ public final class URandom: DataGenerator {
     }
 
     /// Get a random array of Bytes
-    public func bytes(count: Int) throws -> Data {
+    public func generateData(count: Int) throws -> Data {
         return try read(numBytes: count)
     }
 }

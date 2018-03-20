@@ -11,7 +11,7 @@ public final class OSRandom: DataGenerator {
     public init() {}
 
     /// Get a random array of Bytes
-    public func bytes(count: Int) -> Data {
+    public func generateData(count: Int) -> Data {
         var bytes = Data()
 
         for _ in 0..<count {
