@@ -4,9 +4,6 @@ import Foundation
 
 /// Represents an in-memory RSA key.
 public struct RSAKey {
-    /// The bit-count of this RSA key.
-    public var bits: Int
-
     /// The specific RSA key type. Either public or private.
     ///
     /// Note: public keys can only verify signatures. A private key
@@ -17,17 +14,24 @@ public struct RSAKey {
     internal let c: CRSAKey
 
     /// Creates a new `RSAKey` from a public or private key.
-    public init(bits: Int, type: RSAKeyType, key: DataRepresentable) throws {
-        self.bits = bits
+    internal init(type: RSAKeyType, key: CRSAKey) throws {
         self.type = type
-        self.c = try .make(type: type, from: key.makeData())
+        self.c = key
     }
 
-    /// Creates a new `RSAKey` from a certificate.
-    public init(bits: Int, certificate: DataRepresentable) throws {
-        self.bits = bits
-        self.type = .public
-        self.c = try .make(type: .public, from: certificate.makeData(), x509: true)
+    /// Creates a new `RSAKey` from a private key pem file.
+    public static func `private`(pem: DataRepresentable) throws -> RSAKey {
+        return try .init(type: .private, key: .make(type: .private, from: pem.makeData()))
+    }
+
+    /// Creates a new `RSAKey` from a public key pem file.
+    public static func `public`(pem: DataRepresentable) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: pem.makeData()))
+    }
+
+    /// Creates a new `RSAKey` from a public key certificate file.
+    public static func `public`(certificate: DataRepresentable) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: certificate.makeData(), x509: true))
     }
 }
 
