@@ -29,6 +29,7 @@ jobs:
     docker:
       - image: codevapor/swift:4.1
     steps:
+      - run:
           name: Clone Vapor
           command: git clone -b nio https://github.com/vapor/vapor.git
           working_directory: ~/
