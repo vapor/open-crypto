@@ -54,7 +54,7 @@ extension Hash {
     /// Processes the contents of this ByteBuffer and returns the resulting hash
     ///
     /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#hashing-blobs-of-data)
-    public static func hash(_ data: ByteBuffer) -> Data {
+    public static func hash(_ data: BytesBufferPointer) -> Data {
         let h = Self()
         
         h.finalize(data)
@@ -76,7 +76,7 @@ extension Hash {
     /// Then appends a `UInt64` with little or big endian as defined in the protocol implementation
     ///
     /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
-    public func finalize(_ buffer: ByteBuffer? = nil) {
+    public func finalize(_ buffer: BytesBufferPointer? = nil) {
         let totalRemaining = containedRemainder + (buffer?.count ?? 0) + 1
         totalLength = totalLength &+ (UInt64(buffer?.count ?? 0) &* 8)
         
@@ -108,7 +108,7 @@ extension Hash {
         var lastBlocks = [UInt8]()
         
         if containedRemainder > 0 {
-            lastBlocks += Array(ByteBuffer(start: remainder, count: containedRemainder))
+            lastBlocks += Array(BytesBufferPointer(start: remainder, count: containedRemainder))
         }
         
         if let buffer = buffer {
@@ -134,7 +134,7 @@ extension Hash {
     /// Doesn't finalize the hash
     ///
     /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
-    public func update(_ buffer: ByteBuffer) {
+    public func update(_ buffer: BytesBufferPointer) {
         totalLength = totalLength &+ (UInt64(buffer.count) &* 8)
         
         var buffer = buffer

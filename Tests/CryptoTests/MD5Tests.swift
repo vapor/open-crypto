@@ -35,7 +35,7 @@ class MD5Tests: XCTestCase {
         
         for buffer in buffers {
             buffer.withUnsafeBytes { (pointer: BytesPointer) in
-                let buffer = ByteBuffer(start: pointer, count: buffer.count)
+                let buffer = BytesBufferPointer(start: pointer, count: buffer.count)
                 
                 hash.update(buffer)
             }

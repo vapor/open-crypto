@@ -16,7 +16,7 @@ extension Data {
 
 extension DataGenerator {
     internal func generate<T>(_ type: T.Type = T.self) throws -> T {
-        return try bytes(count: MemoryLayout<T>.size)
+        return try generateData(count: MemoryLayout<T>.size)
             .cast(to: T.self)
     }
 }

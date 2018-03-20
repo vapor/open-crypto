@@ -1,8 +1,8 @@
 import Foundation
 
 public protocol DataGenerator {
-    /// Get a random array of Bytes
-    func bytes(count: Int) throws -> Data
+    /// Generate `count` bytes of data.
+    func generateData(count: Int) throws -> Data
 }
 
 // MARK: - Throwing getter methods
