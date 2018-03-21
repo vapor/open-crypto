@@ -9,7 +9,7 @@ let package = Package(
     ],
     dependencies: [
         // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
-        .package(url: "https://github.com/vapor/core.git", .branch("master")),
+        .package(url: "https://github.com/vapor/core.git", from: "3.0.0-rc.2"),
 
         /// Bindings to OpenSSL-compatible libraries for TLS support in SwiftNIO
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "1.0.0"),
