@@ -42,14 +42,14 @@ class SHA1Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try SHA1.hash(Data(test.key.utf8)).hexString.lowercased()
+            let result = try SHA1.digest(test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
     
     func testNotCrashing() throws {
         let data = Data(repeating: 0x02, count: 263)
-        _ = try SHA1.hash(data)
+        _ = try SHA1.digest(data)
     }
 
     func testHMAC() throws {
@@ -67,13 +67,13 @@ class SHA1Tests: XCTestCase {
         ]
 
         for test in tests {
-            let result = try HMACSHA1.authenticate(test.message, withKey: test.key).hexString.lowercased()
+            let result = try HMAC.SHA1.authenticate(test.message, key: test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
 
         // Source: https://github.com/krzyzanowskim/CryptoSwift/blob/swift3-snapshots/CryptoSwiftTests/HMACTests.swift
         XCTAssertEqual(
-            try HMACSHA1.authenticate(Data(), withKey: Data()),
+            try HMAC.SHA1.authenticate(Data(), key: Data()),
             Data([0xfb,0xdb,0x1d,0x1b,0x18,0xaa,0x6c,0x08,0x32,0x4b,0x7d,0x64,0xb7,0x1f,0xb7,0x63,0x70,0x69,0x0e,0x1d])
         )
     }

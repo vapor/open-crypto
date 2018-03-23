@@ -18,7 +18,7 @@
 //        ]
 //        
 //        for test in tests {
-//            let result = try PBKDF2<SHA1>.deriveKey(fromPassword: Data(test.key.utf8), saltedWith: Data(test.salt.utf8), iterating: test.iterations, derivedKeyLength: SHA1.digestSize).hexString.lowercased()
+//            let result = try PBKDF2<SHA1>.deriveKey(fromPassword: Data(test.key.utf8), saltedWith: Data(test.salt.utf8), iterating: test.iterations, derivedKeyLength: SHA1.digestSize).hexEncodedString().lowercased()
 //            
 //            XCTAssertEqual(result, test.expected.lowercased())
 //        }
@@ -34,7 +34,7 @@
 //        ]
 //        
 //        for test in tests {
-//            let result = try PBKDF2<MD5>.deriveKey(fromPassword: Data(test.key.utf8), saltedWith: Data(test.salt.utf8), iterating: test.iterations, derivedKeyLength: MD5.digestSize).hexString.lowercased()
+//            let result = try PBKDF2<MD5>.deriveKey(fromPassword: Data(test.key.utf8), saltedWith: Data(test.salt.utf8), iterating: test.iterations, derivedKeyLength: MD5.digestSize).hexEncodedString().lowercased()
 //            
 //            XCTAssertEqual(result, test.expected.lowercased())
 //        }

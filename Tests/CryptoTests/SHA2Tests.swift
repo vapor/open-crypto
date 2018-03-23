@@ -30,7 +30,7 @@ class SHA2Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try SHA224.hash(test.key).hexString.lowercased()
+            let result = try SHA224.digest(test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
@@ -52,7 +52,7 @@ class SHA2Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try SHA256.hash(Data(test.key.utf8)).hexString.lowercased()
+            let result = try SHA256.digest(test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
@@ -74,7 +74,7 @@ class SHA2Tests: XCTestCase {
         ]
 
         for test in tests {
-            let result = try SHA384.hash(Data(test.key.utf8)).hexString.lowercased()
+            let result = try SHA384.digest(test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
@@ -96,32 +96,32 @@ class SHA2Tests: XCTestCase {
         ]
 
         for test in tests {
-            let result = try SHA512.hash(Data(test.key.utf8)).hexString.lowercased()
+            let result = try SHA512.digest(test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
 
     func testSHA224Performance() throws {
         measure {
-            _ = try? SHA224.hash("kaas")
+            _ = try? SHA224.digest("kaas")
         }
     }
     
     func testSHA256Performance() throws {
         measure {
-            _ = try? SHA256.hash("kaas")
+            _ = try? SHA256.digest("kaas")
         }
     }
     
     func testSHA384Performance() throws {
         measure {
-            _ = try? SHA384.hash("kaas")
+            _ = try? SHA384.digest("kaas")
         }
     }
 
     func testSHA512Performance() throws {
         measure {
-            _ = try? SHA512.hash("kaas")
+            _ = try? SHA512.digest("kaas")
         }
     }
 }

@@ -8,7 +8,7 @@ public struct RSA {
     public let key: RSAKey
 
     /// The hashing algorithm to use/used.
-    public let hashAlgorithm: RSAHashAlgorithm
+    public let digestAlgorithm: DigestAlgorithm
 
     /// The padding algorithm used.
     public let paddingScheme: RSAPaddingScheme
@@ -18,12 +18,12 @@ public struct RSA {
 
     /// Creates a new RSA cipher.
     public init(
-        hashAlgorithm: RSAHashAlgorithm = .sha512,
+        digestAlgorithm: DigestAlgorithm = .sha512,
         paddingScheme: RSAPaddingScheme = .pkcs1,
         inputFormat: RSAInputFormat = .message,
         key: RSAKey
     ) {
-        self.hashAlgorithm = hashAlgorithm
+        self.digestAlgorithm = digestAlgorithm
         self.paddingScheme = paddingScheme
         self.inputFormat = inputFormat
         self.key = key
@@ -52,18 +52,11 @@ public struct RSA {
 
         switch inputFormat {
         case .digest: break // leave input as is
-        case .message:
-            switch hashAlgorithm {
-            case .sha1: input = try SHA1().hash(input)
-            case .sha224: input = try SHA224().hash(input)
-            case .sha256: input = try SHA256().hash(input)
-            case .sha384: input = try SHA384().hash(input)
-            case .sha512: input = try SHA512().hash(input)
-            }
+        case .message: input = try Digest(algorithm: digestAlgorithm).digest(input)
         }
 
         let ret = RSA_sign(
-            hashAlgorithm.c,
+            digestAlgorithm.type,
             input.withUnsafeBytes { $0 },
             UInt32(input.count),
             sig.withUnsafeMutableBytes { $0 },
@@ -86,18 +79,11 @@ public struct RSA {
 
         switch inputFormat {
         case .digest: break // leave input as is
-        case .message:
-            switch hashAlgorithm {
-            case .sha1: input = try SHA1().hash(input)
-            case .sha224: input = try SHA224().hash(input)
-            case .sha256: input = try SHA256().hash(input)
-            case .sha384: input = try SHA384().hash(input)
-            case .sha512: input = try SHA512().hash(input)
-            }
+        case .message: input = try Digest(algorithm: digestAlgorithm).digest(input)
         }
 
         let result = RSA_verify(
-            hashAlgorithm.c,
+            digestAlgorithm.type,
             input.withUnsafeBytes { $0 },
             UInt32(input.count),
             signature.withUnsafeBytes { $0 },
@@ -114,31 +100,6 @@ public enum RSAInputFormat {
     case digest
     /// Raw, unhashed message
     case message
-}
-
-/// Supported RSA hash types.
-public enum RSAHashAlgorithm {
-    /// SHA-1 hash.
-    case sha1
-    /// SHA-2 224 bit hash.
-    case sha224
-    /// SHA-2 256 bit hash.
-    case sha256
-    /// SHA-2 284 bit hash.
-    case sha384
-    /// SHA-2 512 bit hash.
-    case sha512
-
-    /// Internal OpenSSL representation.
-    internal var c: Int32 {
-        switch self {
-        case .sha1: return NID_sha1
-        case .sha224: return NID_sha224
-        case .sha256: return NID_sha256
-        case .sha384: return NID_sha384
-        case .sha512: return NID_sha512
-        }
-    }
 }
 
 /// Supported RSA padding type.
