@@ -31,7 +31,7 @@ public struct RSA {
 
     /// Signs the supplied input (in format specified by `inputFormat`)
     /// returning signature data.
-    public func sign(_ input: DataRepresentable) throws -> Data {
+    public func sign(_ input: LosslessDataConvertible) throws -> Data {
         switch key.type {
         case .public: throw CryptoError(identifier: "rsaSign", reason: "Cannot create RSA signature with a public key. A private key is required.")
         case .private: break
@@ -48,17 +48,17 @@ public struct RSA {
         case .pss: throw CryptoError(identifier: "rsaPaddingScheme", reason: "RSA PSS not yet supported on Linux. Use PKCS#1.")
         }
 
-        var input = try input.makeData()
+        var input = try input.convertToData()
 
         switch inputFormat {
         case .digest: break // leave input as is
         case .message:
             switch hashAlgorithm {
-            case .sha1: input = SHA1.hash(input)
-            case .sha224: input = SHA224.hash(input)
-            case .sha256: input = SHA256.hash(input)
-            case .sha384: input = SHA384.hash(input)
-            case .sha512: input = SHA512.hash(input)
+            case .sha1: input = try SHA1().hash(input)
+            case .sha224: input = try SHA224().hash(input)
+            case .sha256: input = try SHA256().hash(input)
+            case .sha384: input = try SHA384().hash(input)
+            case .sha512: input = try SHA512().hash(input)
             }
         }
 
@@ -80,19 +80,19 @@ public struct RSA {
 
     /// Verifies a signature *created using RSA with identical hash and padding settings)
     /// matches supplied input (in format specified by `inputFormat`).
-    public func verify(_ signature: DataRepresentable, signs input: DataRepresentable) throws -> Bool {
-        var input = try input.makeData()
-        var signature = try signature.makeData()
+    public func verify(_ signature: LosslessDataConvertible, signs input: LosslessDataConvertible) throws -> Bool {
+        var input = try input.convertToData()
+        var signature = try signature.convertToData()
 
         switch inputFormat {
         case .digest: break // leave input as is
         case .message:
             switch hashAlgorithm {
-            case .sha1: input = SHA1.hash(input)
-            case .sha224: input = SHA224.hash(input)
-            case .sha256: input = SHA256.hash(input)
-            case .sha384: input = SHA384.hash(input)
-            case .sha512: input = SHA512.hash(input)
+            case .sha1: input = try SHA1().hash(input)
+            case .sha224: input = try SHA224().hash(input)
+            case .sha256: input = try SHA256().hash(input)
+            case .sha384: input = try SHA384().hash(input)
+            case .sha512: input = try SHA512().hash(input)
             }
         }
 

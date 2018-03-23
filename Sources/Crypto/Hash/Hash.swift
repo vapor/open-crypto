@@ -1,196 +1,127 @@
-import Bits
+import CNIOOpenSSL
 import Foundation
 
-/// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/)
-public protocol Hash: class {
-    /// The amount of processed bytes per chunk
-    static var chunkSize: Int { get }
-    
-    /// The amount of bytes returned in the hash
-    static var digestSize: Int { get }
-    
-    /// If `true`, treat the bitlength in the padding at littleEndian, bigEndian otherwise
-    static var littleEndian: Bool { get }
-    
-    /// The current length of hashes bytes in bits
-    var totalLength: UInt64 { get set }
-    
-    /// The resulting hash
-    var hash: Data { get }
-    
-    /// The amount of bytes currently inside the `remainder` pointer.
-    var containedRemainder: Int { get set }
-    
-    /// A buffer that keeps track of any bytes that cannot be processed until the chunk is full.
-    var remainder: MutableBytesPointer { get }
-    
-    /// Updates the hash using exactly one `chunkSize` of bytes referenced by a pointer
-    func update(pointer: BytesPointer)
-    
-    /// Resets the hash's context to it's original state (reusing the context class)
-    func reset()
-    
-    /// Creates a new empty hash
-    init()
+typealias CEVPAlgorithm = UnsafePointer<EVP_MD>
+typealias CEVPAlgorithmContext = UnsafeMutablePointer<EVP_MD_CTX>?
+
+protocol COpenSSLEVPDigest {
+    static var md: CEVPAlgorithm { get }
+    var ctx: COpenSSLEVPDigestContext { get }
 }
 
-extension Hash {
-    fileprivate var lastChunkSize: Int {
-        return Self.chunkSize &- 8
+extension COpenSSLEVPDigest {
+    public func reset() throws {
+        EVP_DigestInit_ex(ctx.c, Self.md, nil);
     }
-    
-    /// Processes the contents of this `Data` and returns the resulting hash
-    ///
-    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#hashing-blobs-of-data)
-    public static func hash(_ data: Data) -> Data {
-        let h = Self()
-        
-        return Array(data).withUnsafeBufferPointer { buffer in
-            h.finalize(buffer)
-            return h.hash
+
+    public func update(data: Data) throws {
+        let i = data.withUnsafeBytes { ptr in
+            return EVP_DigestUpdate(ctx.c, ptr, data.count)
         }
+        print(i)
     }
-    
-    /// Processes the contents of this ByteBuffer and returns the resulting hash
-    ///
-    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#hashing-blobs-of-data)
-    public static func hash(_ data: BytesBufferPointer) -> Data {
-        let h = Self()
-        
-        h.finalize(data)
-        return h.hash
+
+    public func finish() throws -> Data {
+        var hash = Data(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
+        var count: UInt32 = 0
+        EVP_DigestFinal_ex(ctx.c, hash.withUnsafeMutableBytes { $0 }, &count);
+        return Data(hash[0..<Int(count)])
     }
-    
-    /// Processes the contents of this byte sequence
-    ///
-    /// Doesn't finalize the hash and thus doesn't return any results
-    ///
-    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
-    public func finalize(_ data: Data) {
-        Array(data).withUnsafeBufferPointer { buffer in
-            self.finalize(buffer)
-        }
+}
+
+final class COpenSSLEVPDigestContext {
+    let c: CEVPAlgorithmContext
+
+    init() {
+        c = EVP_MD_CTX_create()
     }
-    
-    /// Finalizes the hash by appending a `0x80` and `0x00` until there are 64 bits left.
-    /// Then appends a `UInt64` with little or big endian as defined in the protocol implementation
-    ///
-    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
-    public func finalize(_ buffer: BytesBufferPointer? = nil) {
-        let totalRemaining = containedRemainder + (buffer?.count ?? 0) + 1
-        totalLength = totalLength &+ (UInt64(buffer?.count ?? 0) &* 8)
-        
-        // Append zeroes
-        var zeroes = lastChunkSize &- (totalRemaining % Self.chunkSize)
-        
-        if zeroes > lastChunkSize {
-            // Append another chunk of zeroes if we have more than 448 bits
-            zeroes = (Self.chunkSize &+ (lastChunkSize &- zeroes)) &+ zeroes
-        }
-        
-        // If there isn't enough room, add another big chunk of zeroes until there is room
-        if zeroes < 0 {
-            zeroes =  (8 &+ zeroes) + lastChunkSize
-        }
-        
-        var length = [UInt8](repeating: 0, count: 8)
-        
-        // Append UInt64 length in bits
-        _ = length.withUnsafeMutableBytes { length in
-            memcpy(length.baseAddress!, &totalLength, 8)
-        }
-        
-        // Little endian is reversed
-        if !Self.littleEndian {
-            length.reverse()
-        }
-        
-        var lastBlocks = [UInt8]()
-        
-        if containedRemainder > 0 {
-            lastBlocks += Array(BytesBufferPointer(start: remainder, count: containedRemainder))
-        }
-        
-        if let buffer = buffer {
-            lastBlocks = Array(buffer)
-        }
-        
-        lastBlocks = lastBlocks + [0x80] + [UInt8](repeating: 0, count: zeroes) + length
-        
-        var offset = 0
-        
-        lastBlocks.withUnsafeBufferPointer { buffer in
-            let pointer = buffer.baseAddress!
-            
-            while offset < buffer.count {
-                defer { offset = offset &+ Self.chunkSize }
-                self.update(pointer: pointer.advanced(by: offset))
-            }
-        }
+
+    deinit {
+        EVP_MD_CTX_destroy(c)
     }
-    
-    /// Updates the hash using the contents of this buffer
-    ///
-    /// Doesn't finalize the hash
-    ///
-    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
-    public func update(_ buffer: BytesBufferPointer) {
-        totalLength = totalLength &+ (UInt64(buffer.count) &* 8)
-        
-        var buffer = buffer
-        
-        // If there was data from a previous chunk that needs to be processed, process that with this buffer, first
-        if containedRemainder > 0 {
-            let needed = Self.chunkSize &- containedRemainder
-            
-            guard let bufferPointer = buffer.baseAddress else {
-                assertionFailure("Invalid buffer provided")
-                return
-            }
-            
-            if buffer.count >= needed {
-                memcpy(remainder.advanced(by: containedRemainder), bufferPointer, needed)
-                
-                buffer = UnsafeBufferPointer(start: bufferPointer.advanced(by: needed), count: buffer.count &- needed)
-                update(pointer: remainder)
-                containedRemainder = 0
-            } else {
-                memcpy(remainder.advanced(by: containedRemainder), bufferPointer, buffer.count)
-                return
-            }
-        }
-        
-        // The buffer *must* have a baseAddress to read from
-        guard var bufferPointer = buffer.baseAddress else {
-            assertionFailure("Invalid hashing buffer provided")
-            return
-        }
-        
-        var bufferSize = buffer.count
-        
-        // Process the input in chunks of `chunkSize`
-        while bufferSize >= Self.chunkSize {
-            defer {
-                bufferPointer = bufferPointer.advanced(by: Self.chunkSize)
-                bufferSize = bufferSize &- Self.chunkSize
-            }
-            
-            update(pointer: bufferPointer)
-        }
-        
-        // Append the remaining data to the internal remainder buffer
-        memcpy(remainder, bufferPointer, bufferSize)
-        containedRemainder = bufferSize
+}
+
+public protocol DigestAlgorithm {
+    func reset() throws
+    func update(data: Data) throws
+    func finish() throws -> Data 
+}
+
+public protocol DefaultConfigurable {
+    static func configureDefault() throws -> Self
+}
+
+extension DigestAlgorithm where Self: DefaultConfigurable {
+    public static func hash(data: Data) throws -> Data {
+        return try configureDefault().hash(data: data)
     }
-    
-    /// Updates the hash with the contents of this byte sequence
-    ///
-    /// Does not finalize the hash
-    ///
-    /// [Learn More →](https://docs.vapor.codes/3.0/crypto/hash/#incremental-hashes-manual)
-    public func update<S: Sequence>(sequence: inout S) where S.Element == UInt8 {
-        Array(sequence).withUnsafeBufferPointer { buffer in
-            update(buffer)
-        }
+
+    public static func hash(_ data: LosslessDataConvertible) throws -> Data {
+        return try configureDefault().hash(data)
     }
+}
+
+extension DigestAlgorithm {
+    public func update(_ data: LosslessDataConvertible) throws {
+        return try update(data: data.convertToData())
+    }
+
+    public func hash(data: Data) throws -> Data {
+        try reset()
+        try update(data: data)
+        return try finish()
+    }
+
+    public func hash(_ data: LosslessDataConvertible) throws -> Data {
+        return try hash(data: data.convertToData())
+    }
+}
+
+public final class SHA1: DigestAlgorithm, COpenSSLEVPDigest, DefaultConfigurable {
+    static var md: UnsafePointer<EVP_MD> = EVP_sha1()
+    var ctx: COpenSSLEVPDigestContext
+    public init() { ctx = .init() }
+    public static func configureDefault() throws -> SHA1 { return .init() }
+}
+
+public final class SHA224: DigestAlgorithm, COpenSSLEVPDigest, DefaultConfigurable {
+    static var md: UnsafePointer<EVP_MD> = EVP_sha224()
+    var ctx: COpenSSLEVPDigestContext
+    public init() { ctx = .init() }
+    public static func configureDefault() throws -> SHA224 { return .init() }
+}
+
+public final class SHA256: DigestAlgorithm, COpenSSLEVPDigest, DefaultConfigurable {
+    static var md: UnsafePointer<EVP_MD> = EVP_sha256()
+    var ctx: COpenSSLEVPDigestContext
+    public init() { ctx = .init() }
+    public static func configureDefault() throws -> SHA256 { return .init() }
+}
+
+public final class SHA384: DigestAlgorithm, COpenSSLEVPDigest, DefaultConfigurable {
+    static var md: UnsafePointer<EVP_MD> = EVP_sha384()
+    var ctx: COpenSSLEVPDigestContext
+    public init() { ctx = .init() }
+    public static func configureDefault() throws -> SHA384 { return .init() }
+}
+
+public final class SHA512: DigestAlgorithm, COpenSSLEVPDigest, DefaultConfigurable {
+    static var md: UnsafePointer<EVP_MD> = EVP_sha512()
+    var ctx: COpenSSLEVPDigestContext
+    public init() { ctx = .init() }
+    public static func configureDefault() throws -> SHA512 { return .init() }
+}
+
+public final class MD4: DigestAlgorithm, COpenSSLEVPDigest, DefaultConfigurable {
+    static var md: UnsafePointer<EVP_MD> = EVP_md4()
+    var ctx: COpenSSLEVPDigestContext
+    public init() { ctx = .init() }
+    public static func configureDefault() throws -> MD4 { return .init() }
+}
+
+public final class MD5: DigestAlgorithm, COpenSSLEVPDigest, DefaultConfigurable {
+    static var md: UnsafePointer<EVP_MD> = EVP_md5()
+    var ctx: COpenSSLEVPDigestContext
+    public init() { ctx = .init() }
+    public static func configureDefault() throws -> MD5 { return .init() }
 }
