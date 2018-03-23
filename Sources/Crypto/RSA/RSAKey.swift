@@ -20,18 +20,18 @@ public struct RSAKey {
     }
 
     /// Creates a new `RSAKey` from a private key pem file.
-    public static func `private`(pem: DataRepresentable) throws -> RSAKey {
-        return try .init(type: .private, key: .make(type: .private, from: pem.makeData()))
+    public static func `private`(pem: LosslessDataConvertible) throws -> RSAKey {
+        return try .init(type: .private, key: .make(type: .private, from: pem.convertToData()))
     }
 
     /// Creates a new `RSAKey` from a public key pem file.
-    public static func `public`(pem: DataRepresentable) throws -> RSAKey {
-        return try .init(type: .public, key: .make(type: .public, from: pem.makeData()))
+    public static func `public`(pem: LosslessDataConvertible) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: pem.convertToData()))
     }
 
     /// Creates a new `RSAKey` from a public key certificate file.
-    public static func `public`(certificate: DataRepresentable) throws -> RSAKey {
-        return try .init(type: .public, key: .make(type: .public, from: certificate.makeData(), x509: true))
+    public static func `public`(certificate: LosslessDataConvertible) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: certificate.convertToData(), x509: true))
     }
 }
 

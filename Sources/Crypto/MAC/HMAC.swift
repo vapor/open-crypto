@@ -1,41 +1,148 @@
+import CNIOOpenSSL
 import Foundation
 
-public final class HMAC<Variant: Hash> {
-    /// Authenticates a message using the provided `Hash` algorithm
+/// HMAC is a MAC (message authentication code), i.e. a keyed hash function used for message authentication, which is based on a hash function.
+///
+///    let digest = try HMAC.SHA1.authenticate("hello", key: "vapor")
+///    print(digest.hexEncodedString()) // bb2a9aabb537902647f3f40bfecb679bf0d7d64b
+///
+/// https://en.wikipedia.org/wiki/HMAC
+/// https://www.openssl.org/docs/man1.0.2/crypto/hmac.html
+public final class HMAC {
+    /// The `DigestAlgorithm` (e.g., SHA1, MD5, SHA256) to base the message authentication on.
+    public let algorithm: DigestAlgorithm
+
+    /// Internal OpenSSL `HMAC_CTX` context.
+    var ctx: HMAC_CTX
+
+    /// Creates a new `HMAC` using the supplied `DigestAlgorithm`.
     ///
-    /// - parameter message: The message to authenticate
-    /// - parameter key: The key to authenticate with
+    /// You can use the convenience static variables on HMAC for common algorithms.
     ///
-    /// - returns: The authenticated message
-    public static func authenticate(_ message: Data, withKey key: Data) -> Data {
-        var key = key
-        
-        // If it's too long, hash it first
-        if key.count > Variant.chunkSize {
-            key = Variant.hash(key)
-        }
-        
-        // Add padding
-        if key.count < Variant.chunkSize {
-            key = key + Data(repeating: 0, count: Variant.chunkSize - key.count)
-        }
-        
-        // XOR the information
-        var outerPadding = Data(repeating: 0x5c, count: Variant.chunkSize)
-        var innerPadding = Data(repeating: 0x36, count: Variant.chunkSize)
-        
-        for i in 0..<key.count {
-            outerPadding[i] = key[i] ^ outerPadding[i]
-        }
-        
-        for i in 0..<key.count {
-            innerPadding[i] = key[i] ^ innerPadding[i]
-        }
-        
-        // Hash the information
-        let innerPaddingHash: Data = Variant.hash(innerPadding + message)
-        let outerPaddingHash: Data = Variant.hash(outerPadding + innerPaddingHash)
-        
-        return outerPaddingHash
+    ///     try HMAC.SHA256.authenticate(...)
+    ///
+    /// You can also use this `init(algorithm:)` method manually to supply custom `DigestAlgorithm`.
+    ///
+    ///     try HMAC(algorithm: .named("sha256")).authenticate(...)
+    ///
+    public init(algorithm: DigestAlgorithm) {
+        self.algorithm = algorithm
+        ctx = HMAC_CTX()
     }
+
+    /// Authenticates the message using the supplied key. This method will first initialize or reset the HMAC
+    /// context. The supplied message will be digested using one call to `update(data:)`.
+    ///
+    /// For streaming HMAC authentication, use the `reset(key:)`, `update(data:)` and `finish()` methods individually.
+    ///
+    ///    let digest = try HMAC.SHA256.authenticate("hello", key: "vapor")
+    ///    print(digest) /// Data
+    ///
+    /// - parameters:
+    ///     - data: Message to digest / authenticate.
+    ///     - key: HMAC key
+    /// - returns: Digested data
+    /// - throws: `CryptoError` if reset, update, or finalization steps fail or data conversion fails.
+    public func authenticate(_ data: LosslessDataConvertible, key: LosslessDataConvertible) throws -> Data {
+        try reset(key: key)
+        try update(data: data)
+        return try finish()
+    }
+
+    /// Initializes or resets the HMAC context. This method sets this HMAC's key for subsequent calls to `update(data:)`.
+    ///
+    ///     let hmacsha256 = try HMAC(algorithm: .sha256)
+    ///     try hmacsha256.reset(key: "vapor")
+    ///
+    /// - parameters:
+    ///     - key: HMAC key
+    /// - throws: `CryptoError` if the initialization / reset fails or data conversion fails.
+    public func reset(key: LosslessDataConvertible) throws {
+        let key = try key.convertToData()
+        guard HMAC_Init_ex(&ctx, .init(key.withUnsafeBytes { $0 }), Int32(key.count), algorithm.c, nil) == 1 else {
+            throw CryptoError.openssl(identifier: "HMAC_Init_ex", reason: "Failed initializing HMAC context.")
+        }
+    }
+
+    /// Updates the HMAC digest with a new chunk of data. This method can be called repeatedly for each new chunk.
+    /// Use this method for stremaing HMAC digests.
+    ///
+    ///     let hmacsha256 = try HMAC(algorithm: .sha256)
+    ///     try hmacsha256.reset(key: "vapor")
+    ///     try hmacsha256.update(data: "hello")
+    ///     try hmacsha256.update(data: "world")
+    ///
+    /// note: You _must_ call `.reset(key:)` once before streaming data.
+    ///
+    /// - parameters:
+    ///     - data: Message chunk to digest / authenticate
+    /// - throws: `CryptoError` if the update fails or data conversion fails.
+    public func update(data: LosslessDataConvertible) throws {
+        let data = try data.convertToData()
+        guard HMAC_Update(&ctx, .init(data.withUnsafeBytes { $0 }), data.count) == 1 else {
+            throw CryptoError.openssl(identifier: "HMAC_Update", reason: "Failed updating HMAC digest.")
+        }
+    }
+
+    /// Completes the HMAC digest. This method should be called once after one call to `reset(key:)` and one more
+    /// more calls to `update(data:)`.
+    ///
+    ///     let hmacsha256 = try HMAC(algorithm: .sha256)
+    ///     try hmacsha256.reset(key: "vapor")
+    ///     try hmacsha256.update(data: "hello")
+    ///     try hmacsha256.update(data: "world")
+    ///     let digest = try hmacsha256.finish()
+    ///     print(digest) // Data
+    ///
+    /// - returns: Digest data
+    /// - throws: `CryptoError` if the finalization step fails.
+    public func finish() throws -> Data {
+        var hash = Data(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
+        var count: UInt32 = 0
+        guard HMAC_Final(&ctx, hash.withUnsafeMutableBytes { $0 }, &count) == 1 else {
+            throw CryptoError.openssl(identifier: "HMAC_Final", reason: "Failed finalizing HMAC digest.")
+        }
+        return Data(hash[0..<Int(count)])
+    }
+
+    deinit { HMAC_CTX_cleanup(&ctx) }
+}
+
+/// MARK: Implementations
+
+extension HMAC {
+    /// MD4 digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/MD4
+    public static var MD4: HMAC { return .init(algorithm: .md4) }
+
+    /// MD5 digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/MD5
+    public static var MD5: HMAC { return .init(algorithm: .md5) }
+
+    /// SHA-1 digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-1
+    public static var SHA1: HMAC { return .init(algorithm: .sha1) }
+
+    /// SHA-224 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA224: HMAC { return .init(algorithm: .sha224) }
+
+    /// SHA-256 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA256: HMAC { return .init(algorithm: .sha256) }
+
+    /// SHA-384 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA384: HMAC { return .init(algorithm: .sha384) }
+
+    /// SHA-512 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA512: HMAC { return .init(algorithm: .sha512) }
 }

@@ -21,29 +21,25 @@ class MD5Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = MD5.hash(Data(test.0.utf8)).hexString.lowercased()
+            let result = try MD5.digest(test.0).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.1.lowercased())
         }
     }
     
     func testUpdated() throws {
-        let hash = MD5()
+        let hash = Digest(algorithm: .md5)
         let buffers = [
             Data("1234567890123456789012345678901234".utf8),
             Data("5678901234567890123456789012345678901234567890".utf8)
         ]
+
+        try hash.reset()
         
         for buffer in buffers {
-            buffer.withUnsafeBytes { (pointer: BytesPointer) in
-                let buffer = BytesBufferPointer(start: pointer, count: buffer.count)
-                
-                hash.update(buffer)
-            }
+            try hash.update(data: buffer)
         }
-        
-        hash.finalize()
-        
-        XCTAssertEqual(hash.hash.hexString.lowercased(), "57edf4a22be3c955ac49da2e2107b67a")
+
+        try XCTAssertEqual(hash.finish().hexEncodedString().lowercased(), "57edf4a22be3c955ac49da2e2107b67a")
     }
 
     func testHMAC() throws {
@@ -61,11 +57,7 @@ class MD5Tests: XCTestCase {
         ]
 
         for test in tests {
-            let result = HMAC<MD5>.authenticate(
-                Data(test.message.utf8),
-                withKey: Data(test.key.utf8)
-            ).hexString.lowercased()
-            
+            let result = try HMAC.MD5.authenticate(test.message, key: test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
