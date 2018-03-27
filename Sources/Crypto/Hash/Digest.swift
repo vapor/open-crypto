@@ -101,7 +101,7 @@ public final class Digest {
     deinit { EVP_MD_CTX_destroy(ctx) }
 }
 
-/// MARK: Implementations
+// MARK: Implementations
 
 /// MD4 digest.
 ///
