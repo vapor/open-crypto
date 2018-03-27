@@ -71,7 +71,7 @@ public struct RSA {
         return sig
     }
 
-    /// Verifies a signature *created using RSA with identical hash and padding settings)
+    /// Verifies a signature (created using RSA with identical hash and padding settings)
     /// matches supplied input (in format specified by `inputFormat`).
     public func verify(_ signature: LosslessDataConvertible, signs input: LosslessDataConvertible) throws -> Bool {
         var input = try input.convertToData()
