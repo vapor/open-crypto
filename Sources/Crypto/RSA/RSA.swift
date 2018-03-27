@@ -96,7 +96,7 @@ public struct RSA {
 
 /// Supported RSA input formats.
 public enum RSAInputFormat {
-    /// The input has been hash already.
+    /// The input has been hashed already.
     case digest
     /// Raw, unhashed message
     case message
