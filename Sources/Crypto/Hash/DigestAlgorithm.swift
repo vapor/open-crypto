@@ -7,7 +7,7 @@ import CNIOOpenSSL
 /// https://en.wikipedia.org/wiki/Cryptographic_hash_function
 /// https://www.openssl.org/docs/man1.1.0/crypto/EVP_MD_CTX_free.html
 public final class DigestAlgorithm {
-    /// Looks up a hash funciton algorithm by name (e.g., "sha256").
+    /// Looks up a hash function algorithm by name (e.g., "sha256").
     /// Uses OpenSSL's `EVP_get_digestbyname` function.
     ///
     ///     let algorithm = try DigestAlgorithm.named("sha256")
