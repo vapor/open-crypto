@@ -1,6 +1,26 @@
 import Foundation
 import Core
 
+/// The requested amount of output bytes from the key derivation
+///
+/// In circumstances with low iterations the amount of output bytes may not be met.
+///
+/// `digest.digestSize * iterations` is the amount of bytes stored in PBKDF2's buffer.
+/// Any data added beyond this limit
+public enum PBKDF2KeySize {
+    case digestSize
+    case fixed(Int)
+    
+    fileprivate func size(for digest: Digest) -> Int {
+        switch self {
+        case .digestSize:
+            return numericCast(digest.algorithm.digestSize)
+        case .fixed(let size):
+            return size
+        }
+    }
+}
+
 /// PBKDF2 derives a fixed or custom length key from a password and salt.
 ///
 /// It accepts a customizable amount of iterations to increase the algorithm weight and security.
@@ -17,26 +37,6 @@ import Core
 ///
 /// https://en.wikipedia.org/wiki/PBKDF2
 public final class PBKDF2 {
-    /// The requested amount of output bytes from the key derivation
-    ///
-    /// In circumstances with low iterations the amount of output bytes may not be met.
-    ///
-    /// `digest.digestSize * iterations` is the amount of bytes stored in PBKDF2's buffer.
-    /// Any data added beyond this limit
-    public enum KeySize {
-        case digestSize
-        case fixed(Int)
-        
-        fileprivate func size(for digest: Digest) -> Int {
-            switch self {
-            case .digestSize:
-                return numericCast(digest.algorithm.digestSize)
-            case .fixed(let size):
-                return size
-            }
-        }
-    }
-    
     private let digest: Digest
     
     /// Creates a new PBKDF2 derivator based on a hashing algorithm
@@ -57,11 +57,11 @@ public final class PBKDF2 {
     /// Derives a key with up to `keySize` of bytes
     ///
     ///
-    public func deriveKey(
-        fromPassword password: LosslessDataConvertible,
+    public func hash(
+        _ password: LosslessDataConvertible,
         salt: LosslessDataConvertible,
         iterations: Int,
-        keySize: KeySize = .digestSize
+        keySize: PBKDF2KeySize = .digestSize
     ) throws -> Data {
         let chunkSize = numericCast(digest.algorithm.blockSize) as Int
         let digestSize = numericCast(digest.algorithm.digestSize) as Int

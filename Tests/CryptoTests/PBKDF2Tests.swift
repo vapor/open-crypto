@@ -10,13 +10,13 @@ class PBKDF2Tests: XCTestCase {
         let pbkdf2 = PBKDF2(digest: SHA256)
         
         for (key, salt, iterations, keySize, expectation) in tests {
-            let result = try pbkdf2.deriveKey(fromPassword: key, salt: salt, iterations: iterations, keySize: keySize)
+            let result = try pbkdf2.hash(key, salt: salt, iterations: iterations, keySize: keySize)
             XCTAssertEqual(result.hexEncodedString(), expectation)
         }
     }
 }
 
-fileprivate let tests: [(key: String, salt: String, iterations: Int, keySize: PBKDF2.KeySize, expectation: String)] = [
+fileprivate let tests: [(key: String, salt: String, iterations: Int, keySize: PBKDF2KeySize, expectation: String)] = [
     ("password", "salt", 1, .fixed(20), "120fb6cffcf8b32c43e7225256c4f837a86548c9"),
     ("password", "salt", 2, .fixed(20), "ae4d0c95af6b46d32d0adff928f06dd02a303f8e"),
     ("password", "salt", 4_096, .fixed(20), "c5e478d59288c841aa530db6845c4c8d962893a0"),
