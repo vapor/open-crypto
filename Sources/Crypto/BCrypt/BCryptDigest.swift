@@ -37,15 +37,15 @@ public final class BCryptDigest {
     /// the existing digest and using that information to hash the plaintext data. If hash digests match, this method returns true.
     ///
     ///     let hash = try BCrypt.hash("vapor", cost: 4)
-    ///     try BCrypt.verify("vapor", matches: hash) // true
-    ///     try BCrypt.verify("foo", matches: hash) // false
+    ///     try BCrypt.verify("vapor", created: hash) // true
+    ///     try BCrypt.verify("foo", created: hash) // false
     ///
     /// - parameters:
     ///     - plaintext: Plaintext data to digest and verify.
     ///     - hash: Existing BCrypt hash to parse version, salt, and digest from.
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: `true` if the hash was created from the supplied plaintext data.
-    public func verify(_ plaintext: LosslessDataConvertible, matches hash: LosslessDataConvertible) throws -> Bool {
+    public func verify(_ plaintext: LosslessDataConvertible, created hash: LosslessDataConvertible) throws -> Bool {
         let parser = try BCryptParser(serialized: hash.convertToData())
         let digest = try BCryptAlgorithm(config: parser.parseConfig()).digest(message: plaintext.convertToData())
         return try digest == parser.parseDigest()
@@ -61,7 +61,7 @@ public final class BCryptDigest {
 /// BCrypt uses a random salt each time it creates a hash. To verify hashes, use the `verify(_:matches)` method.
 ///
 ///     let hash = try BCrypt.hash("vapor", cost: 4)
-///     try BCrypt.verify("vapor", matches: hash) // true
+///     try BCrypt.verify("vapor", created: hash) // true
 ///
 /// https://en.wikipedia.org/wiki/Bcrypt
 public var BCrypt: BCryptDigest {

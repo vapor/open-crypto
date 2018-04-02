@@ -17,7 +17,7 @@ class BCryptTests: XCTestCase {
     
     func testFail() throws {
         let digest = try BCrypt.hash("foo", cost: 6)
-        let res = try BCrypt.verify("bar", matches: digest)
+        let res = try BCrypt.verify("bar", created: digest)
         XCTAssertEqual(res, false)
     }
     
@@ -42,7 +42,7 @@ class BCryptTests: XCTestCase {
     
     func testVerify() throws {
         for (desired, message) in tests {
-            let result = try BCrypt.verify(message, matches: desired)
+            let result = try BCrypt.verify(message, created: desired)
             XCTAssert(result, "\(message): did not match \(desired)")
         }
     }
