@@ -7,7 +7,7 @@ class PBKDF2Tests: XCTestCase {
     ]
     
     func testSanity() throws {
-        let pbkdf2 = PBKDF2(digest: SHA256)
+        let pbkdf2 = PBKDF2.SHA256
         
         for (key, salt, iterations, keySize, expectation) in tests {
             let result = try pbkdf2.hash(key, salt: salt, iterations: iterations, keySize: keySize)

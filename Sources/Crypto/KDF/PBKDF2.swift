@@ -39,6 +39,41 @@ public enum PBKDF2KeySize {
 public final class PBKDF2 {
     private let digest: Digest
     
+    /// MD4 digest powered key derivation.
+    ///
+    /// https://en.wikipedia.org/wiki/MD4
+    public static var MD4: PBKDF2 { return .init(digest: Crypto.MD4) }
+    
+    /// MD5 digest powered key derivation.
+    ///
+    /// https://en.wikipedia.org/wiki/MD5
+    public static var MD5: PBKDF2 { return .init(digest: Crypto.MD5) }
+    
+    /// SHA-1 digest powered key derivation.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-1
+    public static var SHA1: PBKDF2 { return .init(digest: Crypto.SHA1) }
+    
+    /// SHA-224 (SHA-2) digest powered key derivation.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA224: PBKDF2 { return .init(digest: Crypto.SHA224) }
+    
+    /// SHA-256 (SHA-2) digest powered key derivation.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA256: PBKDF2 { return .init(digest: Crypto.SHA256) }
+    
+    /// SHA-384 (SHA-2) digest powered key derivation.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA384: PBKDF2 { return .init(digest: Crypto.SHA384) }
+    
+    /// SHA-512 (SHA-2) digest powered key derivation.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA512: PBKDF2 { return .init(digest: Crypto.SHA512) }
+    
     /// Creates a new PBKDF2 derivator based on a hashing algorithm
     public init(digest: Digest) {
         self.digest = digest
