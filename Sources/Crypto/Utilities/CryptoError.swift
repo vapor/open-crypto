@@ -9,7 +9,7 @@ public struct CryptoError: Debuggable {
     /// See `Debuggable.reason`
     public var reason: String
 
-    /// Internal error creation from OpenSSLL
+    /// Internal error creation from OpenSSL
     internal static func openssl(identifier: String, reason: String) -> CryptoError {
         let errmsg: UnsafeMutablePointer<Int8>? = nil
         ERR_error_string(ERR_get_error(), errmsg)
@@ -22,5 +22,10 @@ public struct CryptoError: Debuggable {
         }
 
         return .init(identifier: identifier, reason: "\(reason): \(cReason).")
+    }
+    
+    /// Custom Crypto errors
+    internal static func custom(identifier: String, reason: String) -> CryptoError {
+        return .init(identifier: identifier, reason: reason)
     }
 }
