@@ -35,6 +35,16 @@ public final class DigestAlgorithm {
     public var type: Int32 {
         return EVP_MD_type(c)
     }
+    
+    /// Returns the algorithm's resulting digest's size.
+    public var digestSize: Int32 {
+        return EVP_MD_size(c)
+    }
+    
+    /// Returns the algorithm's input block size.
+    public var blockSize: Int32 {
+        return EVP_MD_block_size(c)
+    }
 
     /// MD4 digest.
     ///
