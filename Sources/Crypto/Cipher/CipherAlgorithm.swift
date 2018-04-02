@@ -1,6 +1,13 @@
 import CNIOOpenSSL
 
+/// Specifies a cipher algorithm (e.g., AES128-ECB) to be used with a `Cipher`.
+///
+/// Common cipher algorithms are provided as static properties on this class.
+///
+/// There are also static methods for creating `CipherAlgorithm` such as `CipherAlgorithm.named(_:)`
 public final class CipherAlgorithm {
+    // MARK: Static
+
     /// Looks up a cipher function algorithm by name (e.g., "aes-128-cbc").
     /// Uses OpenSSL's `EVP_get_cipherbyname` function.
     ///
@@ -17,6 +24,12 @@ public final class CipherAlgorithm {
         return .init(c: cipher)
     }
 
+    /// AES-128 ECB cipher.
+    public static let aes128ecb: CipherAlgorithm = .init(c: EVP_aes_128_ecb())
+
+    /// AES-256 ECB cipher.
+    public static let aes256ecb: CipherAlgorithm = .init(c: EVP_aes_256_ecb())
+
     /// OpenSSL `EVP_CIPHER` context.
     let c: UnsafePointer<EVP_CIPHER>
 
@@ -25,24 +38,25 @@ public final class CipherAlgorithm {
         self.c = c
     }
 
+    // MARK: Instance
+
     /// Returns the OpenSSL NID type for this algorithm.
     public var type: Int32 {
         return EVP_CIPHER_type(c)
     }
 
+    /// This cipher's required key length.
     public var keySize: Int32 {
         return EVP_CIPHER_key_length(c)
     }
 
+    /// This cipher's required initialization vector length.
     public var ivSize: Int32 {
         return EVP_CIPHER_iv_length(c)
     }
 
-    public var blockSize: Int32 {
+    /// This cipher's block size, used internally to allocate "out" buffers.
+    var blockSize: Int32 {
         return EVP_CIPHER_block_size(c)
     }
-
-    public static let aes128ecb: CipherAlgorithm = .init(c: EVP_aes_128_ecb())
-
-    public static let aes256ecb: CipherAlgorithm = .init(c: EVP_aes_256_ecb())
 }

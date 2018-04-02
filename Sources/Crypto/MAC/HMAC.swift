@@ -3,11 +3,12 @@ import Foundation
 
 /// HMAC is a MAC (message authentication code), i.e. a keyed hash function used for message authentication, which is based on a hash function.
 ///
-///    let digest = try HMAC.SHA1.authenticate("hello", key: "vapor")
-///    print(digest.hexEncodedString()) // bb2a9aabb537902647f3f40bfecb679bf0d7d64b
+///     let digest = try HMAC.SHA1.authenticate("hello", key: "vapor")
+///     print(digest.hexEncodedString()) // bb2a9aabb537902647f3f40bfecb679bf0d7d64b
 ///
-/// https://en.wikipedia.org/wiki/HMAC
-/// https://www.openssl.org/docs/man1.0.2/crypto/hmac.html
+/// Read more about [HMAC on Wikipedia](https://en.wikipedia.org/wiki/HMAC).
+///
+/// Read more about OpenSSL's [HMAC methods](https://www.openssl.org/docs/man1.0.2/crypto/hmac.html)
 public final class HMAC {
     /// The `DigestAlgorithm` (e.g., SHA1, MD5, SHA256) to base the message authentication on.
     public let algorithm: DigestAlgorithm
@@ -108,7 +109,7 @@ public final class HMAC {
     deinit { HMAC_CTX_cleanup(&ctx) }
 }
 
-/// MARK: Implementations
+/// MARK: HMAC Digests
 
 extension HMAC {
     /// MD4 digest based HMAC.

@@ -1,15 +1,22 @@
 import CNIOOpenSSL
 import Foundation
 
-/// Cryptographic encryption and decryption functions for converting plaintext to/from ciphertext.
+/// Cryptographic encryption and decryption functions for converting plaintext to and from ciphertext.
+///
+/// Normally, you will use the global convenience variables for encrypting and decrypting.
 ///
 ///     let ciphertext = try AES128.encrypt("vapor", key: "passwordpassword")
 ///     try AES128.decrypt(ciphertext, key: "passwordpassword").convert(to: String.self) // "vapor"
 ///
-/// https://en.wikipedia.org/wiki/Encryption
-/// https://www.openssl.org/docs/man1.1.0/crypto/EVP_EncryptInit.html
+/// You may also create a `Cipher` manually.
+///
+///     try Cipher(algorithm: .named("aes-128-ecb").encrypt(...)
+///
+/// Read more about [encryption on Wikipedia](https://en.wikipedia.org/wiki/Encryption).
+///
+/// Read more about OpenSSL's [EVP encryption methods](https://www.openssl.org/docs/man1.1.0/crypto/EVP_EncryptInit.html).
 public final class Cipher {
-    /// The `CipherAlgorithm` (e.g., AES-128 CBC) to use.
+    /// The `CipherAlgorithm` (e.g., AES-128 ECB) to use.
     public let algorithm: CipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
@@ -30,14 +37,15 @@ public final class Cipher {
         self.ctx = EVP_CIPHER_CTX_new()
     }
 
-    /// Encrypts the supplied plaintext into ciphertext. This method will call `.reset(key:iv:mode:)`, `.update(data:into:)`, and `.finish(into:)`.
+    /// Encrypts the supplied plaintext into ciphertext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
+    /// and `finish(into:)` automatically.
     ///
     ///     let key: Data // 16-bytes
     ///     let ciphertext = try AES128.encrypt("vapor", key: key)
     ///     print(ciphertext) /// Encrypted Data
     ///
     /// - parameters:
-    ///     - data: Data to encrypt.
+    ///     - data: Plaintext data to encrypt.
     ///     - key: Cipher key to use for encryption.
     ///            This key must be an appropriate length for the cipher you are using. See `CipherAlgorithm.keySize`.
     ///     - iv: Optional initialization vector to use for encryption.
@@ -52,14 +60,15 @@ public final class Cipher {
         return buffer
     }
 
-    /// Decrypts the supplied ciphertext back to plaintext. This method will call `.reset(key:iv:mode:)`, `.update(data:into:)`, and `.finish(into:)`.
+    /// Decrypts the supplied ciphertext back to plaintext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
+    /// and `finish(into:)` automatically.
     ///
     ///     let key: Data // 16-bytes
     ///     let ciphertext = try AES128.encrypt("vapor", key: key)
     ///     try AES128.decrypt(ciphertext, key: key) // "vapor"
     ///
     /// - parameters:
-    ///     - data: Data to decrypt.
+    ///     - data: Ciphertext data to decrypt.
     ///     - key: Cipher key to use for decryption.
     ///            This key must be an appropriate length for the cipher you are using. See `CipherAlgorithm.keySize`.
     ///     - iv: Optional initialization vector to use for decryption.
@@ -86,7 +95,7 @@ public final class Cipher {
     ///     - iv: Optional initialization vector to use for the encryption or decryption.
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     ///     - mode: Determines whether this `Cipher` will encrypt or decrypt data.
-    ///             Set to `CipherModel.encrypt` by default.
+    ///             This is set to `CipherModel.encrypt` by default.
     ///
     /// - throws: `CryptoError` if reset fails, data conversion fails, or key/iv lengths are not correct.
     public func reset(key: LosslessDataConvertible, iv: LosslessDataConvertible? = nil, mode: CipherMode = .encrypt) throws {
@@ -113,12 +122,12 @@ public final class Cipher {
     /// Encrypts or decrypts a chunk of data into the supplied buffer.
     ///
     ///     let key: Data // 16-bytes
-    ///     var aes128 = Cipher(algorithm: .aes128ecb)
+    ///     let aes128 = Cipher(algorithm: .aes128ecb)
     ///     try aes128.reset(key: key, mode: .encrypt)
     ///     var buffer = Data()
     ///     try aes128.update(data: "hello", into: &buffer)
     ///     try aes128.update(data: "world", into: &buffer)
-    ///     print(buffer) // Partial Ciphertext
+    ///     print(buffer) // Partial ciphertext
     ///
     /// Note: You _must_ call `reset()` once before calling this method.
     ///
@@ -141,13 +150,13 @@ public final class Cipher {
     /// Finalizes the encryption or decryption, appending any additional data into the supplied buffer.
     ///
     ///     let key: Data // 16-bytes
-    ///     var aes128 = Cipher(algorithm: .aes128ecb)
+    ///     let aes128 = Cipher(algorithm: .aes128ecb)
     ///     try aes128.reset(key: key, mode: .encrypt)
     ///     var buffer = Data()
     ///     try aes128.update(data: "hello", into: &buffer)
     ///     try aes128.update(data: "world", into: &buffer)
     ///     try aes128.finish(into: &buffer)
-    ///     print(buffer) // Completed Ciphertext
+    ///     print(buffer) // Completed ciphertext
     ///
     /// Note: You _must_ call `reset()` once and `update()` at least once before calling this method.
     ///
@@ -183,7 +192,7 @@ public enum CipherMode: Int32 {
 }
 
 
-// MARK: Implementations
+// MARK: Ciphers
 
 /// AES-128 ECB Cipher.
 ///

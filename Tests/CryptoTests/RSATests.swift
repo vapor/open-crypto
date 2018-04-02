@@ -5,48 +5,55 @@ import Crypto
 class RSATests: XCTestCase {
     func testPrivateKey() throws {
         let plaintext = Data("vapor".utf8)
-        let rsa = try RSA(key: .private(pem: privateKeyString))
-        try XCTAssertTrue(rsa.verify(rsa.sign(plaintext), signs: plaintext))
+        let key: RSAKey = try .private(pem: privateKeyString)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: key)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: key)
+        XCTAssertTrue(verified)
     }
 
     func testPublicKey() throws {
         let plaintext = Data("vapor".utf8)
-        let rsa = try RSA(key: .public(pem: publicKeyString))
-        try XCTAssertTrue(rsa.verify(testSignature, signs: plaintext))
+        let key: RSAKey = try .public(pem: publicKeyString)
+        try XCTAssertTrue(RSA.SHA512.verify(testSignature, signs: plaintext, key: key))
     }
 
     func testFailure() throws {
         let plaintext = Data("vapor".utf8)
-        let rsa = try RSA(key: .public(pem: publicKeyString))
-        try XCTAssertFalse(rsa.verify(Data("fake".utf8), signs: plaintext))
+        let key: RSAKey = try .public(pem: publicKeyString)
+        try XCTAssertFalse(RSA.SHA512.verify(Data("fake".utf8), signs: plaintext, key: key))
     }
 
     func testKey1024() throws {
-        let plaintext = Data("vapor".utf8)
-        let rsaPublic = try RSA(key: .public(pem: publicKey2String))
-        let rsaPrivate = try RSA(key: .private(pem: privateKey2String))
-        try XCTAssertTrue(rsaPublic.verify(rsaPrivate.sign(plaintext), signs: plaintext))
+        let ciphertext = try RSA.SHA512.sign("vapor", key: .private(pem: privateKey2String))
+        let verified = try RSA.SHA512.verify(ciphertext, signs: "vapor", key: .public(pem: publicKey2String))
+        XCTAssertTrue(verified)
     }
 
     func testKey2048() throws {
         let plaintext = Data("vapor".utf8)
-        let rsaPublic = try RSA(key: .public(pem: publicKey3String))
-        let rsaPrivate = try RSA(key: .private(pem: privateKey3String))
-        try XCTAssertTrue(rsaPublic.verify(rsaPrivate.sign(plaintext), signs: plaintext))
+        let rsaPublic: RSAKey = try .public(pem: publicKey3String)
+        let rsaPrivate: RSAKey = try .private(pem: privateKey3String)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: rsaPrivate)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: rsaPublic)
+        XCTAssertTrue(verified)
     }
 
     func testKey4096() throws {
         let plaintext = Data("vapor".utf8)
-        let rsaPublic = try RSA(key: .public(pem: publicKey4String))
-        let rsaPrivate = try RSA(key: .private(pem: privateKey4String))
-        try XCTAssertTrue(rsaPublic.verify(rsaPrivate.sign(plaintext), signs: plaintext))
+        let rsaPublic: RSAKey = try .public(pem: publicKey4String)
+        let rsaPrivate: RSAKey = try .private(pem: privateKey4String)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: rsaPrivate)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: rsaPublic)
+        XCTAssertTrue(verified)
     }
 
     func testKeyCert() throws {
         let plaintext = Data("vapor".utf8)
-        let rsaPublic = try RSA(key: .public(certificate: publicCertString))
-        let rsaPrivate = try RSA(key: .private(pem: privateCertString))
-        try XCTAssertTrue(rsaPublic.verify(rsaPrivate.sign(plaintext), signs: plaintext))
+        let rsaPublic: RSAKey = try .public(certificate: publicCertString)
+        let rsaPrivate: RSAKey = try .private(pem: privateCertString)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: rsaPrivate)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: rsaPublic)
+        XCTAssertTrue(verified)
     }
 
     func testRand() throws {

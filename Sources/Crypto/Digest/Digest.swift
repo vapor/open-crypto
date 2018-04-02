@@ -8,8 +8,9 @@ import Foundation
 ///
 /// See `HMAC` for keyed-hash functions.
 ///
-/// https://en.wikipedia.org/wiki/Cryptographic_hash_function
-/// https://www.openssl.org/docs/man1.1.0/crypto/EVP_MD_CTX_free.html
+/// Read more about hashing on [Wikipedia](https://en.wikipedia.org/wiki/Cryptographic_hash_function).
+///
+/// Read more about OpenSSL's [EVP message digest](https://www.openssl.org/docs/man1.1.0/crypto/EVP_MD_CTX_free.html)/
 public final class Digest {
     /// The `DigestAlgorithm` (e.g., SHA1, MD5, SHA256) to use.
     public let algorithm: DigestAlgorithm
@@ -101,7 +102,7 @@ public final class Digest {
     deinit { EVP_MD_CTX_destroy(ctx) }
 }
 
-// MARK: Implementations
+// MARK: Digests
 
 /// MD4 digest.
 ///
