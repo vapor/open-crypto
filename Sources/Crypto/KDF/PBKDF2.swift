@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 /// PBKDF2 derives a fixed or custom length key from a password and salt.
 ///
@@ -7,10 +8,10 @@ import Foundation
 /// Unlike BCrypt, the salt does not get stored in the final result,
 /// meaning it needs to be generated and stored manually.
 ///
-///     let passwordHasher = PBKDF2(algorithm: SHA512)
+///     let passwordHasher = PBKDF2(digest: SHA1)
 ///     let salt = try CryptoRandom().generateData(count: 64) // Data
 ///     let hash = try passwordHasher.deriveKey(fromPassword: "secret", salt: salt, iterations: 15_000) // Data
-///     
+///     print(hash.hexEncodedString()) // 8e55fa3015da583bb51b706371aa418afc8a0a44
 ///
 /// PBKDF2 leans on HMAC for each iteration and can use all hash functions supported in Crypto
 ///
@@ -26,16 +27,21 @@ public final class PBKDF2 {
         case digestSize
         case fixed(Int)
         
-        func size(forAlgorithm algorithm: Digest) -> Int {
-            return 0
+        fileprivate func size(for digest: Digest) -> Int {
+            switch self {
+            case .digestSize:
+                return numericCast(digest.algorithm.digestSize)
+            case .fixed(let size):
+                return size
+            }
         }
     }
     
     private let digest: Digest
     
     /// Creates a new PBKDF2 derivator based on a hashing algorithm
-    public init(algorithm: DigestAlgorithm) {
-        self.digest = Digest(algorithm: algorithm)
+    public init(digest: Digest) {
+        self.digest = digest
     }
     
     /// Authenticates a message using HMAC with precalculated keys (saves 50% performance)
@@ -52,14 +58,16 @@ public final class PBKDF2 {
     ///
     ///
     public func deriveKey(
-        fromPassword password: Data,
-        salt: Data,
+        fromPassword password: LosslessDataConvertible,
+        salt: LosslessDataConvertible,
         iterations: Int,
         keySize: KeySize = .digestSize
     ) throws -> Data {
         let chunkSize = numericCast(digest.algorithm.blockSize) as Int
         let digestSize = numericCast(digest.algorithm.digestSize) as Int
-        let keySize = keySize.size(forAlgorithm: digest)
+        let keySize = keySize.size(for: digest)
+        var password = try password.convertToData()
+        var salt = try salt.convertToData()
         
         // Check input values to be correct
         guard iterations > 0 else {
@@ -86,8 +94,7 @@ public final class PBKDF2 {
             throw CryptoError.custom(identifier: "emptySalt", reason: "The salt provided to PBKDF2 was 0 bytes long")
         }
         
-        // Precalculate paddings
-        var password = password
+        // Precalculate paddings to save 50% performance
         
         // If the key is too long, hash it first
         if password.count > chunkSize {
@@ -111,15 +118,16 @@ public final class PBKDF2 {
         var response = Data()
         response.reserveCapacity(keySize)
         
-        // Salt + UInt32 (block number)
-        let blockOffset = salt.count
-        var salt = salt + [0,0,0,0]
+        let saltSize = salt.count
+        
+        // Add 4 bytes for the chunk block numbers
+        salt.append(contentsOf: [0,0,0,0])
         
         // Loop over all blocks
         for block in 1...blocks {
             salt.withMutableByteBuffer { buffer in
                 buffer.baseAddress!.advanced(
-                    by: blockOffset
+                    by: saltSize
                 ).withMemoryRebound(
                     to: UInt32.self,
                     capacity: 1

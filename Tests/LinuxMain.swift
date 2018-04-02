@@ -6,4 +6,6 @@ XCTMain([
     testCase(SHA1Tests.allTests),
     testCase(SHA2Tests.allTests),
     testCase(RSATests.allTests),
+    testCase(BCryptTests.allTests),
+    testCase(PBKDF2Tests.allTests),
 ])

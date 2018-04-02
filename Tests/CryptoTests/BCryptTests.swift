@@ -51,7 +51,7 @@ class BCryptTests: XCTestCase {
     }
 }
 
-let tests = [
+fileprivate let tests = [
     "$2a$04$TI13sbmh3IHnmRepeEFoJOkVZWsn5S1O8QOwm8ZU5gNIpJog9pXZm": "vapor",
     "$2a$06$DCq7YPn5Rq63x1Lad4cll.TV4S6ytwfsfvkgY8jIucDrjc8deX1s.": "",
     "$2a$06$m0CrhHm10qJ3lXRY.5zDGO3rS2KdeeWLuGmsfGlMfOxih58VYVfxe": "a",
