@@ -16,7 +16,7 @@ class PBKDF2Tests: XCTestCase {
     }
 }
 
-fileprivate let tests: [(key: String, salt: String, iterations: Int, keySize: PBKDF2KeySize, expectation: String)] = [
+fileprivate let tests: [(key: String, salt: String, iterations: Int32, keySize: PBKDF2KeySize, expectation: String)] = [
     ("password", "salt", 1, .fixed(20), "120fb6cffcf8b32c43e7225256c4f837a86548c9"),
     ("password", "salt", 2, .fixed(20), "ae4d0c95af6b46d32d0adff928f06dd02a303f8e"),
     ("password", "salt", 4_096, .fixed(20), "c5e478d59288c841aa530db6845c4c8d962893a0"),

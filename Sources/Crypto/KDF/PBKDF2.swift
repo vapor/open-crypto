@@ -1,4 +1,5 @@
 import Foundation
+import CNIOOpenSSL
 import Core
 
 /// The requested amount of output bytes from the key derivation
@@ -79,118 +80,36 @@ public final class PBKDF2 {
         self.digest = digest
     }
     
-    /// Authenticates a message using HMAC with precalculated keys (saves 50% performance)
-    fileprivate func authenticate(
-        _ message: Data,
-        innerPadding: Data,
-        outerPadding: Data
-    ) throws -> Data {
-        let innerPaddingHash = try self.digest.digest(innerPadding + message)
-        return try self.digest.digest(outerPadding + innerPaddingHash)
-    }
-    
     /// Derives a key with up to `keySize` of bytes
     ///
     ///
     public func hash(
-        _ password: LosslessDataConvertible,
+        _ password: String,
         salt: LosslessDataConvertible,
-        iterations: Int,
+        iterations: Int32,
         keySize: PBKDF2KeySize = .digestSize
     ) throws -> Data {
-        let chunkSize = numericCast(digest.algorithm.blockSize) as Int
-        let digestSize = numericCast(digest.algorithm.digestSize) as Int
         let keySize = keySize.size(for: digest)
-        var password = try password.convertToData()
-        var salt = try salt.convertToData()
+        let salt = try salt.convertToData()
         
-        // Check input values to be correct
-        guard iterations > 0 else {
-            throw CryptoError.custom(
-                identifier: "noIterations",
-                reason: """
-                PBKDF2 was requested to iterate 0 times.
-                This must be at least 1 iteration.
-                10_000 is the recommended minimum for secure key derivations.
-                """
-            )
-        }
+        var output = Data(repeating: 0, count: keySize)
         
-        guard password.count > 0 else {
-            throw CryptoError.custom(identifier: "emptySalt", reason: "The password provided to PBKDF2 was 0 bytes long")
-        }
-        
-        guard salt.count > 0 else {
-            throw CryptoError.custom(identifier: "emptySalt", reason: "The salt provided to PBKDF2 was 0 bytes long")
-        }
-        
-        // `pow` is not available for `Int`
-        guard keySize <= Int(((pow(2,32)) - 1) * Double(chunkSize)) else {
-            throw CryptoError.custom(identifier: "emptySalt", reason: "The salt provided to PBKDF2 was 0 bytes long")
-        }
-        
-        // Precalculate paddings to save 50% performance
-        
-        // If the key is too long, hash it first
-        if password.count > chunkSize {
-            password = try digest.digest(password)
-        }
-        
-        // Add padding
-        if password.count < chunkSize {
-            password = password + Data(repeating: 0, count: chunkSize &- password.count)
-        }
-        
-        // XOR the information
-        var outerPadding = Data(repeating: 0x5c, count: chunkSize)
-        var innerPadding = Data(repeating: 0x36, count: chunkSize)
-        
-        outerPadding ^= password
-        innerPadding ^= password
-        
-        // This is where all the key derivation happens
-        let blocks = UInt32((keySize + digestSize - 1) / digestSize)
-        var response = Data()
-        response.reserveCapacity(keySize)
-        
-        let saltSize = salt.count
-        
-        // Add 4 bytes for the chunk block numbers
-        salt.append(contentsOf: [0,0,0,0])
-        
-        // Loop over all blocks
-        for block in 1...blocks {
-            salt.withMutableByteBuffer { buffer in
-                buffer.baseAddress!.advanced(
-                    by: saltSize
-                ).withMemoryRebound(
-                    to: UInt32.self,
-                    capacity: 1
-                ) { pointer in
-                    pointer.pointee = block.bigEndian
+        return try salt.withByteBuffer { saltBuffer in
+            try output.withMutableByteBuffer { outputBuffer in
+                let resultCode = PKCS5_PBKDF2_HMAC(
+                    password, Int32(password.count), // password string and length
+                    saltBuffer.baseAddress, Int32(saltBuffer.count), // salt pointer and length
+                    iterations, // Iteration count
+                    self.digest.algorithm.c, // Algorithm identifier
+                    Int32(keySize), outputBuffer.baseAddress // Output buffer
+                )
+                
+                guard resultCode == 1 else {
+                    throw CryptoError.openssl(identifier: "PKCS5_PBKDF2_HMAC", reason: "Failed to hash password using PBKDF2")
                 }
             }
             
-            // Iterate the first time
-            var ui = try authenticate(salt, innerPadding: innerPadding, outerPadding: outerPadding)
-            var u1 = ui
-            
-            // Continue iterating for this block
-            for _ in 0..<iterations - 1 {
-                u1 = try authenticate(u1, innerPadding: innerPadding, outerPadding: outerPadding)
-                ui ^= u1
-            }
-            
-            // Append the response to be returned
-            response.append(contentsOf: ui)
-        }
-        
-        // In the scenarios where the keySize is not the digestSize we have to make a slice
-        if response.count > keySize {
-            return Data(response[0..<keySize])
-        } else {
-            // Otherwise we can use a more direct return which is more performant
-            return response
+            return output
         }
     }
 }
