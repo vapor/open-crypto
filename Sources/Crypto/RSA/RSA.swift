@@ -52,7 +52,7 @@ public struct RSA {
 
         switch inputFormat {
         case .digest: break // leave input as is
-        case .message: input = try Digest(algorithm: digestAlgorithm).digest(input)
+        case .message: input = try Digest(algorithm: digestAlgorithm).hash(input)
         }
 
         let ret = RSA_sign(
@@ -79,7 +79,7 @@ public struct RSA {
 
         switch inputFormat {
         case .digest: break // leave input as is
-        case .message: input = try Digest(algorithm: digestAlgorithm).digest(input)
+        case .message: input = try Digest(algorithm: digestAlgorithm).hash(input)
         }
 
         let result = RSA_verify(

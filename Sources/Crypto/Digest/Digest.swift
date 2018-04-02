@@ -3,7 +3,7 @@ import Foundation
 
 /// Cryptographic hash functions convert data of arbitrary size to a fixed-size digest.
 ///
-///     let digest = try SHA1.digest("hello")
+///     let digest = try SHA1.hash("hello")
 ///     print(digest.hexEncodedString()) // aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d
 ///
 /// See `HMAC` for keyed-hash functions.
@@ -21,11 +21,11 @@ public final class Digest {
     ///
     /// You can use the convenience static variables for common algorithms.
     ///
-    ///     try SHA256.digest(...)
+    ///     try SHA256.hash(...)
     ///
     /// You can also use this `init(algorithm:)` method manually to supply custom `DigestAlgorithm`.
     ///
-    ///     try Digest(algorithm: .named("sha256")).digest(...)
+    ///     try Digest(algorithm: .named("sha256")).hash(...)
     ///
     public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
@@ -34,14 +34,14 @@ public final class Digest {
 
     /// Creates a digest for the supplied data. This method will call `.reset()`, `.update(data:)`, and `.finish()`.
     ///
-    ///     let digest = try SHA256.digest("hello")
+    ///     let digest = try SHA256.hash("hello")
     ///     print(digest) /// Data
     ///
     /// - parameters:
     ///     - data: Data to digest
     /// - returns: Digest
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func digest(_ data: LosslessDataConvertible) throws -> Data {
+    public func hash(_ data: LosslessDataConvertible) throws -> Data {
         try reset()
         try update(data: data)
         return try finish()

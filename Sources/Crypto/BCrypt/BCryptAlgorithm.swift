@@ -1,75 +1,66 @@
 import Bits
 import Foundation
 
-public final class BCrypt {
+/// Internal BCrypt implementation.
+internal final class BCryptAlgorithm {
     // the salt for this hash
-    var salt: Salt
-    
-    // cache the digest once it's created once
-    private var _digest: Data?
+    public let config: BCryptConfig
     
     // keys
     private var p: UnsafeMutablePointer<UInt32>
     private var s: UnsafeMutablePointer<UInt32>
     
-    init(_ salt: Salt? = nil) throws {
+    public init(config: BCryptConfig) throws {
         p = UnsafeMutablePointer<UInt32>
-            .allocate(capacity: Key.p.count)
+            .allocate(capacity: BCryptKeys.p.count)
         p.initialize(
-            from: UnsafeMutableRawPointer(mutating: Key.p)
+            from: UnsafeMutableRawPointer(mutating: BCryptKeys.p)
                 .assumingMemoryBound(to: UInt32.self),
-            count: Key.p.count
+            count: BCryptKeys.p.count
         )
         
         s = UnsafeMutablePointer<UInt32>
-            .allocate(capacity: Key.s.count)
+            .allocate(capacity: BCryptKeys.s.count)
         s.initialize(
-            from: UnsafeMutableRawPointer(mutating: Key.s)
+            from: UnsafeMutableRawPointer(mutating: BCryptKeys.s)
                 .assumingMemoryBound(to: UInt32.self),
-            count: Key.s.count
+            count: BCryptKeys.s.count
         )
+
+        self.config = config
         
-        self.salt = try salt ?? Salt()
-        
-        guard case .two(let scheme) = self.salt.version else {
-            throw BCrypt.Error.unsupportedSaltVersion
+        guard case .two(let scheme) = self.config.version else {
+            throw CryptoError(identifier: "unsupportedBCryptVersion", reason: "BCrypt version \(config.version) is not supported.")
         }
         
         guard scheme == .a || scheme == .x || scheme == .y else {
-            throw BCrypt.Error.unsupportedSaltVersion
+            throw CryptoError(identifier: "unsupportedBCryptVersion", reason: "BCrypt version \(config.version) is not supported.")
         }
     }
     
     deinit {
-        p.deinitialize(count: Key.p.count)
+        p.deinitialize(count: BCryptKeys.p.count)
         p.deallocate()
         
-        s.deinitialize(count: Key.s.count)
+        s.deinitialize(count: BCryptKeys.s.count)
         s.deallocate()
     }
     
-    func digest(message: inout Data) -> Data {
-        // prevent digest from being actually run
-        // multiple times
-        if let digest = _digest {
-            return digest
-        }
-        
+    func digest(message: Data) -> Data {
         var message = message + [0]
         
         var j: Int
         let clen: Int = 6
-        var cdata: [UInt32] = Key.ctext
-        enhanceKeySchedule(
-            with: &salt.bytes,
-            key: &message
-        )
+        var cdata: [UInt32] = BCryptKeys.ctext
+
+        var saltData = config.salt
+        enhanceKeySchedule(with: &saltData, key: &message)
         
-        let rounds = 1 << salt.cost
+        let rounds = 1 << config.cost
         
         for _ in 0..<rounds {
             key(&message)
-            key(&salt.bytes)
+            key(&saltData)
         }
         
         for _ in 0..<64 {
@@ -103,9 +94,7 @@ public final class BCrypt {
             #endif
         }
         
-        let digest = Data(result[0..<23])
-        _digest = digest
-        return digest
+        return Data(result[0..<23])
     }
     
     // MARK: Private
@@ -206,13 +195,13 @@ public final class BCrypt {
 
         key.withUnsafeMutableBytes { (keyPointer: MutableBytesPointer) in
             data.withUnsafeMutableBytes { (dataPointer: MutableBytesPointer) in
-                for i in 0..<Key.p.count {
+                for i in 0..<BCryptKeys.p.count {
                     p[i] = p[i] ^ streamToWord(with: keyPointer, length: keyLength, off: &koffp)
                 }
                 
                 var i = 0
                 
-                while i < Key.p.count {
+                while i < BCryptKeys.p.count {
                     lr[0] ^= streamToWord(with: dataPointer, length: dataLength, off: &doffp)
                     lr[1] ^= streamToWord(with: dataPointer, length: dataLength, off: &doffp)
                     self.encipher(lr: &lr, off: 0)
@@ -224,7 +213,7 @@ public final class BCrypt {
                 
                 i = 0
                 
-                while i < Key.s.count {
+                while i < BCryptKeys.s.count {
                     lr[0] ^= streamToWord(with: dataPointer, length: dataLength, off: &doffp)
                     lr[1] ^= streamToWord(with: dataPointer, length: dataLength, off: &doffp)
                     self.encipher(lr: &lr, off: 0)
