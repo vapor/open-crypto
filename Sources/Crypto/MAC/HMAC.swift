@@ -65,7 +65,7 @@ public final class HMAC {
     }
 
     /// Updates the HMAC digest with a new chunk of data. This method can be called repeatedly for each new chunk.
-    /// Use this method for stremaing HMAC digests.
+    /// Use this method for streaming HMAC digests.
     ///
     ///     let hmacsha256 = try HMAC(algorithm: .sha256)
     ///     try hmacsha256.reset(key: "vapor")
