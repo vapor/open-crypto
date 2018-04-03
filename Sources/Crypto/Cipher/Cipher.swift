@@ -1,6 +1,26 @@
 import CNIOOpenSSL
 import Foundation
 
+// MARK: Ciphers
+
+/// AES-128 ECB Cipher.
+///
+///     let key: Data // 16-bytes
+///     let ciphertext = try AES128.encrypt("vapor", key: key)
+///     print(ciphertext) // Encrypted Data
+///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
+///
+public var AES128: Cipher { return .init(algorithm: .aes128ecb) }
+
+/// AES-256 ECB Cipher.
+///
+///     let key: Data // 32-bytes
+///     let ciphertext = try AES256.encrypt("vapor", key: key)
+///     print(ciphertext) // Encrypted Data
+///     AES256.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
+///
+public var AES256: Cipher { return .init(algorithm: .aes256ecb) }
+
 /// Cryptographic encryption and decryption functions for converting plaintext to and from ciphertext.
 ///
 /// Normally, you will use the global convenience variables for encrypting and decrypting.
@@ -190,26 +210,3 @@ public enum CipherMode: Int32 {
     /// Decrypts encrypted ciphertext back to its original value.
     case decrypt = 0
 }
-
-
-// MARK: Ciphers
-
-/// AES-128 ECB Cipher.
-///
-///     let key: Data // 16-bytes
-///     let ciphertext = try AES128.encrypt("vapor", key: key)
-///     print(ciphertext) // Encrypted Data
-///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
-///
-/// https://en.wikipedia.org/wiki/MD4
-public var AES128: Cipher { return .init(algorithm: .aes128ecb) }
-
-/// AES-256 ECB Cipher.
-///
-///     let key: Data // 32-bytes
-///     let ciphertext = try AES128.encrypt("vapor", key: key)
-///     print(ciphertext) // Encrypted Data
-///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
-///
-/// https://en.wikipedia.org/wiki/MD4
-public var AES256: Cipher { return .init(algorithm: .aes256ecb) }
