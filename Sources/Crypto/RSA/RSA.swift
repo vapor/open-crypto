@@ -17,11 +17,7 @@ import Foundation
 ///
 /// Read more about RSA on [Wikipedia](https://en.wikipedia.org/wiki/RSA_(cryptosystem)).
 public final class RSA {
-    /// The hashing algorithm to use, (e.g., SHA512). See `DigestAlgorithm`.
-    public let algorithm: DigestAlgorithm
-
-    /// The padding algorithm used.
-    public let paddingScheme: RSAPaddingScheme
+    // MARK: Static
 
     /// RSA using SHA256 digest.
     public static var SHA256: RSA { return .init(algorithm: .sha256) }
@@ -32,11 +28,28 @@ public final class RSA {
     /// RSA using SHA512 digest.
     public static var SHA512: RSA { return .init(algorithm: .sha512) }
 
-    /// Creates a new RSA cipher.
-    public init(algorithm: DigestAlgorithm, paddingScheme: RSAPaddingScheme = .pkcs1) {
+    // MARK: Properties
+
+    /// The hashing algorithm to use, (e.g., SHA512). See `DigestAlgorithm`.
+    public let algorithm: DigestAlgorithm
+
+    // MARK: Init
+
+    /// Creates a new RSA cipher using the supplied `DigestAlgorithm`.
+    ///
+    /// You can use the convenience static variables on `RSA` for common algorithms.
+    ///
+    ///     let ciphertext = try RSA.SHA512.sign("vapor", key: .private(pem: ...))
+    ///
+    /// You can also use this method to manually create an `RSA`.
+    ///
+    ///     let rsa = RSA(algorithm: .sha512)
+    ///
+    public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
-        self.paddingScheme = paddingScheme
     }
+
+    // MARK: Methods
 
     /// Signs the supplied input (in format specified by `format`).
     ///
@@ -59,11 +72,6 @@ public final class RSA {
             repeating: 0,
             count: Int(RSA_size(key.c.pointer))
         )
-
-        switch paddingScheme {
-        case .pkcs1: break
-        case .pss: throw CryptoError(identifier: "rsaPaddingScheme", reason: "RSA PSS not yet supported on Linux. Use PKCS#1.")
-        }
 
         var input = try input.convertToData()
 
@@ -126,12 +134,4 @@ public enum RSAInputFormat {
     case digest
     /// Raw, unhashed message
     case message
-}
-
-/// Supported RSA padding type.
-public enum RSAPaddingScheme {
-    /// PKCS#1
-    case pkcs1
-    /// Probabilistic Signature Scheme
-    case pss
 }
