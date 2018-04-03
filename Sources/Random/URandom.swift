@@ -4,11 +4,13 @@ import COperatingSystem
 /// URandom represents a file connection to /dev/urandom on Unix systems.
 /// `/dev/urandom` is a cryptographically secure random generator provided by the OS.
 public final class URandom: DataGenerator {
-    public enum Error: Swift.Error {
+    /// Internal error type.
+    internal enum Error: Swift.Error {
         case open(Int32)
         case read(Int32)
     }
 
+    /// Internal file pointer.
     private let file: UnsafeMutablePointer<FILE>
 
     /// Initialize URandom
@@ -21,10 +23,12 @@ public final class URandom: DataGenerator {
         self.file = file
     }
 
+    /// Clean up file descriptor.
     deinit {
         fclose(file)
     }
 
+    /// Internal read method.
     private func read(numBytes: Int) throws -> Data {
         // Initialize an empty array with space for numBytes bytes
         var bytes = [UInt8](repeating: 0, count: numBytes)
