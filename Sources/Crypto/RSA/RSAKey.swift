@@ -4,20 +4,7 @@ import Foundation
 
 /// Represents an in-memory RSA key.
 public struct RSAKey {
-    /// The specific RSA key type. Either public or private.
-    ///
-    /// Note: public keys can only verify signatures. A private key
-    /// is required to create new signatures.
-    public var type: RSAKeyType
-
-    /// The C OpenSSL key ref.
-    internal let c: CRSAKey
-
-    /// Creates a new `RSAKey` from a public or private key.
-    internal init(type: RSAKeyType, key: CRSAKey) throws {
-        self.type = type
-        self.c = key
-    }
+    // MARK: Static
 
     /// Creates a new `RSAKey` from a private key pem file.
     public static func `private`(pem: LosslessDataConvertible) throws -> RSAKey {
@@ -32,6 +19,25 @@ public struct RSAKey {
     /// Creates a new `RSAKey` from a public key certificate file.
     public static func `public`(certificate: LosslessDataConvertible) throws -> RSAKey {
         return try .init(type: .public, key: .make(type: .public, from: certificate.convertToData(), x509: true))
+    }
+
+    // MARK: Properties
+
+    /// The specific RSA key type. Either public or private.
+    ///
+    /// Note: public keys can only verify signatures. A private key
+    /// is required to create new signatures.
+    public var type: RSAKeyType
+
+    /// The C OpenSSL key ref.
+    internal let c: CRSAKey
+
+    // MARK: Init
+
+    /// Creates a new `RSAKey` from a public or private key.
+    internal init(type: RSAKeyType, key: CRSAKey) throws {
+        self.type = type
+        self.c = key
     }
 }
 

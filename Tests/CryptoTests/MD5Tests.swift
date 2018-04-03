@@ -21,7 +21,7 @@ class MD5Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try MD5.digest(test.0).hexEncodedString().lowercased()
+            let result = try MD5.hash(test.0).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.1.lowercased())
         }
     }

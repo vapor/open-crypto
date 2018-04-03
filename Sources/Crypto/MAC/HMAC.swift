@@ -3,17 +3,59 @@ import Foundation
 
 /// HMAC is a MAC (message authentication code), i.e. a keyed hash function used for message authentication, which is based on a hash function.
 ///
-///    let digest = try HMAC.SHA1.authenticate("hello", key: "vapor")
-///    print(digest.hexEncodedString()) // bb2a9aabb537902647f3f40bfecb679bf0d7d64b
+///     let digest = try HMAC.SHA1.authenticate("hello", key: "vapor")
+///     print(digest.hexEncodedString()) // bb2a9aabb537902647f3f40bfecb679bf0d7d64b
 ///
-/// https://en.wikipedia.org/wiki/HMAC
-/// https://www.openssl.org/docs/man1.0.2/crypto/hmac.html
+/// Read more about [HMAC on Wikipedia](https://en.wikipedia.org/wiki/HMAC).
+///
+/// Read more about OpenSSL's [HMAC methods](https://www.openssl.org/docs/man1.0.2/crypto/hmac.html)
 public final class HMAC {
+    // MARK: Static
+
+    /// MD4 digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/MD4
+    public static var MD4: HMAC { return .init(algorithm: .md4) }
+
+    /// MD5 digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/MD5
+    public static var MD5: HMAC { return .init(algorithm: .md5) }
+
+    /// SHA-1 digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-1
+    public static var SHA1: HMAC { return .init(algorithm: .sha1) }
+
+    /// SHA-224 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA224: HMAC { return .init(algorithm: .sha224) }
+
+    /// SHA-256 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA256: HMAC { return .init(algorithm: .sha256) }
+
+    /// SHA-384 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA384: HMAC { return .init(algorithm: .sha384) }
+
+    /// SHA-512 (SHA-2) digest based HMAC.
+    ///
+    /// https://en.wikipedia.org/wiki/SHA-2
+    public static var SHA512: HMAC { return .init(algorithm: .sha512) }
+
+    // MARK: Properties
+
     /// The `DigestAlgorithm` (e.g., SHA1, MD5, SHA256) to base the message authentication on.
     public let algorithm: DigestAlgorithm
 
     /// Internal OpenSSL `HMAC_CTX` context.
     var ctx: HMAC_CTX
+
+    // MARK: Init
 
     /// Creates a new `HMAC` using the supplied `DigestAlgorithm`.
     ///
@@ -29,6 +71,8 @@ public final class HMAC {
         self.algorithm = algorithm
         ctx = HMAC_CTX()
     }
+
+    // MARK: Methods
 
     /// Authenticates the message using the supplied key. This method will first initialize or reset the HMAC
     /// context. The supplied message will be digested using one call to `update(data:)`.
@@ -106,43 +150,4 @@ public final class HMAC {
     }
 
     deinit { HMAC_CTX_cleanup(&ctx) }
-}
-
-/// MARK: Implementations
-
-extension HMAC {
-    /// MD4 digest based HMAC.
-    ///
-    /// https://en.wikipedia.org/wiki/MD4
-    public static var MD4: HMAC { return .init(algorithm: .md4) }
-
-    /// MD5 digest based HMAC.
-    ///
-    /// https://en.wikipedia.org/wiki/MD5
-    public static var MD5: HMAC { return .init(algorithm: .md5) }
-
-    /// SHA-1 digest based HMAC.
-    ///
-    /// https://en.wikipedia.org/wiki/SHA-1
-    public static var SHA1: HMAC { return .init(algorithm: .sha1) }
-
-    /// SHA-224 (SHA-2) digest based HMAC.
-    ///
-    /// https://en.wikipedia.org/wiki/SHA-2
-    public static var SHA224: HMAC { return .init(algorithm: .sha224) }
-
-    /// SHA-256 (SHA-2) digest based HMAC.
-    ///
-    /// https://en.wikipedia.org/wiki/SHA-2
-    public static var SHA256: HMAC { return .init(algorithm: .sha256) }
-
-    /// SHA-384 (SHA-2) digest based HMAC.
-    ///
-    /// https://en.wikipedia.org/wiki/SHA-2
-    public static var SHA384: HMAC { return .init(algorithm: .sha384) }
-
-    /// SHA-512 (SHA-2) digest based HMAC.
-    ///
-    /// https://en.wikipedia.org/wiki/SHA-2
-    public static var SHA512: HMAC { return .init(algorithm: .sha512) }
 }

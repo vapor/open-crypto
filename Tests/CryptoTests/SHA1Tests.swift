@@ -42,14 +42,14 @@ class SHA1Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try SHA1.digest(test.key).hexEncodedString().lowercased()
+            let result = try SHA1.hash(test.key).hexEncodedString().lowercased()
             XCTAssertEqual(result, test.expected.lowercased())
         }
     }
     
     func testNotCrashing() throws {
         let data = Data(repeating: 0x02, count: 263)
-        _ = try SHA1.digest(data)
+        _ = try SHA1.hash(data)
     }
 
     func testHMAC() throws {
