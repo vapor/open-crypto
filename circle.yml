@@ -43,12 +43,81 @@ jobs:
           working_directory: ~/vapor
 
 
+  linux-jwt:
+    docker:
+      - image: codevapor/swift:4.1
+    steps:
+      - run:
+          name: Clone JWT
+          command: git clone -b master https://github.com/vapor/jwt.git
+          working_directory: ~/
+      - run:
+          name: Switch JWT to this Crypto revision
+          command: swift package edit Crypto --revision $CIRCLE_SHA1
+          working_directory: ~/jwt
+      - run:
+          name: Run JWT unit tests
+          command: swift test
+          working_directory: ~/jwt
+
+
+  linux-mysql:
+    docker:
+      - image: codevapor/swift:4.1
+      - image: mysql:5.7
+        environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: true
+          MYSQL_DATABASE: vapor_database
+          # MYSQL_ROOT_HOST: %
+          MYSQL_USER: vapor_username
+          MYSQL_PASSWORD: vapor_password
+    steps:
+      - run:
+          name: Clone MySQL
+          command: git clone -b master https://github.com/vapor/mysql.git
+          working_directory: ~/
+      - run:
+          name: Switch MySQL to this Crypto revision
+          command: swift package edit Crypto --revision $CIRCLE_SHA1
+          working_directory: ~/mysql
+      - run:
+          name: Run MySQL unit tests
+          command: swift test
+          working_directory: ~/mysql
+
+
+  linux-postgresql:    
+    docker:
+      - image: codevapor/swift:4.1
+      - image: circleci/postgres:latest
+        environment:
+          POSTGRES_USER: vapor_username
+          POSTGRES_DB: vapor_database
+          POSTGRES_PASSWORD: vapor_password
+    steps:
+      - run:
+          name: Clone PostgreSQL
+          command: git clone -b master https://github.com/vapor/postgresql.git
+          working_directory: ~/
+      - run:
+          name: Switch PostgreSQL to this Crypto revision
+          command: swift package edit Crypto --revision $CIRCLE_SHA1
+          working_directory: ~/postgresql
+      - run:
+          name: Run PostgreSQL unit tests
+          command: swift test
+          working_directory: ~/postgresql
+
+
 workflows:
   version: 2
   tests:
     jobs:
       - linux
       - linux-vapor
+      - linux-jwt
+      - linux-mysql
+      - linux-postgresql
       # - macos
 
   nightly:
