@@ -1,6 +1,7 @@
 import Foundation
 
 extension Array {
+    /// Returns a random element from this array using `OSRandom`.
     public var random: Element? {
         guard count > 0 else {
             return nil

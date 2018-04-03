@@ -11,12 +11,12 @@ class RandomTests: XCTestCase {
     ]
 
     func testURandom() throws {
-        let rand = try URandom().makeInt8()
+        let rand = try URandom().generate(Int8.self)
         print(rand)
     }
 
     func testOSRandom() throws {
-        let rand = try OSRandom().makeInt64()
+        let rand = try OSRandom().generate(Int64.self)
         print(rand)
         let bytes = OSRandom().generateData(count: 32)
         print(String(data: bytes, encoding: .utf8) ?? "n/a")

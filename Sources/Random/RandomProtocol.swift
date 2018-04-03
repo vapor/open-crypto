@@ -1,5 +1,6 @@
 import Foundation
 
+/// Capable of generating random `Data`.
 public protocol DataGenerator {
     /// Generate `count` bytes of data.
     func generateData(count: Int) throws -> Data
