@@ -41,6 +41,29 @@ public struct RSAKey {
     }
     
     /// Creates a new `RSAKey` from components.
+    ///
+    /// For example, if you want to use Google's [public OAuth2 keys](https://www.googleapis.com/oauth2/v3/certs),
+    /// you could parse the request using:
+    ///
+    ///     struct CertKeysResponse: APIResponse {
+    ///         let keys: [Key]
+    ///
+    ///         struct Key: Codable {
+    ///             let kty: String
+    ///             let alg: String
+    ///             let kid: String
+    ///
+    ///             let n: String
+    ///             let e: String
+    ///             let d: String?
+    ///         }
+    ///     }
+    ///
+    /// And then instantiate the key as:
+    ///
+    ///     try RSAKey(n: key.n, e: key.e, d: key.d)
+    ///
+    /// - throws: `CryptoError` if key generation fails.
     public init(n: String, e: String, d: String? = nil) throws {
         func parseBignum(_ s: String) -> UnsafeMutablePointer<BIGNUM>? {
             return Data(base64URLEncoded: s)?.withByteBuffer { p in
