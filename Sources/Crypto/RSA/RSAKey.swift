@@ -39,6 +39,29 @@ public struct RSAKey {
         self.type = type
         self.c = key
     }
+    
+    /// Creates a new `RSAKey` from components.
+    public init(n: String, e: String, d: String? = nil) throws {
+        func parseBignum(_ s: String) -> UnsafeMutablePointer<BIGNUM>? {
+            return Data(base64URLEncoded: s)?.withByteBuffer { p in
+                return BN_bin2bn(p.baseAddress, Int32(p.count), nil)
+            }
+        }
+        
+        guard let rsa = RSA_new() else {
+            throw CryptoError.openssl(identifier: "rsaNull", reason: "RSA key creation failed")
+        }
+        
+        rsa.pointee.n = parseBignum(n)
+        rsa.pointee.e = parseBignum(e)
+        
+        if let d = d {
+            rsa.pointee.d = parseBignum(d)
+            self = try .init(type: .private, key: CRSAKey(rsa))
+        } else {
+            self = try .init(type: .public, key: CRSAKey(rsa))
+        }
+    }
 }
 
 /// Supported RSA key types.
@@ -56,7 +79,7 @@ final class CRSAKey {
     let pointer: UnsafeMutablePointer<rsa_st>
 
     /// Creates a new `CRSAKey` from a pointer.
-    private init(_ pointer: UnsafeMutablePointer<rsa_st>) {
+    internal init(_ pointer: UnsafeMutablePointer<rsa_st>) {
         self.pointer = pointer
     }
 
