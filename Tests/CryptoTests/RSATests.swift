@@ -63,6 +63,20 @@ class RSATests: XCTestCase {
         XCTAssertNotEqual(data1.hexDebug, data2.hexDebug)
     }
 
+    func testComps() throws {
+        //"kty": "RSA",
+        //"alg": "RS256",
+        //"use": "sig",
+        //"kid": "3b547886ff85a3428df4f61db73c1c23982a928e",
+        //"n": "mjJLokVSf3F_7MAPPEZzT0fQO2AQwlpzDdYG1EHH9WTxm0Dk4KB8vIBCp6lWm0fV8-pv0N7zF9rJ0CHKgkxuC02VwHVtuegE7XikfRCZJaPAn-MHm-eowW2SpSmsudi0_Gs1cvjxms_lVvoHUBaDTjhHWqCRGX_oOiNCglJKPFaYtyTA4ZiUfQ3FE_uVeoC_gYTYxuUzVxLsKJynrFaOVGIvnp9uRdbS0WtUhs7BY-tgqzJEt42_PFo-DAgWFIpdUzfG0AxAHZQ7TxDM09MaWBVoUMrBMqpMT6TaRtWiKOYeGEfV-ZH2d8qWoJHaKbZjMiSL64sgTNw2T_pZAyTI3Q",
+        //"e": "AQAB"
+        let key: RSAKey = try .components(
+            n: "mjJLokVSf3F_7MAPPEZzT0fQO2AQwlpzDdYG1EHH9WTxm0Dk4KB8vIBCp6lWm0fV8-pv0N7zF9rJ0CHKgkxuC02VwHVtuegE7XikfRCZJaPAn-MHm-eowW2SpSmsudi0_Gs1cvjxms_lVvoHUBaDTjhHWqCRGX_oOiNCglJKPFaYtyTA4ZiUfQ3FE_uVeoC_gYTYxuUzVxLsKJynrFaOVGIvnp9uRdbS0WtUhs7BY-tgqzJEt42_PFo-DAgWFIpdUzfG0AxAHZQ7TxDM09MaWBVoUMrBMqpMT6TaRtWiKOYeGEfV-ZH2d8qWoJHaKbZjMiSL64sgTNw2T_pZAyTI3Q",
+            e: "AQAB"
+        )
+        XCTAssertEqual(key.type, .public)
+    }
+
     static var allTests = [
         ("testPrivateKey", testPrivateKey),
         ("testPublicKey", testPublicKey),
@@ -72,6 +86,7 @@ class RSATests: XCTestCase {
         ("testKey4096", testKey4096),
         ("testKeyCert", testKeyCert),
         ("testRand", testRand),
+        ("testComps", testComps),
     ]
 }
 
