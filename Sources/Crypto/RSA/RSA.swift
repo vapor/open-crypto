@@ -73,7 +73,7 @@ public final class RSA {
             count: Int(RSA_size(key.c.pointer))
         )
 
-        var input = try input.convertToData()
+        var input = input.convertToData()
 
         switch format {
         case .digest: break // leave input as is
@@ -108,8 +108,8 @@ public final class RSA {
     /// - returns: `true` if signature matches plaintext input.
     /// - throws: `CryptoError` if verification fails or data conversion fails.
     public func verify(_ signature: LosslessDataConvertible, signs input: LosslessDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
-        var input = try input.convertToData()
-        var signature = try signature.convertToData()
+        var input = input.convertToData()
+        var signature = signature.convertToData()
 
         switch format {
         case .digest: break // leave input as is
