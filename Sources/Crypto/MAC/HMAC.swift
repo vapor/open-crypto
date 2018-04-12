@@ -102,7 +102,7 @@ public final class HMAC {
     ///     - key: HMAC key
     /// - throws: `CryptoError` if the initialization / reset fails or data conversion fails.
     public func reset(key: LosslessDataConvertible) throws {
-        let key = try key.convertToData()
+        let key = key.convertToData()
         guard HMAC_Init_ex(&ctx, .init(key.withUnsafeBytes { $0 }), Int32(key.count), algorithm.c, nil) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Init_ex", reason: "Failed initializing HMAC context.")
         }
@@ -122,7 +122,7 @@ public final class HMAC {
     ///     - data: Message chunk to digest / authenticate
     /// - throws: `CryptoError` if the update fails or data conversion fails.
     public func update(data: LosslessDataConvertible) throws {
-        let data = try data.convertToData()
+        let data = data.convertToData()
         guard HMAC_Update(&ctx, .init(data.withUnsafeBytes { $0 }), data.count) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Update", reason: "Failed updating HMAC digest.")
         }

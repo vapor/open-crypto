@@ -119,8 +119,8 @@ public final class Cipher {
     ///
     /// - throws: `CryptoError` if reset fails, data conversion fails, or key/iv lengths are not correct.
     public func reset(key: LosslessDataConvertible, iv: LosslessDataConvertible? = nil, mode: CipherMode = .encrypt) throws {
-        let key = try key.convertToData()
-        let iv = try iv?.convertToData()
+        let key = key.convertToData()
+        let iv = iv?.convertToData()
 
         guard EVP_CipherInit_ex(ctx, algorithm.c, nil, key.withUnsafeBytes { $0 }, iv?.withUnsafeBytes { $0 }, mode.rawValue) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherInit_ex", reason: "Failed initializing cipher context.")
@@ -156,7 +156,7 @@ public final class Cipher {
     ///     - buffer: Mutable buffer to append newly encrypted or decrypted data to.
     /// - throws: `CryptoError` if update fails or data conversion fails.
     public func update(data: LosslessDataConvertible, into buffer: inout Data) throws {
-        let input = try data.convertToData()
+        let input = data.convertToData()
         let inputLength: Int32 = numericCast(input.count)
 
         var chunk = Data(repeating: 0, count: numericCast(inputLength + algorithm.blockSize - 1))

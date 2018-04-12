@@ -64,7 +64,7 @@ class CipherTests: XCTestCase {
 }
 
 extension Data {
-    public func convert<T>(to type: T.Type = T.self) throws -> T where T: LosslessDataConvertible {
-        return try T.convertFromData(self)
+    public func convert<T>(to type: T.Type = T.self) -> T where T: LosslessDataConvertible {
+        return T.convertFromData(self)
     }
 }

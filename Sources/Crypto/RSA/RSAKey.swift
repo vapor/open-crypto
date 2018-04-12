@@ -61,10 +61,10 @@ public struct RSAKey {
     ///
     /// And then instantiate the key as:
     ///
-    ///     try RSAKey(n: key.n, e: key.e, d: key.d)
+    ///     try RSAKey.components(n: key.n, e: key.e, d: key.d)
     ///
     /// - throws: `CryptoError` if key generation fails.
-    public init(n: String, e: String, d: String? = nil) throws {
+    public static func components(n: String, e: String, d: String? = nil) throws -> RSAKey {
         func parseBignum(_ s: String) -> UnsafeMutablePointer<BIGNUM>? {
             return Data(base64URLEncoded: s)?.withByteBuffer { p in
                 return BN_bin2bn(p.baseAddress, Int32(p.count), nil)
@@ -80,9 +80,9 @@ public struct RSAKey {
         
         if let d = d {
             rsa.pointee.d = parseBignum(d)
-            self = try .init(type: .private, key: CRSAKey(rsa))
+            return try .init(type: .private, key: CRSAKey(rsa))
         } else {
-            self = try .init(type: .public, key: CRSAKey(rsa))
+            return try .init(type: .public, key: CRSAKey(rsa))
         }
     }
 }

@@ -116,7 +116,7 @@ public final class Digest {
     ///     - data: Message chunk to digest.
     /// - throws: `CryptoError` if update fails or data conversion fails.
     public func update(data: LosslessDataConvertible) throws {
-        let data = try data.convertToData()
+        let data = data.convertToData()
         guard EVP_DigestUpdate(ctx, .init(data.withUnsafeBytes { $0 }), data.count) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestUpdate", reason: "Failed updating digest.")
         }
