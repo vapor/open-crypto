@@ -6,7 +6,7 @@ import CNIOOpenSSL
 ///
 /// https://en.wikipedia.org/wiki/Cryptographic_hash_function
 /// https://www.openssl.org/docs/man1.1.0/crypto/EVP_MD_CTX_free.html
-public final class DigestAlgorithm {
+public final class DigestAlgorithm: Equatable {
     /// Looks up a hash function algorithm by name (e.g., "sha256").
     /// Uses OpenSSL's `EVP_get_digestbyname` function.
     ///
@@ -21,6 +21,11 @@ public final class DigestAlgorithm {
             throw CryptoError.openssl(identifier: "EVP_get_digestbyname", reason: "No digest named \(name) was found.")
         }
         return .init(c: digest)
+    }
+
+    /// See `Equatable`.
+    public static func == (lhs: DigestAlgorithm, rhs: DigestAlgorithm) -> Bool {
+        return lhs.type == rhs.type
     }
 
     /// OpenSSL `EVP_MD` context.
