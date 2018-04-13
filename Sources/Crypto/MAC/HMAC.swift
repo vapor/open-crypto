@@ -123,7 +123,7 @@ public final class HMAC {
     /// - throws: `CryptoError` if the update fails or data conversion fails.
     public func update(data: LosslessDataConvertible) throws {
         let data = data.convertToData()
-        guard HMAC_Update(&ctx, .init(data.withUnsafeBytes { $0 }), data.count) == 1 else {
+        guard data.withUnsafeBytes({ HMAC_Update(&ctx, .init($0), data.count) }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Update", reason: "Failed updating HMAC digest.")
         }
     }
