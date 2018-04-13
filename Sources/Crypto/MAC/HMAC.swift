@@ -103,7 +103,7 @@ public final class HMAC {
     /// - throws: `CryptoError` if the initialization / reset fails or data conversion fails.
     public func reset(key: LosslessDataConvertible) throws {
         let key = key.convertToData()
-        guard HMAC_Init_ex(&ctx, .init(key.withUnsafeBytes { $0 }), Int32(key.count), algorithm.c, nil) == 1 else {
+        guard key.withUnsafeBytes({ HMAC_Init_ex(&ctx, .init($0), Int32(key.count), algorithm.c, nil) }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Init_ex", reason: "Failed initializing HMAC context.")
         }
     }
