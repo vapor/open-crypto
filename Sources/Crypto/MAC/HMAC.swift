@@ -143,7 +143,7 @@ public final class HMAC {
     public func finish() throws -> Data {
         var hash = Data(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
-        guard HMAC_Final(&ctx, hash.withUnsafeMutableBytes { $0 }, &count) == 1 else {
+        guard hash.withUnsafeMutableBytes({ HMAC_Final(&ctx, .init($0), &count) }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Final", reason: "Failed finalizing HMAC digest.")
         }
         return Data(hash[0..<Int(count)])
