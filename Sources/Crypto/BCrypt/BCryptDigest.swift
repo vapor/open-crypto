@@ -2,7 +2,13 @@ import Foundation
 import Random
 import libbcrypt
 
-public final class BCrypt {
+/// Creates and verifies BCrypt hashes. Normally you will not need to initialize one of these classes and you will
+/// use the global `BCrypt` convenience instead.
+///
+///     try BCrypt.hash("vapor", cost: 4)
+///
+/// See `BCrypt` for more information.
+public final class BCryptDigest {
 
     enum Algorithm: String, RawRepresentable {
         /// older version
@@ -31,7 +37,7 @@ public final class BCrypt {
     ///                  SSSSSSSSSSSSSSSSSSSSSS => Salt
     ///
     /// Allowed charset for the salt: [./A-Za-z0-9]
-    private static func generateSalt(cost: UInt, algorithm: Algorithm = ._2y) throws -> String {
+    private func generateSalt(cost: UInt, algorithm: Algorithm = ._2y) throws -> String {
         let random = try URandom().generateString(count: 16)
 
         guard let saltRaw = crypt_gensalt(
@@ -46,12 +52,12 @@ public final class BCrypt {
         return String(cString: saltRaw)
     }
 
-    public static func hash(_ message: String, cost: UInt = 12) throws -> String {
+    public func hash(_ message: String, cost: UInt = 12) throws -> String {
         let salt = try generateSalt(cost: cost)
         return try hash(message, salt: salt)
     }
 
-    public static func hash(_ message: String, cost: UInt = 12, salt: String) throws -> String {
+    public func hash(_ message: String, cost: UInt = 12, salt: String) throws -> String {
         var pointer: UnsafeMutableRawPointer? = UnsafeMutableRawPointer.allocate(byteCount: 40 * MemoryLayout<UInt8>.stride, alignment: MemoryLayout<UInt8>.alignment)
         var dstPointerSize = Int32(40)
 
@@ -67,7 +73,7 @@ public final class BCrypt {
         return String(cString: encryptedRaw)
     }
 
-    public static func verify(_ message: String, created hashed: String) throws -> Bool {
+    public func verify(_ message: String, created hashed: String) throws -> Bool {
 
         guard let hashVersion = Algorithm(rawValue: String(hashed.prefix(4)))
             else {
@@ -91,4 +97,21 @@ public final class BCrypt {
 
         return messageHashChecksum == hashChecksum
     }
+}
+
+// MARK: BCrypt
+/// Creates and verifies BCrypt hashes.
+///
+/// Use BCrypt to create hashes for sensitive information like passwords.
+///
+///     try BCrypt.hash("vapor", cost: 4)
+///
+/// BCrypt uses a random salt each time it creates a hash. To verify hashes, use the `verify(_:matches)` method.
+///
+///     let hash = try BCrypt.hash("vapor", cost: 4)
+///     try BCrypt.verify("vapor", created: hash) // true
+///
+/// https://en.wikipedia.org/wiki/Bcrypt
+public var BCrypt: BCryptDigest {
+    return .init()
 }
