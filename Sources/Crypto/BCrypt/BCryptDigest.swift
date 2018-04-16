@@ -23,7 +23,7 @@ public final class BCryptDigest {
             return 4
         }
 
-        /// Salt's length
+        /// Salt's length (includes revision and cost info)
         var saltCount: Int {
             return 29
         }
@@ -31,6 +31,28 @@ public final class BCryptDigest {
         /// Checksum's length
         var checksumCount: Int {
             return 31
+        }
+
+        /// Salt's length (does NOT include revision and cost info)
+        static var saltCount: Int {
+            return 22
+        }
+    }
+
+    /// Checks whether the provided salt is valid or not
+    ///
+    /// - Parameter salt: Salt to be checked
+    /// - Returns: True if the provided salt is valid
+    private func isSaltValid(_ salt: String) -> Bool {
+        // 2 cases:
+
+        // Includes revision and cost info (count should be 29)
+        let revisionString = String( salt.prefix(4) )
+        if let algorithm = Algorithm(rawValue: revisionString) {
+            return salt.count == algorithm.saltCount
+        } else {
+            // Does not include revision and cost info (count should be 22)
+            return salt.count == Algorithm.saltCount
         }
     }
 
@@ -69,8 +91,13 @@ public final class BCryptDigest {
     ///                  SSSSSSSSSSSSSSSSSSSSSS => Salt
     ///
     /// Allowed charset for the salt: [./A-Za-z0-9]
-    private func generateSalt(cost: UInt, algorithm: Algorithm = ._2b) throws -> String {
-        let randomData = try URandom().generateData(count: 16)
+    private func generateSalt(cost: UInt, algorithm: Algorithm = ._2b, seed: String? = nil) throws -> String {
+        let randomData: Data
+        if let seed = seed, let seedData = seed.data(using: .utf8) {
+            randomData = seedData
+        } else {
+            randomData = try URandom().generateData(count: 16)
+        }
         let encodedSalt = try base64Encode(randomData)
 
         return
@@ -108,13 +135,27 @@ public final class BCryptDigest {
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: BCrypt hash for the supplied plaintext data.
     public func hash(_ plaintext: String, cost: UInt = 12, salt: String) throws -> String {
-        let revisionString = String( salt.prefix(4) )
-        guard let originalAlgorithm = Algorithm(rawValue: revisionString) else {
+
+        guard isSaltValid(salt) else {
             throw CryptoError(identifier: "invalidSalt", reason: "Provided salt has the incorrect format")
         }
 
+        let originalAlgorithm: Algorithm
+        if salt.hasPrefix("$") { // full salt, not user provided
+            let revisionString = String( salt.prefix(4) )
+            if let parsedRevision = Algorithm(rawValue: revisionString) {
+                originalAlgorithm = parsedRevision
+            } else {
+                throw CryptoError(identifier: "invalidSalt", reason: "Provided salt has the incorrect format")
+            }
+        } else {
+            originalAlgorithm = ._2b
+        }
+
+        // OpenBSD doesn't support 2y revision.
         let normalizedSalt: String
         if originalAlgorithm == Algorithm._2y {
+            // Replace with 2b.
             normalizedSalt = Algorithm._2b.rawValue + salt.dropFirst(originalAlgorithm.revisionCount)
         } else {
             normalizedSalt = salt
@@ -149,26 +190,24 @@ public final class BCryptDigest {
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: `true` if the hash was created from the supplied plaintext data.
     public func verify(_ plaintext: String, created hash: String) throws -> Bool {
-        guard let hashVersion = Algorithm(rawValue: String(hash.prefix(4)))
-            else {
-                throw CryptoError(identifier: "invalidHashFormat", reason: "No BCrypt revision information found")
+        guard let hashVersion = Algorithm(rawValue: String(hash.prefix(4))) else {
+            throw CryptoError(identifier: "invalidHashFormat", reason: "No BCrypt revision information found")
         }
 
         let hashSalt = String(hash.prefix(hashVersion.saltCount))
-        guard !hashSalt.isEmpty, hashSalt.count == hashVersion.saltCount
-            else {
-                throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt salt data not found or has incorrect length")
+        guard !hashSalt.isEmpty, hashSalt.count == hashVersion.saltCount else {
+            throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt salt data not found or has incorrect length")
         }
 
         let hashChecksum = String(hash.suffix(hashVersion.checksumCount))
-        guard !hashChecksum.isEmpty, hashChecksum.count == hashVersion.checksumCount
-            else {
-                throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt hash data not found or has incorrect length")
+        guard !hashChecksum.isEmpty, hashChecksum.count == hashVersion.checksumCount else {
+            throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt hash data not found or has incorrect length")
         }
 
         let messageHash = try self.hash(plaintext, salt: hashSalt)
         let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
 
+//        return timingsafe_bcmp(messageHash, hash, messageHash.count) == 0
         return messageHashChecksum == hashChecksum
     }
 }
