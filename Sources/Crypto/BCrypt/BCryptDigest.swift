@@ -10,6 +10,9 @@ import libbcrypt
 /// See `BCrypt` for more information.
 public final class BCryptDigest {
 
+    /// Creates a new `BCryptDigest`. Use the global `BCrypt` convenience
+    public init() { }
+
     enum Algorithm: String, RawRepresentable {
         /// older version
         case _2a = "$2a$"
