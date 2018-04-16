@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "Crypto",
     products: [
-        .library(name: "Crypto", targets: ["Crypto"]),
+        .library(name: "Crypto", targets: ["Crypto", "libbcrypt"]),
         .library(name: "Random", targets: ["Random"]),
     ],
     dependencies: [
@@ -15,7 +15,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "1.0.0"),
     ],
     targets: [
-        .target(name: "Crypto", dependencies: ["Async", "Bits", "Core", "COperatingSystem", "Debugging", "NIOOpenSSL", "Random"]),
+        .target(name: "libbcrypt"),
+        .target(name: "Crypto", dependencies: ["Async", "Bits", "Core", "COperatingSystem", "Debugging", "NIOOpenSSL", "Random", "libbcrypt"]),
         .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
         .target(name: "Random", dependencies: ["Bits"]),
         .testTarget(name: "RandomTests", dependencies: ["Random"]),
