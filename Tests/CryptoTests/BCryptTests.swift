@@ -5,7 +5,6 @@ class BCryptTests: XCTestCase {
     static let allTests = [
         ("testVersion", testVersion),
         ("testFail", testFail),
-        //        ("testSanity", testSanity),
         ("testInvalidSalt", testInvalidSalt),
         ("testVerify", testVerify),
         ("testNotVerify", testNotVerify),
@@ -21,16 +20,6 @@ class BCryptTests: XCTestCase {
         let res = try BCrypt.verify("bar", created: digest)
         XCTAssertEqual(res, false)
     }
-
-    //    func testSanity() throws {
-    //        let secret = "passwordpassword"
-    //        let res = try BCrypt.hash("foo", cost: 4, salt: secret)
-    //
-    //        let parser = try BCryptParser(serialized: res)
-    //        let parsedSalt = try parser.parseConfig()
-    //
-    //        XCTAssertEqual(secret, String(bytes: parsedSalt.salt, encoding: .utf8))
-    //    }
 
     func testInvalidSalt() throws {
         do {
@@ -49,8 +38,10 @@ class BCryptTests: XCTestCase {
     }
 
     func testNotVerify() throws {
-        let result = try BCrypt.verify(tests.first!.value, created: tests.first!.key + "_vapor")
-        XCTAssertFalse(result, "\(tests.first!.value): did not match \(tests.first!.key)")
+        let message = tests.first!.value + "_vapor"
+        let shouldNotMatch = tests.first!.key
+        let result = try BCrypt.verify(message, created: shouldNotMatch)
+        XCTAssertFalse(result, "\(shouldNotMatch): matched \(message)")
     }
 }
 
