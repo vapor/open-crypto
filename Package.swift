@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "Crypto",
     products: [
-        .library(name: "Crypto", targets: ["Crypto", "libbcrypt"]),
+        .library(name: "Crypto", targets: ["Crypto"]),
         .library(name: "Random", targets: ["Random"]),
     ],
     dependencies: [
@@ -16,7 +16,7 @@ let package = Package(
     ],
     targets: [
         .target(name: "libbcrypt"),
-        .target(name: "Crypto", dependencies: ["Async", "Bits", "Core", "COperatingSystem", "Debugging", "NIOOpenSSL", "Random", "libbcrypt"]),
+        .target(name: "Crypto", dependencies: ["Async", "Bits", "Core", "COperatingSystem", "Debugging", "libbcrypt", "NIOOpenSSL", "Random"]),
         .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
         .target(name: "Random", dependencies: ["Bits"]),
         .testTarget(name: "RandomTests", dependencies: ["Random"]),
