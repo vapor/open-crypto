@@ -46,4 +46,16 @@ public final class URandom: DataGenerator {
     public func generateData(count: Int) throws -> Data {
         return try read(numBytes: count)
     }
+
+    public func generateString(count: Int) throws -> String {
+        let bytes = try self.read(numBytes: count)
+
+        var string = ""
+        while (string.count < count) {
+            string += bytes
+                .compactMap({ String(bytes: [$0], encoding: .utf8) })
+                .reduce("",+)
+        }
+        return string
+    }
 }
