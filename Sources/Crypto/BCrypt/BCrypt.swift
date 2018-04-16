@@ -31,28 +31,27 @@ public final class BCrypt {
     ///                  SSSSSSSSSSSSSSSSSSSSSS => Salt
     ///
     /// Allowed charset for the salt: [./A-Za-z0-9]
-    private static func generateSalt(cost: UInt, algorithm: Algorithm = ._2y) -> String? {
-        guard let random = try? URandom().generateString(count: 16)
-            else { return nil }
+    private static func generateSalt(cost: UInt, algorithm: Algorithm = ._2y) throws -> String {
+        let random = try URandom().generateString(count: 16)
 
         guard let saltRaw = crypt_gensalt(
             algorithm.rawValue,
             cost,
             random,
             Int32(random.count) //Int32(entropy.utf8.count / MemoryLayout<UInt8>.size)
-        ) else { return nil }
+        ) else {
+            throw CryptoError(identifier: "unableToGenerateSalt", reason: "Unable to generate BCrypt salt")
+        }
 
         return String(cString: saltRaw)
     }
 
-    public static func hash(_ message: String, cost: UInt = 12) -> String? {
-        guard let salt = generateSalt(cost: cost)
-            else { return nil }
-
-        return hash(message, salt: salt)
+    public static func hash(_ message: String, cost: UInt = 12) throws -> String {
+        let salt = try generateSalt(cost: cost)
+        return try hash(message, salt: salt)
     }
 
-    public static func hash(_ message: String, cost: UInt = 12, salt: String) -> String? {
+    public static func hash(_ message: String, cost: UInt = 12, salt: String) throws -> String {
         var pointer: UnsafeMutableRawPointer? = UnsafeMutableRawPointer.allocate(byteCount: 40 * MemoryLayout<UInt8>.stride, alignment: MemoryLayout<UInt8>.alignment)
         var dstPointerSize = Int32(40)
 
@@ -61,30 +60,34 @@ public final class BCrypt {
             salt,
             &pointer,
             &dstPointerSize
-            ) else { return nil }
+        ) else {
+            throw CryptoError(identifier: "unableToComputeHash", reason: "Unable to compute BCrypt hash")
+        }
 
         return String(cString: encryptedRaw)
     }
 
-    public static func verify(_ message: String, created hashed: String) -> Bool {
+    public static func verify(_ message: String, created hashed: String) throws -> Bool {
 
         guard let hashVersion = Algorithm(rawValue: String(hashed.prefix(4)))
-            else { return false }
+            else {
+                throw CryptoError(identifier: "invalidHashFormat", reason: "No BCrypt revision information found")
+        }
 
         let hashSalt = String(hashed.prefix(hashVersion.saltCount))
         guard !hashSalt.isEmpty, hashSalt.count == hashVersion.saltCount
-            else { return false }
+            else {
+                throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt salt data not found or has incorrect length")
+        }
 
         let hashChecksum = String(hashed.suffix(hashVersion.checksumCount))
         guard !hashChecksum.isEmpty, hashChecksum.count == hashVersion.checksumCount
-            else { return false }
+            else {
+                throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt hash data not found or has incorrect length")
+        }
 
-        guard let messageHash = hash(message, salt: hashSalt)
-            else { return false }
-
+        let messageHash = try hash(message, salt: hashSalt)
         let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
-        guard !messageHashChecksum.isEmpty
-            else { return false }
 
         return messageHashChecksum == hashChecksum
     }
