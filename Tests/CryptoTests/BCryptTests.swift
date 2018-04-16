@@ -6,18 +6,18 @@ class BCryptTests: XCTestCase {
         ("testVersion", testVersion),
         ("testFail", testFail),
 //        ("testSanity", testSanity),
-//        ("testInvalidSalt", testInvalidSalt),
+        ("testInvalidSalt", testInvalidSalt),
         ("testVerify", testVerify),
         ("testNotVerify", testNotVerify),
     ]
 
     func testVersion() throws {
-        let digest = try BCrypt.hash("foo", cost: 6)!
+        let digest = try BCrypt.hash("foo", cost: 6)
         XCTAssert(digest.hasPrefix("$2y$06$"))
     }
 
     func testFail() throws {
-        let digest = try BCrypt.hash("foo", cost: 6)!
+        let digest = try BCrypt.hash("foo", cost: 6)
         let res = try BCrypt.verify("bar", created: digest)
         XCTAssertEqual(res, false)
     }
@@ -31,15 +31,15 @@ class BCryptTests: XCTestCase {
 //
 //        XCTAssertEqual(secret, String(bytes: parsedSalt.salt, encoding: .utf8))
 //    }
-//
-//    func testInvalidSalt() throws {
-//        do {
-//            _ = try BCryptParser(serialized: Data("foo".utf8))
-//            XCTFail("Should have failed")
-//        } catch let error as CryptoError {
-//            print(error)
-//        }
-//    }
+
+    func testInvalidSalt() throws {
+        do {
+            _ = try BCrypt.verify("", created: "foo")
+            XCTFail("Should have failed")
+        } catch let error as CryptoError {
+            print(error)
+        }
+    }
 
     func testVerify() throws {
         for (desired, message) in tests {
