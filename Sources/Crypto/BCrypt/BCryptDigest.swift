@@ -1,3 +1,7 @@
+import Foundation
+import Random
+import libbcrypt
+
 /// Creates and verifies BCrypt hashes. Normally you will not need to initialize one of these classes and you will
 /// use the global `BCrypt` convenience instead.
 ///
@@ -5,56 +9,100 @@
 ///
 /// See `BCrypt` for more information.
 public final class BCryptDigest {
-    /// Creates a new `BCryptDigest`. Use the global `BCrypt` convenience variable.
+
+    /// Creates a new `BCryptDigest`. Use the global `BCrypt` convenience
     public init() { }
 
-    /// Creates a BCrypt digest for the supplied data.
-    ///
-    ///     try BCrypt.hash("vapor", cost: 4)
-    ///
-    ///  If a `salt` is not supplied, a random one will be generated. You can use a custom salt if desired.
-    ///
-    ///     try BCrypt.hash("vapor", cost: 12, salt: "passwordpassword")
-    ///
-    /// - parameters:
-    ///     - plaintext: Plaintext data to digest.
-    ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
-    ///     - salt: Optional salt for this hash. If omitted, a random salt will be generated.
-    ///             The salt must be 16-bytes.
-    /// - throws: `CryptoError` if hashing fails or if data conversion fails.
-    /// - returns: BCrypt hash for the supplied plaintext data.
-    public func hash(_ plaintext: LosslessDataConvertible, cost: Int = 12, salt: LosslessDataConvertible? = nil) throws -> Data {
-        let config = try BCryptConfig(
-            version: .two(.y),
-            cost: cost,
-            salt: salt?.convertToData() ?? CryptoRandom().generateData(count: 16)
-        )
-        let digest = try BCryptAlgorithm(config: config).digest(message: plaintext.convertToData())
-        let serializer = BCryptSerializer(config: config, digest: digest)
-        return serializer.serialize()
+    enum Algorithm: String, RawRepresentable {
+        /// older version
+        case _2a = "$2a$"
+        /// format specific to the crypt_blowfish BCrypt implementation, identical to `2b` in all but name.
+        case _2y = "$2y$"
+        /// latest revision of the official BCrypt algorithm, current default
+        case _2b = "$2b$"
+
+        /// Salt's length
+        var saltCount: Int {
+            return 29
+        }
+
+        /// Checksum's length
+        var checksumCount: Int {
+            return 31
+        }
     }
 
-    /// Verifies an existing BCrypt hash matches the supplied plaintext value. Verification works by parsing the salt and version from
-    /// the existing digest and using that information to hash the plaintext data. If hash digests match, this method returns `true`.
+    /// Generates string (29 chars total) containing the algorithm information + the cost + base-64 encoded 22 character salt
     ///
-    ///     let hash = try BCrypt.hash("vapor", cost: 4)
-    ///     try BCrypt.verify("vapor", created: hash) // true
-    ///     try BCrypt.verify("foo", created: hash) // false
+    ///     E.g:  $2b$05$J/dtt5ybYUTCJ/dtt5ybYO
+    ///           $AA$ => Algorithm
+    ///              $CC$ => Cost
+    ///                  SSSSSSSSSSSSSSSSSSSSSS => Salt
     ///
-    /// - parameters:
-    ///     - plaintext: Plaintext data to digest and verify.
-    ///     - hash: Existing BCrypt hash to parse version, salt, and existing digest from.
-    /// - throws: `CryptoError` if hashing fails or if data conversion fails.
-    /// - returns: `true` if the hash was created from the supplied plaintext data.
-    public func verify(_ plaintext: LosslessDataConvertible, created hash: LosslessDataConvertible) throws -> Bool {
-        let parser = try BCryptParser(serialized: hash.convertToData())
-        let digest = try BCryptAlgorithm(config: parser.parseConfig()).digest(message: plaintext.convertToData())
-        return try digest == parser.parseDigest()
+    /// Allowed charset for the salt: [./A-Za-z0-9]
+    private func generateSalt(cost: UInt, algorithm: Algorithm = ._2y) throws -> String {
+        let random = try URandom().generateString(count: 16)
+
+        guard let saltRaw = crypt_gensalt(
+            algorithm.rawValue,
+            cost,
+            random,
+            Int32(random.count) //Int32(entropy.utf8.count / MemoryLayout<UInt8>.size)
+        ) else {
+            throw CryptoError(identifier: "unableToGenerateSalt", reason: "Unable to generate BCrypt salt")
+        }
+
+        return String(cString: saltRaw)
+    }
+
+    public func hash(_ message: String, cost: UInt = 12) throws -> String {
+        let salt = try generateSalt(cost: cost)
+        return try hash(message, salt: salt)
+    }
+
+    public func hash(_ message: String, cost: UInt = 12, salt: String) throws -> String {
+        var pointer: UnsafeMutableRawPointer? = UnsafeMutableRawPointer.allocate(byteCount: 40 * MemoryLayout<UInt8>.stride, alignment: MemoryLayout<UInt8>.alignment)
+        var dstPointerSize = Int32(40)
+
+        guard let encryptedRaw = crypt_ra(
+            message,
+            salt,
+            &pointer,
+            &dstPointerSize
+        ) else {
+            throw CryptoError(identifier: "unableToComputeHash", reason: "Unable to compute BCrypt hash")
+        }
+
+        return String(cString: encryptedRaw)
+    }
+
+    public func verify(_ message: String, created hashed: String) throws -> Bool {
+
+        guard let hashVersion = Algorithm(rawValue: String(hashed.prefix(4)))
+            else {
+                throw CryptoError(identifier: "invalidHashFormat", reason: "No BCrypt revision information found")
+        }
+
+        let hashSalt = String(hashed.prefix(hashVersion.saltCount))
+        guard !hashSalt.isEmpty, hashSalt.count == hashVersion.saltCount
+            else {
+                throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt salt data not found or has incorrect length")
+        }
+
+        let hashChecksum = String(hashed.suffix(hashVersion.checksumCount))
+        guard !hashChecksum.isEmpty, hashChecksum.count == hashVersion.checksumCount
+            else {
+                throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt hash data not found or has incorrect length")
+        }
+
+        let messageHash = try hash(message, salt: hashSalt)
+        let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
+
+        return messageHashChecksum == hashChecksum
     }
 }
 
 // MARK: BCrypt
-
 /// Creates and verifies BCrypt hashes.
 ///
 /// Use BCrypt to create hashes for sensitive information like passwords.
