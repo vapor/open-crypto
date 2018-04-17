@@ -39,88 +39,6 @@ public final class BCryptDigest {
         }
     }
 
-    /// Checks whether the provided salt is valid or not
-    ///
-    /// - Parameter salt: Salt to be checked
-    /// - Returns: True if the provided salt is valid
-    private func isSaltValid(_ salt: String) -> Bool {
-        // 2 cases:
-
-        // Includes revision and cost info (count should be 29)
-        let revisionString = String( salt.prefix(4) )
-        if let algorithm = Algorithm(rawValue: revisionString) {
-            return salt.count == algorithm.saltCount
-        } else {
-            // Does not include revision and cost info (count should be 22)
-            return salt.count == Algorithm.saltCount
-        }
-    }
-
-    /// Encodes the provided plaintext using OpenBSD's Base 64 encoding
-    ///
-    /// - Parameter plaintext: Plaintext to encode
-    /// - Returns: Base 64 encoded plaintext
-    private func base64Encode(_ data: Data) throws -> String {
-        let randomBytes = data.withUnsafeBytes {
-            [UInt8](UnsafeBufferPointer(start: $0, count: data.count))
-        }
-
-        let encodedSaltBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 25)
-        encode_base64(encodedSaltBytes, randomBytes, randomBytes.count)
-
-        return String(cString: encodedSaltBytes)
-    }
-
-    /// Encodes the provided plaintext using OpenBSD's Base 64 encoding
-    ///
-    /// - Parameter plaintext: Plaintext to encode
-    /// - Returns: Base 64 encoded plaintext
-    private func base64Encode(_ plaintext: String) throws -> String {
-        guard let randomData = plaintext.data(using: .utf8) else {
-            throw CryptoError(identifier: "invalidPlaintext", reason: "Invalid plaintext")
-        }
-
-        return try base64Encode(randomData)
-    }
-
-    /// Generates string (29 chars total) containing the algorithm information + the cost + base-64 encoded 22 character salt
-    ///
-    ///     E.g:  $2b$05$J/dtt5ybYUTCJ/dtt5ybYO
-    ///           $AA$ => Algorithm
-    ///              $CC$ => Cost
-    ///                  SSSSSSSSSSSSSSSSSSSSSS => Salt
-    ///
-    /// Allowed charset for the salt: [./A-Za-z0-9]
-    private func generateSalt(cost: UInt, algorithm: Algorithm = ._2b, seed: String? = nil) throws -> String {
-        let randomData: Data
-        if let seed = seed, let seedData = seed.data(using: .utf8) {
-            randomData = seedData
-        } else {
-            randomData = try URandom().generateData(count: 16)
-        }
-        let encodedSalt = try base64Encode(randomData)
-
-        return
-            algorithm.rawValue +
-            (cost < 10 ? "0\(cost)" : "\(cost)" ) +
-            "$" +
-            encodedSalt
-    }
-
-    /// Creates a BCrypt digest for the supplied data. `salt` will be generated.
-    ///
-    ///     try BCrypt.hash("vapor", cost: 4)
-    ///
-    /// - parameters:
-    ///     - plaintext: Plaintext data to digest.
-    ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
-    /// - throws: `CryptoError` if hashing fails or if data conversion fails.
-    /// - returns: BCrypt hash for the supplied plaintext data.
-    public func hash(_ plaintext: String, cost: UInt = 12) throws -> String {
-        let salt = try generateSalt(cost: cost)
-        return try hash(plaintext, cost: cost, salt: salt)
-    }
-
     /// Creates a BCrypt digest for the supplied data.
     ///
     /// Salt must be provided
@@ -128,14 +46,15 @@ public final class BCryptDigest {
     ///     try BCrypt.hash("vapor", cost: 12, salt: "passwordpassword")
     ///
     /// - parameters:
-    ///     - plaintext: Plaintext data to digest.
+    ///     - plaintextData: Plaintext data to digest.
     ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
     ///     - salt: Optional salt for this hash. If omitted, a random salt will be generated.
     ///             The salt must be 16-bytes.
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: BCrypt hash for the supplied plaintext data.
-    public func hash(_ plaintext: String, cost: UInt = 12, salt: String) throws -> String {
+    public func hash(_ plaintextData: LosslessDataConvertible, cost: UInt = 12, salt saltData: LosslessDataConvertible) throws -> String {
 
+        let salt = String.convertFromData(saltData.convertToData())
         guard isSaltValid(salt) else {
             throw CryptoError(identifier: "invalidSalt", reason: "Provided salt has the incorrect format")
         }
@@ -161,6 +80,7 @@ public final class BCryptDigest {
             normalizedSalt = salt
         }
 
+        let plaintext = String.convertFromData(plaintextData.convertToData())
         let hashedBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 128)
         defer { hashedBytes.deallocate() }
         let hashingResult = bcrypt_hashpass(
@@ -175,6 +95,20 @@ public final class BCryptDigest {
         } else {
             return originalAlgorithm.rawValue + String(cString: hashedBytes).dropFirst(originalAlgorithm.revisionCount)
         }
+    }
+
+    /// Creates a BCrypt digest for the supplied data. `salt` will be generated.
+    ///
+    ///     try BCrypt.hash("vapor", cost: 4)
+    ///
+    /// - parameters:
+    ///     - plaintext: Plaintext data to hash.
+    ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
+    /// - throws: `CryptoError` if hashing fails or if data conversion fails.
+    /// - returns: BCrypt hash for the supplied plaintext data.
+    public func hash(_ plaintext: LosslessDataConvertible, cost: UInt = 12) throws -> String {
+        let salt = try generateSalt(cost: cost)
+        return try hash(plaintext, cost: cost, salt: salt)
     }
 
     /// Verifies an existing BCrypt hash matches the supplied plaintext value. Verification works by parsing the salt and version from
@@ -207,9 +141,77 @@ public final class BCryptDigest {
         let messageHash = try self.hash(plaintext, salt: hashSalt)
         let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
 
-//        return timingsafe_bcmp(messageHash, hash, messageHash.count) == 0
+        //        return timingsafe_bcmp(messageHash, hash, messageHash.count) == 0
         return messageHashChecksum == hashChecksum
     }
+
+    // MARK:- Private
+
+    /// Generates string (29 chars total) containing the algorithm information + the cost + base-64 encoded 22 character salt
+    ///
+    ///     E.g:  $2b$05$J/dtt5ybYUTCJ/dtt5ybYO
+    ///           $AA$ => Algorithm
+    ///              $CC$ => Cost
+    ///                  SSSSSSSSSSSSSSSSSSSSSS => Salt
+    ///
+    /// Allowed charset for the salt: [./A-Za-z0-9]
+    ///
+    /// - parameters:
+    ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
+    ///     - algorithm: Revision to use (2b by default)
+    ///     - seed: Salt (without revision data). Generated if not provided. Must be 16 chars long.
+    /// - returns: Complete salt
+    private func generateSalt(cost: UInt, algorithm: Algorithm = ._2b, seed: String? = nil) throws -> String {
+        let randomData: Data
+        if let seed = seed, let seedData = seed.data(using: .utf8) {
+            randomData = seedData
+        } else {
+            randomData = try URandom().generateData(count: 16)
+        }
+        let encodedSalt = try base64Encode(randomData)
+
+        return
+            algorithm.rawValue +
+                (cost < 10 ? "0\(cost)" : "\(cost)" ) +
+                "$" +
+        encodedSalt
+    }
+
+    /// Checks whether the provided salt is valid or not
+    ///
+    /// - parameters:
+    ///     - salt: Salt to be checked
+    /// - returns: True if the provided salt is valid
+    private func isSaltValid(_ salt: String) -> Bool {
+        // 2 cases:
+
+        // Includes revision and cost info (count should be 29)
+        let revisionString = String( salt.prefix(4) )
+        if let algorithm = Algorithm(rawValue: revisionString) {
+            return salt.count == algorithm.saltCount
+        } else {
+            // Does not include revision and cost info (count should be 22)
+            return salt.count == Algorithm.saltCount
+        }
+    }
+
+    /// Encodes the provided plaintext using OpenBSD's base 64 encoding
+    ///
+    /// - parameters
+    ///     - dataConvertible: Data to be base64 encoded.
+    /// - returns: Base 64 encoded plaintext
+    private func base64Encode(_ dataConvertible: LosslessDataConvertible) throws -> String {
+        let data = dataConvertible.convertToData()
+        let randomBytes = data.withUnsafeBytes {
+            [UInt8](UnsafeBufferPointer(start: $0, count: data.count))
+        }
+
+        let encodedSaltBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 25)
+        encode_base64(encodedSaltBytes, randomBytes, randomBytes.count)
+
+        return String(cString: encodedSaltBytes)
+    }
+
 }
 
 // MARK: BCrypt
