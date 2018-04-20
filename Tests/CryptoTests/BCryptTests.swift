@@ -38,8 +38,9 @@ class BCryptTests: XCTestCase {
     }
 
     func testNotVerify() throws {
-        let message = "Vapor3_vapor"
-        let shouldNotMatch = "$2y$11$kHM/VXmCVsGXDGIVu9mD8eY/uEYI.Nva9sHgrLYuLzr0il28DDOGO"
+        let testCase = tests.first!
+        let message = "vapor_" + testCase.value
+        let shouldNotMatch = testCase.key
         let result = try BCrypt.verify(message, created: shouldNotMatch)
         XCTAssertFalse(result, "\(shouldNotMatch): matched \(message)")
     }
