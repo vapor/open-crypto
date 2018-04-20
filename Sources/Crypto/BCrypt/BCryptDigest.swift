@@ -61,7 +61,7 @@ public final class BCryptDigest {
 
         let originalAlgorithm: Algorithm
         if salt.hasPrefix("$") { // full salt, not user provided
-            let revisionString = String( salt.prefix(4) )
+            let revisionString = String(salt.prefix(4))
             if let parsedRevision = Algorithm(rawValue: revisionString) {
                 originalAlgorithm = parsedRevision
             } else {
@@ -188,7 +188,7 @@ public final class BCryptDigest {
         // 2 cases:
 
         // Includes revision and cost info (count should be 29)
-        let revisionString = String( salt.prefix(4) )
+        let revisionString = String(salt.prefix(4))
         if let algorithm = Algorithm(rawValue: revisionString) {
             return salt.count == algorithm.saltCount
         } else {
