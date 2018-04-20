@@ -123,7 +123,8 @@ public final class BCryptDigest {
     ///     - hash: Existing BCrypt hash to parse version, salt, and existing digest from.
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: `true` if the hash was created from the supplied plaintext data.
-    public func verify(_ plaintext: String, created hash: String) throws -> Bool {
+    public func verify(_ plaintextData: LosslessDataConvertible, created hashData: LosslessDataConvertible) throws -> Bool {
+        let hash = String.convertFromData(hashData.convertToData())
         guard let hashVersion = Algorithm(rawValue: String(hash.prefix(4))) else {
             throw CryptoError(identifier: "invalidHashFormat", reason: "No BCrypt revision information found")
         }
@@ -138,6 +139,7 @@ public final class BCryptDigest {
             throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt hash data not found or has incorrect length")
         }
 
+        let plaintext = String.convertFromData(plaintextData.convertToData())
         let messageHash = try self.hash(plaintext, salt: hashSalt)
         let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
 
