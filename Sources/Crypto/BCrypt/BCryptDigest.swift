@@ -143,7 +143,6 @@ public final class BCryptDigest {
         let messageHash = try self.hash(plaintext, salt: hashSalt)
         let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
 
-        //        return timingsafe_bcmp(messageHash, hash, messageHash.count) == 0
         return messageHashChecksum == hashChecksum
     }
 
