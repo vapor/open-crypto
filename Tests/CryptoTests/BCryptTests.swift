@@ -38,8 +38,8 @@ class BCryptTests: XCTestCase {
     }
 
     func testNotVerify() throws {
-        let message = tests.first!.value + "_vapor"
-        let shouldNotMatch = tests.first!.key
+        let message = "Vapor3_vapor"
+        let shouldNotMatch = "$2y$11$kHM/VXmCVsGXDGIVu9mD8eY/uEYI.Nva9sHgrLYuLzr0il28DDOGO"
         let result = try BCrypt.verify(message, created: shouldNotMatch)
         XCTAssertFalse(result, "\(shouldNotMatch): matched \(message)")
     }
@@ -51,8 +51,8 @@ let tests = [
     "$2a$05$XXXXXXXXXXXXXXXXXXXXXOAcXxm9kjPGEMsLznoKqmqw7tc8WCx4a" : "U*U*U",
     "$2a$05$abcdefghijklmnopqrstuu5s2v8.iXieOjg/.AySBTTZIIVFJeBui" :
         "0123456789abcdefghijklmnopqrstuvwxyz" +
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" +
-    "chars after 72 are ignored",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" +
+        "chars after 72 are ignored",
     "$2a$04$TI13sbmh3IHnmRepeEFoJOkVZWsn5S1O8QOwm8ZU5gNIpJog9pXZm" : "vapor",
     "$2y$11$kHM/VXmCVsGXDGIVu9mD8eY/uEYI.Nva9sHgrLYuLzr0il28DDOGO" : "Vapor3",
     "$2a$06$DCq7YPn5Rq63x1Lad4cll.TV4S6ytwfsfvkgY8jIucDrjc8deX1s." : "",
