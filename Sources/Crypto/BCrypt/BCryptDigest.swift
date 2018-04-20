@@ -54,9 +54,15 @@ public final class BCryptDigest {
     ///             The salt must be 16-bytes if provided by the user (without cost, revision data)
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: BCrypt hash for the supplied plaintext data.
-    public func hash(_ plaintextData: LosslessDataConvertible, cost: UInt = 12, salt saltData: LosslessDataConvertible) throws -> String {
+    public func hash(_ plaintextData: LosslessDataConvertible, cost: Int = 12, salt saltData: LosslessDataConvertible? = nil) throws -> String {
 
-        let salt = String.convertFromData(saltData.convertToData())
+        let salt: String
+        if let saltData = saltData?.convertToData() {
+            salt = String.convertFromData(saltData)
+        } else {
+            salt = try generateSalt(cost: cost)
+        }
+
         guard isSaltValid(salt) else {
             throw CryptoError(identifier: "invalidSalt", reason: "Provided salt has the incorrect format")
         }
@@ -99,20 +105,6 @@ public final class BCryptDigest {
         } else {
             return originalAlgorithm.rawValue + String(cString: hashedBytes).dropFirst(originalAlgorithm.revisionCount)
         }
-    }
-
-    /// Creates a BCrypt digest for the supplied data. `salt` will be generated.
-    ///
-    ///     try BCrypt.hash("vapor", cost: 4)
-    ///
-    /// - parameters:
-    ///     - plaintext: Plaintext data to hash.
-    ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
-    /// - throws: `CryptoError` if hashing fails or if data conversion fails.
-    /// - returns: BCrypt hash for the supplied plaintext data.
-    public func hash(_ plaintext: LosslessDataConvertible, cost: UInt = 12) throws -> String {
-        let salt = try generateSalt(cost: cost)
-        return try hash(plaintext, cost: cost, salt: salt)
     }
 
     /// Verifies an existing BCrypt hash matches the supplied plaintext value. Verification works by parsing the salt and version from
@@ -166,7 +158,7 @@ public final class BCryptDigest {
     ///     - algorithm: Revision to use (2b by default)
     ///     - seed: Salt (without revision data). Generated if not provided. Must be 16 chars long.
     /// - returns: Complete salt
-    private func generateSalt(cost: UInt, algorithm: Algorithm = ._2b, seed: String? = nil) throws -> String {
+    private func generateSalt(cost: Int, algorithm: Algorithm = ._2b, seed: String? = nil) throws -> String {
         let randomData: Data
         if let seed = seed, let seedData = seed.data(using: .utf8) {
             randomData = seedData
