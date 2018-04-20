@@ -1,3 +1,6 @@
+import libbcrypt
+import Random
+
 /// Creates and verifies BCrypt hashes. Normally you will not need to initialize one of these classes and you will
 /// use the global `BCrypt` convenience instead.
 ///
@@ -5,33 +8,103 @@
 ///
 /// See `BCrypt` for more information.
 public final class BCryptDigest {
+
     /// Creates a new `BCryptDigest`. Use the global `BCrypt` convenience variable.
     public init() { }
 
+    private enum Algorithm: String, RawRepresentable {
+        /// older version
+        case _2a = "$2a$"
+        /// format specific to the crypt_blowfish BCrypt implementation, identical to `2b` in all but name.
+        case _2y = "$2y$"
+        /// latest revision of the official BCrypt algorithm, current default
+        case _2b = "$2b$"
+
+        /// Revision's length, including the `$` symbols
+        var revisionCount: Int {
+            return 4
+        }
+
+        /// Salt's length (includes revision and cost info)
+        var fullSaltCount: Int {
+            return 29
+        }
+
+        /// Checksum's length
+        var checksumCount: Int {
+            return 31
+        }
+
+        /// Salt's length (does NOT include neither revision nor cost info)
+        static var saltCount: Int {
+            return 22
+        }
+    }
+
     /// Creates a BCrypt digest for the supplied data.
     ///
-    ///     try BCrypt.hash("vapor", cost: 4)
-    ///
-    ///  If a `salt` is not supplied, a random one will be generated. You can use a custom salt if desired.
+    /// Salt must be provided
     ///
     ///     try BCrypt.hash("vapor", cost: 12, salt: "passwordpassword")
     ///
     /// - parameters:
-    ///     - plaintext: Plaintext data to digest.
+    ///     - plaintextData: Plaintext data to digest.
     ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
     ///     - salt: Optional salt for this hash. If omitted, a random salt will be generated.
-    ///             The salt must be 16-bytes.
+    ///             The salt must be 16-bytes if provided by the user (without cost, revision data)
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: BCrypt hash for the supplied plaintext data.
-    public func hash(_ plaintext: LosslessDataConvertible, cost: Int = 12, salt: LosslessDataConvertible? = nil) throws -> Data {
-        let config = try BCryptConfig(
-            version: .two(.y),
-            cost: cost,
-            salt: salt?.convertToData() ?? CryptoRandom().generateData(count: 16)
+    public func hash(_ plaintextData: LosslessDataConvertible, cost: Int = 12, salt saltData: LosslessDataConvertible? = nil) throws -> String {
+
+        let salt: String
+        if let saltData = saltData?.convertToData() {
+            salt = String.convertFromData(saltData)
+        } else {
+            salt = try generateSalt(cost: cost)
+        }
+
+        guard isSaltValid(salt) else {
+            throw CryptoError(identifier: "invalidSalt", reason: "Provided salt has the incorrect format")
+        }
+
+        let originalAlgorithm: Algorithm
+        if salt.count == Algorithm.saltCount {
+            // user provided salt
+            originalAlgorithm = ._2b
+        } else {
+            // full salt, not user provided
+            let revisionString = String(salt.prefix(4))
+            if let parsedRevision = Algorithm(rawValue: revisionString) {
+                originalAlgorithm = parsedRevision
+            } else {
+                throw CryptoError(identifier: "invalidSalt", reason: "Provided salt has the incorrect format")
+            }
+        }
+
+        // OpenBSD doesn't support 2y revision.
+        let normalizedSalt: String
+        if originalAlgorithm == Algorithm._2y {
+            // Replace with 2b.
+            normalizedSalt = Algorithm._2b.rawValue + salt.dropFirst(originalAlgorithm.revisionCount)
+        } else {
+            normalizedSalt = salt
+        }
+
+        let plaintext = String.convertFromData(plaintextData.convertToData())
+        let hashedBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 128)
+        defer { hashedBytes.deallocate() }
+        let hashingResult = bcrypt_hashpass(
+            plaintext,
+            normalizedSalt,
+            hashedBytes,
+            128
         )
-        let digest = try BCryptAlgorithm(config: config).digest(message: plaintext.convertToData())
-        let serializer = BCryptSerializer(config: config, digest: digest)
-        return serializer.serialize()
+
+        if hashingResult != 0 {
+            throw CryptoError(identifier: "unableToComputeHash", reason: "Unable to compute BCrypt hash")
+        } else {
+            return originalAlgorithm.rawValue + String(cString: hashedBytes).dropFirst(originalAlgorithm.revisionCount)
+        }
     }
 
     /// Verifies an existing BCrypt hash matches the supplied plaintext value. Verification works by parsing the salt and version from
@@ -46,11 +119,94 @@ public final class BCryptDigest {
     ///     - hash: Existing BCrypt hash to parse version, salt, and existing digest from.
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: `true` if the hash was created from the supplied plaintext data.
-    public func verify(_ plaintext: LosslessDataConvertible, created hash: LosslessDataConvertible) throws -> Bool {
-        let parser = try BCryptParser(serialized: hash.convertToData())
-        let digest = try BCryptAlgorithm(config: parser.parseConfig()).digest(message: plaintext.convertToData())
-        return try digest == parser.parseDigest()
+    public func verify(_ plaintextData: LosslessDataConvertible, created hashData: LosslessDataConvertible) throws -> Bool {
+        let hash = String.convertFromData(hashData.convertToData())
+        guard let hashVersion = Algorithm(rawValue: String(hash.prefix(4))) else {
+            throw CryptoError(identifier: "invalidHashFormat", reason: "No BCrypt revision information found")
+        }
+
+        let hashSalt = String(hash.prefix(hashVersion.fullSaltCount))
+        guard !hashSalt.isEmpty, hashSalt.count == hashVersion.fullSaltCount else {
+            throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt salt data not found or has incorrect length")
+        }
+
+        let hashChecksum = String(hash.suffix(hashVersion.checksumCount))
+        guard !hashChecksum.isEmpty, hashChecksum.count == hashVersion.checksumCount else {
+            throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt hash data not found or has incorrect length")
+        }
+
+        let plaintext = String.convertFromData(plaintextData.convertToData())
+        let messageHash = try self.hash(plaintext, salt: hashSalt)
+        let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
+
+        return messageHashChecksum == hashChecksum
     }
+
+    // MARK:- Private
+
+    /// Generates string (29 chars total) containing the algorithm information + the cost + base-64 encoded 22 character salt
+    ///
+    ///     E.g:  $2b$05$J/dtt5ybYUTCJ/dtt5ybYO
+    ///           $AA$ => Algorithm
+    ///              $CC$ => Cost
+    ///                  SSSSSSSSSSSSSSSSSSSSSS => Salt
+    ///
+    /// Allowed charset for the salt: [./A-Za-z0-9]
+    ///
+    /// - parameters:
+    ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
+    ///     - algorithm: Revision to use (2b by default)
+    ///     - seed: Salt (without revision data). Generated if not provided. Must be 16 chars long.
+    /// - returns: Complete salt
+    private func generateSalt(cost: Int, algorithm: Algorithm = ._2b, seed: String? = nil) throws -> String {
+        let randomData: Data
+        if let seed = seed, let seedData = seed.data(using: .utf8) {
+            randomData = seedData
+        } else {
+            randomData = try URandom().generateData(count: 16)
+        }
+        let encodedSalt = try base64Encode(randomData)
+
+        return
+            algorithm.rawValue +
+            (cost < 10 ? "0\(cost)" : "\(cost)" ) + // 0 padded
+            "$" +
+            encodedSalt
+    }
+
+    /// Checks whether the provided salt is valid or not
+    ///
+    /// - parameters:
+    ///     - salt: Salt to be checked
+    /// - returns: True if the provided salt is valid
+    private func isSaltValid(_ salt: String) -> Bool {
+
+        // Includes revision and cost info (count should be 29)
+        let revisionString = String(salt.prefix(4))
+        if let algorithm = Algorithm(rawValue: revisionString) {
+            return salt.count == algorithm.fullSaltCount
+        } else {
+            // Does not include revision and cost info (count should be 22)
+            return salt.count == Algorithm.saltCount
+        }
+    }
+
+    /// Encodes the provided plaintext using OpenBSD's custom base-64 encoding (Radix-64)
+    ///
+    /// - parameters
+    ///     - dataConvertible: Data to be base64 encoded.
+    /// - returns: Base 64 encoded plaintext
+    private func base64Encode(_ dataConvertible: LosslessDataConvertible) throws -> String {
+        let data = dataConvertible.convertToData()
+        let dataBytes = [UInt8](data)
+
+        let encodedBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 25)
+        defer { encodedBytes.deallocate() }
+        encode_base64(encodedBytes, dataBytes, dataBytes.count)
+
+        return String(cString: encodedBytes)
+    }
+
 }
 
 // MARK: BCrypt
