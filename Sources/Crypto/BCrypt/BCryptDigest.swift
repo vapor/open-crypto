@@ -8,6 +8,7 @@ import Random
 ///
 /// See `BCrypt` for more information.
 public final class BCryptDigest {
+
     /// Creates a new `BCryptDigest`. Use the global `BCrypt` convenience variable.
     public init() { }
 
@@ -19,12 +20,13 @@ public final class BCryptDigest {
         /// latest revision of the official BCrypt algorithm, current default
         case _2b = "$2b$"
 
+        /// Revision's length, including the `$` symbols
         var revisionCount: Int {
             return 4
         }
 
         /// Salt's length (includes revision and cost info)
-        var saltCount: Int {
+        var fullSaltCount: Int {
             return 29
         }
 
@@ -33,7 +35,7 @@ public final class BCryptDigest {
             return 31
         }
 
-        /// Salt's length (does NOT include revision and cost info)
+        /// Salt's length (does NOT include neither revision nor cost info)
         static var saltCount: Int {
             return 22
         }
@@ -49,7 +51,7 @@ public final class BCryptDigest {
     ///     - plaintextData: Plaintext data to digest.
     ///     - cost: Desired complexity. Larger `cost` values take longer to hash and verify.
     ///     - salt: Optional salt for this hash. If omitted, a random salt will be generated.
-    ///             The salt must be 16-bytes.
+    ///             The salt must be 16-bytes if provided by the user (without cost, revision data)
     /// - throws: `CryptoError` if hashing fails or if data conversion fails.
     /// - returns: BCrypt hash for the supplied plaintext data.
     public func hash(_ plaintextData: LosslessDataConvertible, cost: UInt = 12, salt saltData: LosslessDataConvertible) throws -> String {
@@ -60,15 +62,17 @@ public final class BCryptDigest {
         }
 
         let originalAlgorithm: Algorithm
-        if salt.hasPrefix("$") { // full salt, not user provided
+        if salt.count == Algorithm.saltCount {
+            // user provided salt
+            originalAlgorithm = ._2b
+        } else {
+            // full salt, not user provided
             let revisionString = String(salt.prefix(4))
             if let parsedRevision = Algorithm(rawValue: revisionString) {
                 originalAlgorithm = parsedRevision
             } else {
                 throw CryptoError(identifier: "invalidSalt", reason: "Provided salt has the incorrect format")
             }
-        } else {
-            originalAlgorithm = ._2b
         }
 
         // OpenBSD doesn't support 2y revision.
@@ -129,8 +133,8 @@ public final class BCryptDigest {
             throw CryptoError(identifier: "invalidHashFormat", reason: "No BCrypt revision information found")
         }
 
-        let hashSalt = String(hash.prefix(hashVersion.saltCount))
-        guard !hashSalt.isEmpty, hashSalt.count == hashVersion.saltCount else {
+        let hashSalt = String(hash.prefix(hashVersion.fullSaltCount))
+        guard !hashSalt.isEmpty, hashSalt.count == hashVersion.fullSaltCount else {
             throw CryptoError(identifier: "invalidHashFormat", reason: "BCrypt salt data not found or has incorrect length")
         }
 
@@ -173,9 +177,9 @@ public final class BCryptDigest {
 
         return
             algorithm.rawValue +
-                (cost < 10 ? "0\(cost)" : "\(cost)" ) +
-                "$" +
-        encodedSalt
+            (cost < 10 ? "0\(cost)" : "\(cost)" ) + // 0 padded
+            "$" +
+            encodedSalt
     }
 
     /// Checks whether the provided salt is valid or not
@@ -184,33 +188,31 @@ public final class BCryptDigest {
     ///     - salt: Salt to be checked
     /// - returns: True if the provided salt is valid
     private func isSaltValid(_ salt: String) -> Bool {
-        // 2 cases:
 
         // Includes revision and cost info (count should be 29)
         let revisionString = String(salt.prefix(4))
         if let algorithm = Algorithm(rawValue: revisionString) {
-            return salt.count == algorithm.saltCount
+            return salt.count == algorithm.fullSaltCount
         } else {
             // Does not include revision and cost info (count should be 22)
             return salt.count == Algorithm.saltCount
         }
     }
 
-    /// Encodes the provided plaintext using OpenBSD's base 64 encoding
+    /// Encodes the provided plaintext using OpenBSD's custom base-64 encoding (Radix-64)
     ///
     /// - parameters
     ///     - dataConvertible: Data to be base64 encoded.
     /// - returns: Base 64 encoded plaintext
     private func base64Encode(_ dataConvertible: LosslessDataConvertible) throws -> String {
         let data = dataConvertible.convertToData()
-        let randomBytes = data.withUnsafeBytes {
-            [UInt8](UnsafeBufferPointer(start: $0, count: data.count))
-        }
+        let dataBytes = [UInt8](data)
 
-        let encodedSaltBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 25)
-        encode_base64(encodedSaltBytes, randomBytes, randomBytes.count)
+        let encodedBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 25)
+        defer { encodedBytes.deallocate() }
+        encode_base64(encodedBytes, dataBytes, dataBytes.count)
 
-        return String(cString: encodedSaltBytes)
+        return String(cString: encodedBytes)
     }
 
 }
