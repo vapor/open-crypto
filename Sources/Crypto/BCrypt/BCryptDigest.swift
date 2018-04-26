@@ -26,10 +26,10 @@ public final class BCryptDigest {
     /// - returns: BCrypt hash for the supplied plaintext data.
     public func hash(_ plaintext: LosslessDataConvertible, cost: Int = 12, salt: LosslessDataConvertible? = nil) throws -> String {
 
-        guard cost >= 4 && cost <= 31 else {
+        guard cost >= BCRYPT_MINLOGROUNDS && cost <= 31 else {
             throw CryptoError(identifier: "invalidCost", reason: "Cost should be between 4 and 31")
         }
-        
+
         let saltString: String
         if let salt = salt?.convertToData() {
             saltString = String.convertFromData(salt)
