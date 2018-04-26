@@ -20,6 +20,21 @@ typedef uint64_t u_int64_t;
 #define explicit_bzero(s,n) memset(s, 0, n)
 #define DEF_WEAK(f)
 
+
+/* This implementation is adaptable to current computing power.
+ * You can have up to 2^31 rounds which should be enough for some
+ * time to come.
+ */
+
+#define BCRYPT_VERSION '2'
+#define BCRYPT_MAXSALT 16    /* Precomputation is just so nice */
+#define BCRYPT_WORDS 6        /* Ciphertext words */
+#define BCRYPT_MINLOGROUNDS 4    /* we have log2(rounds) in salt */
+
+#define    BCRYPT_SALTSPACE    (7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
+#define    BCRYPT_HASHSPACE    61
+
+
 int bcrypt_hashpass(const char *key, const char *salt, char *encrypted, size_t encryptedlen);
 int encode_base64(char *, const u_int8_t *, size_t);
 int timingsafe_bcmp(const void *b1, const void *b2, size_t n);
