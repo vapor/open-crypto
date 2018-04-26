@@ -8,6 +8,7 @@ class BCryptTests: XCTestCase {
         ("testInvalidSalt", testInvalidSalt),
         ("testVerify", testVerify),
         ("testNotVerify", testNotVerify),
+        ("testHashPassword", testHashPassword)
     ]
 
     func testVersion() throws {
@@ -19,6 +20,10 @@ class BCryptTests: XCTestCase {
         let digest = try BCrypt.hash("foo", cost: 6)
         let res = try BCrypt.verify("bar", created: digest)
         XCTAssertEqual(res, false)
+    }
+    
+    func testHashPassword() throws {
+        XCTAssertNoThrow(try BCrypt.hash("password", cost: 2))
     }
 
     func testInvalidSalt() throws {
