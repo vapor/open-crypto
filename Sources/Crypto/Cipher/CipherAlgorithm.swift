@@ -30,11 +30,23 @@ public final class CipherAlgorithm {
     /// AES-256 ECB cipher.
     public static let aes256ecb: CipherAlgorithm = .init(c: EVP_aes_256_ecb())
 
+    /// AES-128 CBC cipher.
+    public static let aes128cbc: CipherAlgorithm = .init(c: EVP_aes_128_cbc())
+
+    /// AES-256 CBC cipher.
+    public static let aes256cbc: CipherAlgorithm = .init(c: EVP_aes_256_cbc())
+
+    /// AES-128 CFB cipher.
+    public static let aes128cfb: CipherAlgorithm = .init(c: EVP_aes_128_cfb128())
+
+    /// AES-256 CFB cipher.
+    public static let aes256cfb: CipherAlgorithm = .init(c: EVP_aes_256_cfb128())
+
     /// OpenSSL `EVP_CIPHER` context.
-    let c: UnsafePointer<EVP_CIPHER>
+    public let c: UnsafePointer<EVP_CIPHER>
 
     /// Internal init accepting a `EVP_CIPHER`.
-    init(c: UnsafePointer<EVP_CIPHER>) {
+    public init(c: UnsafePointer<EVP_CIPHER>) {
         self.c = c
     }
 
@@ -56,7 +68,7 @@ public final class CipherAlgorithm {
     }
 
     /// This cipher's block size, used internally to allocate "out" buffers.
-    var blockSize: Int32 {
+    public var blockSize: Int32 {
         return EVP_CIPHER_block_size(c)
     }
 }
