@@ -44,4 +44,19 @@ class RandomTests: XCTestCase {
         }
         print(results)
     }
+    
+    func testArrayRandomized() throws {
+        let original = [4, 3, 5, 2, -1]
+        var random1 = original
+        var random2 = original
+        while random1 == original || random2 == original || random1 == random2 {
+            random1 = original.randomized()
+            random2 = original.randomized()
+        }
+        XCTAssertNotEqual(original, random1)
+        XCTAssertNotEqual(original, random2)
+        XCTAssertNotEqual(random1, random2)
+        XCTAssertEqual(original.sorted(by: <), random1.sorted(by: <))
+        XCTAssertEqual(original.sorted(by: <), random2.sorted(by: <))
+    }
 }
