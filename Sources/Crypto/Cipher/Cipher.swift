@@ -134,7 +134,7 @@ public final class Cipher {
         if let _iv = iv {
             let ivLength = EVP_CIPHER_CTX_iv_length(ctx)
             guard ivLength == _iv.count else {
-                throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(_iv.count) != \(keyLength).")
+                throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(_iv.count) != \(ivLength).")
             }
         }
     }
