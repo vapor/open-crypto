@@ -4,7 +4,7 @@ import Foundation
 import Random
 
 /// Uses OpenSSL `RAND_bytes` to generate random data.
-public final class CryptoRandom: DataGenerator {
+public struct CryptoRandom: DataGenerator {
     /// Creates a new `CryptoRandom`.
     public init() {}
 
