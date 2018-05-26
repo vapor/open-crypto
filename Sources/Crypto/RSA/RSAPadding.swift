@@ -3,10 +3,15 @@ import Foundation
 
 /// RSA Paddings
 public enum RSAPadding: Int32 {
+    /// PKCS #1 v1.5 padding
     case pkcs1
+    /// SSLv23 padding
     case sslv23
+    /// No padding
     case none
+    /// PKCS #1 v2.0 EME-OAEP + SHA-1 + MGF1 padding
     case pkcs1_OAEP
+    /// X9.31 padding
     case x931
 
     public init?(rawValue: Int32) {
