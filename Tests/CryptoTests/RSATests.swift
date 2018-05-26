@@ -97,6 +97,7 @@ class RSATests: XCTestCase {
         ("testKeyCert", testKeyCert),
         ("testRand", testRand),
         ("testComps", testComps),
+        ("testEncrypt", testEncrypt),
     ]
 }
 
