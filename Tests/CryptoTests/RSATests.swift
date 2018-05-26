@@ -7,7 +7,7 @@ class RSATests: XCTestCase {
         let plaintext = Data("vapor".utf8)
         let key: RSAKey = try .private(pem: privateKeyString)
         let ciphertext = try RSA().sign(plaintext, algorithm: .sha512, key: key)
-        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: key)
+        let verified = try RSA().verify(ciphertext, algorithm: .sha512, signs: plaintext, key: key)
         XCTAssertTrue(verified)
     }
 
@@ -63,7 +63,7 @@ class RSATests: XCTestCase {
         let encryptedData = try RSA().encrypt(plaintext, padding: .pkcs1, key: rsaPublic)
         let decryptedData = try RSA().decrypt(encryptedData, padding: .pkcs1, key: rsaPrivate)
         let decryptedPlaintext = String(data: decryptedData, encoding: .utf8)
-        XCTAssertTrue(decryptedData == "vapor")
+        XCTAssertTrue(decryptedPlaintext == "vapor")
     }
 
     func testRand() throws {
