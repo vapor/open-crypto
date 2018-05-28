@@ -117,7 +117,8 @@ public final class Digest {
     /// - throws: `CryptoError` if update fails or data conversion fails.
     public func update(data: LosslessDataConvertible) throws {
         let data = data.convertToData()
-        guard EVP_DigestUpdate(ctx, .init(data.withUnsafeBytes { $0 }), data.count) == 1 else {
+        
+        guard data.withByteBuffer({ EVP_DigestUpdate(ctx, $0.baseAddress!, $0.count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestUpdate", reason: "Failed updating digest.")
         }
     }
@@ -134,12 +135,13 @@ public final class Digest {
     /// - returns: Digest data
     /// - throws: `CryptoError` if the finalization step fails.
     public func finish() throws -> Data {
-        var hash = Data(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
+        var hash = Data(count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
-        guard EVP_DigestFinal_ex(ctx, hash.withUnsafeMutableBytes { $0 }, &count) == 1 else {
+
+        guard hash.withMutableByteBuffer({ EVP_DigestFinal_ex(ctx, $0.baseAddress!, &count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestFinal_ex", reason: "Failed finalizing digest.")
         }
-        return Data(hash[0..<Int(count)])
+        return hash.prefix(upTo: Int(count))
     }
 
     deinit { EVP_MD_CTX_destroy(ctx) }
