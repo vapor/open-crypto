@@ -23,15 +23,12 @@ public final class RSA {
     // MARK: Static
 
     /// RSA using SHA256 digest.
-    @available(*, deprecated, message: "Use sign(_:algorithm:format:key:) or verify(_:algorithm:signs:format:key:)")
     public static var SHA256: RSA { return .init(algorithm: .sha256) }
 
     /// RSA using SHA384 digest.
-    @available(*, deprecated, message: "Use sign(_:algorithm:format:key:) or verify(_:algorithm:signs:format:key:)")
     public static var SHA384: RSA { return .init(algorithm: .sha384) }
 
     /// RSA using SHA512 digest.
-    @available(*, deprecated, message: "Use sign(_:algorithm:format:key:) or verify(_:algorithm:signs:format:key:)")
     public static var SHA512: RSA { return .init(algorithm: .sha512) }
 
     // MARK: Properties
@@ -39,24 +36,21 @@ public final class RSA {
     /// The hashing algorithm to use, (e.g., SHA512). See `DigestAlgorithm`.
     public let algorithm: DigestAlgorithm
 
-    @available(*, deprecated, message: "Use sign(_:algorithm:format:key:) or verify(_:algorithm:signs:format:key:)")
+    // MARK: Init
+
+    /// Creates a new RSA cipher using the supplied `DigestAlgorithm`.
+    ///
+    /// You can use the convenience static variables on `RSA` for common algorithms.
+    ///
+    ///     let ciphertext = try RSA.SHA512.sign("vapor", key: .private(pem: ...))
+    ///
+    /// You can also use this method to manually create an `RSA`.
+    ///
+    ///     let rsa = RSA(algorithm: .sha512)
+    ///
     public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
     }
-
-    // MARK: Init
-
-    /// Creates a new RSA cipher with the default unsafe md4 DigestAlgorithm.
-    /// You should use the sign and verify methods to provide a safer algorithm.
-    public init() {
-        self.algorithm = .md4
-    }
-
-    @available(*, deprecated, message: "Use sign(_:algorithm:format:key:)")
-    public func sign(_ input: LosslessDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Data {
-        return try sign(input, algorithm: self.algorithm, format: format, key: key)
-    }
-
 
     // MARK: Methods
 
@@ -67,11 +61,10 @@ public final class RSA {
     /// - parameters:
     ///     - input: Plaintext message or message digest to sign.
     ///     - format: Format of the input, either plaintext message or digest.
-    ///     - algorithm: Digest algorithm to use.
     ///     - key: `RSAKey` to use for signing this data.
     /// - returns: RSA signature for this data.
     /// - throws: `CryptoError` if signing fails or data conversion fails.
-    public func sign(_ input: LosslessDataConvertible, algorithm: DigestAlgorithm, format: RSAInputFormat = .message, key: RSAKey) throws -> Data {
+    public func sign(_ input: LosslessDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Data {
         switch key.type {
         case .public: throw CryptoError(identifier: "rsaSign", reason: "Cannot create RSA signature with a public key. A private key is required.")
         case .private: break
@@ -110,11 +103,6 @@ public final class RSA {
         return sig
     }
 
-    @available(*, deprecated, message: "Use verify(_:algorithm:signs:format:key:)")
-    public func verify(_ signature: LosslessDataConvertible, signs input: LosslessDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
-        return try verify(signature, algorithm: self.algorithm, signs: input, format: format, key: key)
-    }
-
     /// Returns `true` if the supplied signature was created by signing the plaintext data.
     ///
     ///     try RSA.SHA512.verify(ciphertext, signs: "vapor", key: .public(pem: ...))
@@ -126,7 +114,7 @@ public final class RSA {
     ///     - key: `RSAKey` to use for signing this data.
     /// - returns: `true` if signature matches plaintext input.
     /// - throws: `CryptoError` if verification fails or data conversion fails.
-    public func verify(_ signature: LosslessDataConvertible, algorithm: DigestAlgorithm, signs input: LosslessDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
+    public func verify(_ signature: LosslessDataConvertible, signs input: LosslessDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
         var input = input.convertToData()
         let signature = signature.convertToData()
 
@@ -161,7 +149,7 @@ public final class RSA {
     ///     - key: `RSAKey` to use for decrypting this data.
     /// - returns: Decrypted data.
     /// - throws: `CryptoError` if encrypting fails.
-    public func decrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey) throws -> Data {
+    public static func decrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey) throws -> Data {
         return try rsaPkeyCrypt(input, padding: padding, key: key, coder: RSA_private_decrypt)
     }
 
@@ -175,11 +163,11 @@ public final class RSA {
     ///     - key: `RSAKey` to use for encrypting this data.
     /// - returns: Encrypted data.
     /// - throws: `CryptoError` if encrypting fails.
-    public func encrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey) throws -> Data {
+    public static func encrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey) throws -> Data {
         return try rsaPkeyCrypt(input, padding: padding, key: key, coder: RSA_public_encrypt)
     }
 
-    fileprivate func rsaPkeyCrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
+    fileprivate static func rsaPkeyCrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
         var outputData = Data(count: Int(RSA_size(key.c.pointer)))
 
         let outputLen = input.convertToData().withByteBuffer { inputBuffer in

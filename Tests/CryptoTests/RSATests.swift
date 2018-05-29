@@ -6,26 +6,26 @@ class RSATests: XCTestCase {
     func testPrivateKey() throws {
         let plaintext = Data("vapor".utf8)
         let key: RSAKey = try .private(pem: privateKeyString)
-        let ciphertext = try RSA().sign(plaintext, algorithm: .sha512, key: key)
-        let verified = try RSA().verify(ciphertext, algorithm: .sha512, signs: plaintext, key: key)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: key)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: key)
         XCTAssertTrue(verified)
     }
 
     func testPublicKey() throws {
         let plaintext = Data("vapor".utf8)
         let key: RSAKey = try .public(pem: publicKeyString)
-        try XCTAssertTrue(RSA().verify(testSignature, algorithm: .sha512, signs: plaintext, key: key))
+        try XCTAssertTrue(RSA.SHA512.verify(testSignature, signs: plaintext, key: key))
     }
 
     func testFailure() throws {
         let plaintext = Data("vapor".utf8)
         let key: RSAKey = try .public(pem: publicKeyString)
-        try XCTAssertFalse(RSA().verify(Data("fake".utf8), algorithm: .sha512, signs: plaintext, key: key))
+        try XCTAssertFalse(RSA.SHA512.verify(Data("fake".utf8), signs: plaintext, key: key))
     }
 
     func testKey1024() throws {
-        let ciphertext = try RSA().sign("vapor", algorithm: .sha512, key: .private(pem: privateKey2String))
-        let verified = try RSA().verify(ciphertext, algorithm: .sha512, signs: "vapor", key: .public(pem: publicKey2String))
+        let ciphertext = try RSA.SHA512.sign("vapor", key: .private(pem: privateKey2String))
+        let verified = try RSA.SHA512.verify(ciphertext, signs: "vapor", key: .public(pem: publicKey2String))
         XCTAssertTrue(verified)
     }
 
@@ -33,8 +33,8 @@ class RSATests: XCTestCase {
         let plaintext = Data("vapor".utf8)
         let rsaPublic: RSAKey = try .public(pem: publicKey3String)
         let rsaPrivate: RSAKey = try .private(pem: privateKey3String)
-        let ciphertext = try RSA().sign(plaintext, algorithm: .sha512, key: rsaPrivate)
-        let verified = try RSA().verify(ciphertext, algorithm: .sha512, signs: plaintext, key: rsaPublic)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: rsaPrivate)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: rsaPublic)
         XCTAssertTrue(verified)
     }
 
@@ -42,8 +42,8 @@ class RSATests: XCTestCase {
         let plaintext = Data("vapor".utf8)
         let rsaPublic: RSAKey = try .public(pem: publicKey4String)
         let rsaPrivate: RSAKey = try .private(pem: privateKey4String)
-        let ciphertext = try RSA().sign(plaintext, algorithm: .sha512, key: rsaPrivate)
-        let verified = try RSA().verify(ciphertext, algorithm: .sha512, signs: plaintext, key: rsaPublic)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: rsaPrivate)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: rsaPublic)
         XCTAssertTrue(verified)
     }
 
@@ -51,8 +51,8 @@ class RSATests: XCTestCase {
         let plaintext = Data("vapor".utf8)
         let rsaPublic: RSAKey = try .public(certificate: publicCertString)
         let rsaPrivate: RSAKey = try .private(pem: privateCertString)
-        let ciphertext = try RSA().sign(plaintext, algorithm: .sha512, key: rsaPrivate)
-        let verified = try RSA().verify(ciphertext, algorithm: .sha512, signs: plaintext, key: rsaPublic)
+        let ciphertext = try RSA.SHA512.sign(plaintext, key: rsaPrivate)
+        let verified = try RSA.SHA512.verify(ciphertext, signs: plaintext, key: rsaPublic)
         XCTAssertTrue(verified)
     }
 
@@ -60,8 +60,8 @@ class RSATests: XCTestCase {
         let plaintext = Data("vapor".utf8)
         let rsaPublic: RSAKey = try .public(certificate: publicCertString)
         let rsaPrivate: RSAKey = try .private(pem: privateCertString)
-        let encryptedData = try RSA().encrypt(plaintext, padding: .pkcs1, key: rsaPublic)
-        let decryptedData = try RSA().decrypt(encryptedData, padding: .pkcs1, key: rsaPrivate)
+        let encryptedData = try RSA.encrypt(plaintext, padding: .pkcs1, key: rsaPublic)
+        let decryptedData = try RSA .decrypt(encryptedData, padding: .pkcs1, key: rsaPrivate)
         let decryptedPlaintext = String(data: decryptedData, encoding: .utf8)
         XCTAssertTrue(decryptedPlaintext == "vapor")
     }
