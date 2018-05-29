@@ -56,7 +56,7 @@ public final class RSA {
 
     /// Signs the supplied input (in format specified by `format`).
     ///
-    ///     let ciphertext = try RSA.SHA512.sign("vapor", algorithm: .sha256,key: .private(pem: ...))
+    ///     let ciphertext = try RSA.SHA512.sign("vapor", key: .private(pem: ...))
     ///
     /// - parameters:
     ///     - input: Plaintext message or message digest to sign.
