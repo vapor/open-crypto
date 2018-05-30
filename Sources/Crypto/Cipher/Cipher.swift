@@ -33,7 +33,8 @@ public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb()))
 ///
 public var AES256CBC: Cipher { return .init(algorithm: .aes256cbc) }
 
-/// AES-256 GCM Cipher. This is the recommended encryption mode (see https://github.com/vapor/crypto/issues/59).
+/// AES-256 GCM Cipher. This will the recommended encryption mode once it works (see https://github.com/vapor/crypto/issues/59).
+/// At the moment, we do not yet have a means to return/pass in the encrypted data's tag, causing authentication to fail.
 ///
 ///     let key: Data // 32 bytes
 ///     let iv: Data // 12 RANDOM bytes; different for each plaintext to encrypt. MUST be passed alongside the ciphertext to the receiver.
