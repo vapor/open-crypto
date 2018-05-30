@@ -102,8 +102,13 @@ public final class Cipher {
             let bufferLength = bytes.count + Int(EVP_MAX_BLOCK_LENGTH)
             let buffer = UnsafeMutablePointer<Byte>.allocate(capacity: bufferLength)
             defer {
+                #if swift(>=4.1)
+                buffer.deinitialize(count: 1)
+                buffer.deallocate()
+                #else
                 buffer.deinitialize()
                 buffer.deallocate(capacity: bufferLength)
+                #endif
             }
 
             guard update(&ctx, buffer, &newLength, bytes, Int32(bytes.count)) == 1 else {
@@ -119,8 +124,13 @@ public final class Cipher {
         let bufferLength = Int(1024 + EVP_MAX_BLOCK_LENGTH)
         let buffer = UnsafeMutablePointer<Byte>.allocate(capacity: bufferLength)
         defer {
+            #if swift(>=4.1)
+            buffer.deinitialize(count: 1)
+            buffer.deallocate()
+            #else
             buffer.deinitialize()
             buffer.deallocate(capacity: bufferLength)
+            #endif
 
             EVP_CIPHER_CTX_cleanup(&ctx)
         }
