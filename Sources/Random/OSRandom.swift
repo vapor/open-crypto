@@ -3,7 +3,7 @@ import Foundation
 import COperatingSystem
 
 /// Uses the operating system's Random function uses `random` on Linux and `arc4random` on macOS.
-public final class OSRandom: DataGenerator {
+public struct OSRandom: DataGenerator {
     /// Create a new `OSRandom`
     public init() {}
 
