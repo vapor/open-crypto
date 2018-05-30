@@ -220,7 +220,7 @@ public enum CipherMode: Int32 {
 
 /// Wrapper to allow for safely working with a potentially-nil Data's byte buffer.
 extension Optional where Wrapped == Data {
-    public func withByteBuffer<T>(_ closure: (BytesBufferPointer?) throws -> T) rethrows -> T {
+    func withByteBuffer<T>(_ closure: (BytesBufferPointer?) throws -> T) rethrows -> T {
         switch self {
             case .some(let data):
                 return try data.withByteBuffer({ try closure($0) })

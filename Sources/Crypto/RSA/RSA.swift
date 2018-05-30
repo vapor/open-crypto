@@ -18,7 +18,8 @@ import Foundation
 /// Read more about RSA on [Wikipedia](https://en.wikipedia.org/wiki/RSA_(cryptosystem)).
 public final class RSA {
 
-    typealias RSAPkeySymmetricCoder = @convention(c) (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, UnsafeMutablePointer<CNIOOpenSSL.RSA>?, Int32) -> Int32
+    /// Typealias for OpenSSLs encrypt and decrypt signature
+    private typealias RSAPkeySymmetricCoder = @convention(c) (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, UnsafeMutablePointer<CNIOOpenSSL.RSA>?, Int32) -> Int32
 
     // MARK: Static
 
@@ -139,9 +140,9 @@ public final class RSA {
     }
 
 
-    /// Dencrypts the supplied input.
+    /// Decrypts the supplied input.
     ///
-    ///     let decryptedData = try RSA().sign("vapor", padding: .pkcs1 ,key: .private(pem: ...))
+    ///     let decryptedData = try RSA().decrypt("vapor", padding: .pkcs1 ,key: .private(pem: ...))
     ///
     /// - parameters:
     ///     - input: Encrypted message to decrypt.
@@ -167,7 +168,7 @@ public final class RSA {
         return try rsaPkeyCrypt(input, padding: padding, key: key, coder: RSA_public_encrypt)
     }
 
-    fileprivate static func rsaPkeyCrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
+    private static func rsaPkeyCrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
         var outputData = Data(count: Int(RSA_size(key.c.pointer)))
 
         let outputLen = input.convertToData().withByteBuffer { inputBuffer in
