@@ -17,10 +17,6 @@ import Foundation
 ///
 /// Read more about RSA on [Wikipedia](https://en.wikipedia.org/wiki/RSA_(cryptosystem)).
 public final class RSA {
-
-    /// Typealias for OpenSSLs encrypt and decrypt signature
-    private typealias RSAPkeySymmetricCoder = @convention(c) (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, UnsafeMutablePointer<CNIOOpenSSL.RSA>?, Int32) -> Int32
-
     // MARK: Static
 
     /// RSA using SHA256 digest.
@@ -142,7 +138,7 @@ public final class RSA {
 
     /// Decrypts the supplied input.
     ///
-    ///     let decryptedData = try RSA().decrypt("vapor", padding: .pkcs1 ,key: .private(pem: ...))
+    ///     let string = try RSA().decrypt(data, key: .private(pem: ...))
     ///
     /// - parameters:
     ///     - input: Encrypted message to decrypt.
@@ -150,13 +146,13 @@ public final class RSA {
     ///     - key: `RSAKey` to use for decrypting this data.
     /// - returns: Decrypted data.
     /// - throws: `CryptoError` if encrypting fails.
-    public static func decrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey) throws -> Data {
-        return try rsaPkeyCrypt(input, padding: padding, key: key, coder: RSA_private_decrypt)
+    public static func decrypt(_ input: LosslessDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
+        return try cipher(input, padding: padding, key: key, coder: RSA_private_decrypt)
     }
 
     /// Encrypts the supplied input.
     ///
-    ///     let encryptedData = try RSA().encrypt("vapor", padding: .pkcs1 ,key: .public(pem: ...))
+    ///     let encryptedData = try RSA().encrypt("vapor", key: .public(pem: ...))
     ///
     /// - parameters:
     ///     - input: Plaintext message to encrypt.
@@ -164,11 +160,17 @@ public final class RSA {
     ///     - key: `RSAKey` to use for encrypting this data.
     /// - returns: Encrypted data.
     /// - throws: `CryptoError` if encrypting fails.
-    public static func encrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey) throws -> Data {
-        return try rsaPkeyCrypt(input, padding: padding, key: key, coder: RSA_public_encrypt)
+    public static func encrypt(_ input: LosslessDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
+        return try cipher(input, padding: padding, key: key, coder: RSA_public_encrypt)
     }
+    
+    // MARK: Private
+    
+    /// Typealias for OpenSSLs encrypt and decrypt signature
+    private typealias RSAPkeySymmetricCoder = @convention(c) (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, UnsafeMutablePointer<CNIOOpenSSL.RSA>?, Int32) -> Int32
 
-    private static func rsaPkeyCrypt(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
+    /// Private cipher
+    private static func cipher(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
         var outputData = Data(count: Int(RSA_size(key.c.pointer)))
 
         let outputLen = input.convertToData().withByteBuffer { inputBuffer in
@@ -184,7 +186,7 @@ public final class RSA {
         }
 
         guard outputLen >= 0 else {
-            throw CryptoError.openssl(identifier: "rsaPkeyCrypt", reason: "RSA data encryption operation failed")
+            throw CryptoError.openssl(identifier: "rsaPkeyCrypt", reason: "RSA data encryption operation failed.")
         }
         return outputData.prefix(upTo: Int(outputLen))
     }

@@ -111,7 +111,8 @@ public final class BCryptDigest {
 
         let messageHash = try self.hash(plaintext, salt: hashSalt)
         let messageHashChecksum = String(messageHash.suffix(hashVersion.checksumCount))
-        return messageHashChecksum == hashChecksum
+        
+        return messageHashChecksum.secureCompare(to: hashChecksum)
     }
 
     // MARK: Private
