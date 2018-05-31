@@ -14,8 +14,6 @@ public enum RSAPadding: Int32 {
     /// X9.31 padding
     case x931
 
-    // MARK: Init
-
     /// Creates a new RSAPadding from an Int32.
     /// Valid raw values are defined in OpenSSL
     public init?(rawValue: Int32) {
@@ -35,6 +33,7 @@ public enum RSAPadding: Int32 {
         }
     }
 
+    /// See `RawRepresentable`.
     public var rawValue: Int32 {
         switch self {
         case .pkcs1:
@@ -49,5 +48,4 @@ public enum RSAPadding: Int32 {
             return RSA_X931_PADDING
         }
     }
-
 }

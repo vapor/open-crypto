@@ -4,6 +4,9 @@ import Foundation
 import Random
 
 /// Uses OpenSSL `RAND_bytes` to generate random data.
+///
+/// - warning: The underlying implementation uses `RAND_bytes` which has [been shown]( http://emboss.github.io/blog/2013/08/21/openssl-prng-is-not-really-fork-safe/)
+///            to not be fork safe. Consider using `URandom` instead.
 public struct CryptoRandom: DataGenerator {
     /// Creates a new `CryptoRandom`.
     public init() {}
