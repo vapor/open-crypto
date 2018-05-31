@@ -4,23 +4,46 @@ import Bits
 
 // MARK: Ciphers
 
-/// AES-128 ECB Cipher.
+/// AES-128 ECB Cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
 ///
-///     let key: Data // 16-bytes
+///     let key: Data // 16 bytes
 ///     let ciphertext = try AES128.encrypt("vapor", key: key)
 ///     print(ciphertext) // Encrypted Data
 ///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
-public var AES128: Cipher { return .init(algorithm: .aes128ecb) }
+@available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
+public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb())) }
 
-/// AES-256 ECB Cipher.
+/// AES-256 ECB Cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
 ///
-///     let key: Data // 32-bytes
+///     let key: Data // 32 bytes
 ///     let ciphertext = try AES256.encrypt("vapor", key: key)
 ///     print(ciphertext) // Encrypted Data
 ///     AES256.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
-public var AES256: Cipher { return .init(algorithm: .aes256ecb) }
+@available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
+public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb())) }
+
+/// AES-256 CBC Cipher. Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
+///
+///     let key: Data // 32 bytes
+///     let iv: Data // 16 RANDOM bytes; different for each plaintext to encrypt. MUST be passed alongside the ciphertext to the receiver.
+///     let ciphertext = try AES256.encrypt("vapor", key: key, iv: iv)
+///     print(ciphertext) // Encrypted Data
+///     AES256.decrypt(ciphertext, key: key, iv: iv).convert(to: String.self) // "vapor"
+///
+public var AES256CBC: Cipher { return .init(algorithm: .aes256cbc) }
+
+/// AES-256 GCM Cipher. This will the recommended encryption mode once it works (see https://github.com/vapor/crypto/issues/59).
+/// At the moment, we do not yet have a means to return/pass in the encrypted data's tag, causing authentication to fail.
+///
+///     let key: Data // 32 bytes
+///     let iv: Data // 12 RANDOM bytes; different for each plaintext to encrypt. MUST be passed alongside the ciphertext to the receiver.
+///     let ciphertext = try AES256.encrypt("vapor", key: key, iv: iv)
+///     print(ciphertext) // Encrypted Data
+///     AES256.decrypt(ciphertext, key: key, iv: iv).convert(to: String.self) // "vapor"
+///
+public var AES256GCM: Cipher { return .init(algorithm: .aes256gcm) }
 
 /// Cryptographic encryption and decryption functions for converting plaintext to and from ciphertext.
 ///
