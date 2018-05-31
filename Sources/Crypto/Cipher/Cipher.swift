@@ -1,5 +1,6 @@
 import CNIOOpenSSL
 import Foundation
+import Bits
 
 // MARK: Ciphers
 
@@ -145,20 +146,22 @@ public final class Cipher {
         let key = key.convertToData()
         let iv = iv?.convertToData()
 
-        guard EVP_CipherInit_ex(ctx, algorithm.c, nil, key.withUnsafeBytes { $0 }, iv?.withUnsafeBytes { $0 }, mode.rawValue) == 1 else {
-            throw CryptoError.openssl(identifier: "EVP_CipherInit_ex", reason: "Failed initializing cipher context.")
-        }
-
-        let keyLength = EVP_CIPHER_CTX_key_length(ctx)
+        let keyLength = EVP_CIPHER_key_length(algorithm.c)
         guard keyLength == key.count else {
             throw CryptoError(identifier: "cipherKeySize", reason: "Invalid cipher key length \(key.count) != \(keyLength).")
         }
+        
+        let ivLength = EVP_CIPHER_iv_length(algorithm.c)
+        guard (ivLength == 0 && (iv == nil || iv?.count == 0)) || (iv != nil && iv?.count == Int(ivLength)) else {
+            throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(iv?.count ?? 0) != \(ivLength).")
+        }
 
-        if let _iv = iv {
-            let ivLength = EVP_CIPHER_CTX_iv_length(ctx)
-            guard ivLength == _iv.count else {
-                throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(_iv.count) != \(ivLength).")
+        guard key.withByteBuffer({ keyBuffer in
+            iv.withByteBuffer { ivBuffer in
+                EVP_CipherInit_ex(ctx, algorithm.c, nil, keyBuffer.baseAddress!, ivBuffer?.baseAddress, mode.rawValue)
             }
+        }) == 1 else {
+            throw CryptoError.openssl(identifier: "EVP_CipherInit_ex", reason: "Failed initializing cipher context.")
         }
     }
 
@@ -180,14 +183,17 @@ public final class Cipher {
     /// - throws: `CryptoError` if update fails or data conversion fails.
     public func update(data: LosslessDataConvertible, into buffer: inout Data) throws {
         let input = data.convertToData()
-        let inputLength: Int32 = numericCast(input.count)
-
-        var chunk = Data(repeating: 0, count: numericCast(inputLength + algorithm.blockSize - 1))
+        var chunk = Data(count: input.count + Int(algorithm.blockSize) - 1)
         var chunkLength: Int32 = 0
-        guard EVP_CipherUpdate(ctx, chunk.withUnsafeMutableBytes { $0 }, &chunkLength, input.withUnsafeBytes { $0 }, inputLength) == 1 else {
+
+        guard chunk.withMutableByteBuffer({ chunkBuffer in
+            input.withByteBuffer { inputBuffer in
+                EVP_CipherUpdate(ctx, chunkBuffer.baseAddress!, &chunkLength, inputBuffer.baseAddress!, Int32(truncatingIfNeeded: inputBuffer.count))
+            }
+        }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherUpdate", reason: "Failed updating cipher.")
         }
-        buffer += chunk.subdata(in: 0..<numericCast(chunkLength))
+        buffer += chunk.prefix(upTo: Int(chunkLength))
     }
 
     /// Finalizes the encryption or decryption, appending any additional data into the supplied buffer.
@@ -207,12 +213,13 @@ public final class Cipher {
     ///     - buffer: Mutable buffer to append any remaining encrypted or decrypted data to.
     /// - throws: `CryptoError` if finalization fails.
     public func finish(into buffer: inout Data) throws {
-        var chunk = Data(repeating: 0, count: numericCast(algorithm.blockSize))
+        var chunk = Data(count: Int(algorithm.blockSize))
         var chunkLength: Int32 = 0
-        guard EVP_CipherFinal_ex(ctx, chunk.withUnsafeMutableBytes { $0 }, &chunkLength) == 1 else {
+        
+        guard chunk.withMutableByteBuffer({ EVP_CipherFinal_ex(ctx, $0.baseAddress!, &chunkLength) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherFinal_ex", reason: "Failed finishing cipher.")
         }
-        buffer += chunk.subdata(in: 0..<numericCast(chunkLength))
+        buffer += chunk.prefix(upTo: Int(chunkLength))
     }
 
     /// Cleans up and frees the allocated OpenSSL cipher context.
@@ -232,4 +239,19 @@ public enum CipherMode: Int32 {
 
     /// Decrypts encrypted ciphertext back to its original value.
     case decrypt = 0
+}
+
+/// Wrapper to allow for safely working with a potentially-nil Data's byte buffer.
+extension Optional where Wrapped == Data {
+    func withByteBuffer<T>(_ closure: (BytesBufferPointer?) throws -> T) rethrows -> T {
+        switch self {
+            case .some(let data):
+                return try data.withByteBuffer({ try closure($0) })
+            case .none:
+                return try closure(nil)
+        }
+    }
+    
+    // Note: It's iffy to try this with a mutable buffer, so an Optional version
+    // of withMutableByteBuffer is not provided.
 }

@@ -56,6 +56,16 @@ class RSATests: XCTestCase {
         XCTAssertTrue(verified)
     }
 
+    func testEncrypt() throws {
+        let plaintext = Data("vapor".utf8)
+        let rsaPublic: RSAKey = try .public(certificate: publicCertString)
+        let rsaPrivate: RSAKey = try .private(pem: privateCertString)
+        let encryptedData = try RSA.encrypt(plaintext, padding: .pkcs1, key: rsaPublic)
+        let decryptedData = try RSA .decrypt(encryptedData, padding: .pkcs1, key: rsaPrivate)
+        let decryptedPlaintext = String(data: decryptedData, encoding: .utf8)
+        XCTAssertTrue(decryptedPlaintext == "vapor")
+    }
+
     func testRand() throws {
         let rand = CryptoRandom()
         let data1 = try rand.generateData(count: 4)
@@ -87,6 +97,7 @@ class RSATests: XCTestCase {
         ("testKeyCert", testKeyCert),
         ("testRand", testRand),
         ("testComps", testComps),
+        ("testEncrypt", testEncrypt),
     ]
 }
 
