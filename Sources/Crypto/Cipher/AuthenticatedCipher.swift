@@ -2,58 +2,25 @@ import CNIOOpenSSL
 import Foundation
 import Bits
 
-// MARK: Ciphers
-
-/// AES-128 ECB Cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
-///
-///     let key: Data // 16 bytes
-///     let ciphertext = try AES128.encrypt("vapor", key: key)
-///     print(ciphertext) // Encrypted Data
-///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
-///
-@available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb())) }
-
-/// AES-256 ECB Cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
+/// AES-256 GCM Cipher. This is the reccomended cipher mode. (see https://github.com/vapor/crypto/issues/59).
 ///
 ///     let key: Data // 32 bytes
-///     let ciphertext = try AES256.encrypt("vapor", key: key)
-///     print(ciphertext) // Encrypted Data
-///     AES256.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
-///
-@available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb())) }
-
-/// AES-256 CBC Cipher. Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
-///
-///     let key: Data // 32 bytes
-///     let iv: Data // 16 RANDOM bytes; different for each plaintext to encrypt. MUST be passed alongside the ciphertext to the receiver.
+///     let iv: Data // 12 RANDOM bytes; different for each plaintext to encrypt. MUST be passed alongside the ciphertext to the receiver.
 ///     let ciphertext = try AES256.encrypt("vapor", key: key, iv: iv)
 ///     print(ciphertext) // Encrypted Data
 ///     AES256.decrypt(ciphertext, key: key, iv: iv).convert(to: String.self) // "vapor"
 ///
-public var AES256CBC: Cipher { return .init(algorithm: .aes256cbc) }
+public var AES256GCM: AuthenticatedCipher { return .init(algorithm: .aes256gcm) }
 
-/// Cryptographic encryption and decryption functions for converting plaintext to and from ciphertext.
-///
-/// Normally, you will use the global convenience variables for encrypting and decrypting.
-///
-///     let ciphertext = try AES128.encrypt("vapor", key: "passwordpassword")
-///     try AES128.decrypt(ciphertext, key: "passwordpassword").convert(to: String.self) // "vapor"
-///
-/// You may also create a `Cipher` manually.
-///
-///     try Cipher(algorithm: .named("aes-128-ecb").encrypt(...)
-///
-/// Read more about [encryption on Wikipedia](https://en.wikipedia.org/wiki/Encryption).
-///
-/// Read more about OpenSSL's [EVP encryption methods](https://www.openssl.org/docs/man1.1.0/crypto/EVP_EncryptInit.html).
-public final class Cipher {
+public final class AuthenticatedCipher {
     /// The `CipherAlgorithm` (e.g., AES-128 ECB) to use.
-    public let algorithm: CipherAlgorithm
+    public let algorithm: AuthenticatedCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
     let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
+
+    /// Byte length of a GCM tag
+    public static let gcmTagLength: Int = 16
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
@@ -65,7 +32,7 @@ public final class Cipher {
     ///
     ///     try Cipher(algorithm: .named("aes-128-ecb").encrypt(...)
     ///
-    public init(algorithm: CipherAlgorithm) {
+    public init(algorithm: AuthenticatedCipherAlgorithm) {
         self.algorithm = algorithm
         self.ctx = EVP_CIPHER_CTX_new()
     }
@@ -73,26 +40,30 @@ public final class Cipher {
     /// Encrypts the supplied plaintext into ciphertext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
     /// and `finish(into:)` automatically.
     ///
-    ///     let key: Data // 16-bytes
-    ///     let ciphertext = try AES128.encrypt("vapor", key: key)
+    ///     let key: Data // 32-bytes
+    ///     let iv: Data // 12-bytes
+    ///     let (ciphertext, tag) = try AES256.encryptGCM("vapor", key: key, iv: iv)
     ///     print(ciphertext) /// Encrypted Data
+    ///     print(tag) /// GCM authentication tag
     ///
     /// - parameters:
     ///     - data: Plaintext data to encrypt.
     ///     - key: Cipher key to use for encryption.
     ///            This key must be an appropriate length for the cipher you are using. See `CipherAlgorithm.keySize`.
-    ///     - iv: Optional initialization vector to use for encryption.
+    ///     - iv: Initialization vector to use for encryption.
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
-    /// - returns: Encrypted ciphertext.
-    /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func encrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible? = nil) throws -> Data {
+    /// - returns: Encrypted ciphertext and GCM tag.
+    /// - throws: `CryptoError` if reset, update, finalization or tag retrieval steps fail or if data conversion fails.
+    public func encrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible) throws -> (Data, Data) {
         var buffer = Data()
 
         try reset(key: key, iv: iv, mode: .encrypt)
         try update(data: data, into: &buffer)
         try finish(into: &buffer)
 
-        return buffer
+        let tag = try gcmTag()
+
+        return (buffer, tag)
     }
 
     /// Decrypts the supplied ciphertext back to plaintext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -106,15 +77,18 @@ public final class Cipher {
     ///     - data: Ciphertext data to decrypt.
     ///     - key: Cipher key to use for decryption.
     ///            This key must be an appropriate length for the cipher you are using. See `CipherAlgorithm.keySize`.
-    ///     - iv: Optional initialization vector to use for decryption.
+    ///     - iv: Initialization vector to use for decryption.
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
+    ///     - tag: Authentication tag for GCM-mode ciphers.
+    ///           The tag must be 16 bytes
     /// - returns: Decrypted plaintext.
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func decrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible? = nil) throws -> Data {
+    public func decrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible, tag: LosslessDataConvertible) throws -> Data {
         var buffer = Data()
 
         try reset(key: key, iv: iv, mode: .decrypt)
         try update(data: data, into: &buffer)
+        try gcmTag(tag.convertToData())
         try finish(into: &buffer)
 
         return buffer
@@ -143,7 +117,7 @@ public final class Cipher {
         guard keyLength == key.count else {
             throw CryptoError(identifier: "cipherKeySize", reason: "Invalid cipher key length \(key.count) != \(keyLength).")
         }
-        
+
         let ivLength = EVP_CIPHER_iv_length(algorithm.c)
         guard (ivLength == 0 && (iv == nil || iv?.count == 0)) || (iv != nil && iv?.count == Int(ivLength)) else {
             throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(iv?.count ?? 0) != \(ivLength).")
@@ -208,11 +182,39 @@ public final class Cipher {
     public func finish(into buffer: inout Data) throws {
         var chunk = Data(count: Int(algorithm.blockSize))
         var chunkLength: Int32 = 0
-        
+
         guard chunk.withMutableByteBuffer({ EVP_CipherFinal_ex(ctx, $0.baseAddress!, &chunkLength) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherFinal_ex", reason: "Failed finishing cipher.")
         }
         buffer += chunk.prefix(upTo: Int(chunkLength))
+    }
+
+    /// Gets the GCM Tag from the CIPHER_CTX struct. Only usable with a GCM-mode cipher.
+    ///
+    /// Note: This _must_ be called after `finish()` to retrieve the generated tag.
+    ///
+    /// - throws: `CryptoError` if tag retrieval fails
+    public func gcmTag() throws -> Data {
+        var buffer = Data(count: Cipher.gcmTagLength)
+
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, Int32(Cipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
+            throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed getting tag (EVP_CTRL_CCM_GET_TAG).")
+        }
+
+        return buffer
+    }
+
+    /// Sets the GCM Tag in the CIPHER_CTX struct. Only usable with a GCM-mode cipher.
+    ///
+    /// Note: This _must_ be called before `finish()` to set the tag.
+    ///
+    /// - throws: `CryptoError` if tag set fails
+    public func gcmTag(_ tag: Data) throws {
+        var buffer = tag
+
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Int32(Cipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
+            throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed setting tag (EVP_CTRL_GCM_SET_TAG).")
+        }
     }
 
     /// Cleans up and frees the allocated OpenSSL cipher context.
@@ -221,30 +223,4 @@ public final class Cipher {
         EVP_CIPHER_CTX_free(ctx)
     }
 
-}
-
-/// Available cipher modes. Either `encrypt` or `decrypt`.
-///
-/// Used when calling `reset` on a `Cipher`.
-public enum CipherMode: Int32 {
-    /// Encrypts arbitrary data to encrypted ciphertext.
-    case encrypt = 1
-
-    /// Decrypts encrypted ciphertext back to its original value.
-    case decrypt = 0
-}
-
-/// Wrapper to allow for safely working with a potentially-nil Data's byte buffer.
-extension Optional where Wrapped == Data {
-    func withByteBuffer<T>(_ closure: (BytesBufferPointer?) throws -> T) rethrows -> T {
-        switch self {
-            case .some(let data):
-                return try data.withByteBuffer({ try closure($0) })
-            case .none:
-                return try closure(nil)
-        }
-    }
-    
-    // Note: It's iffy to try this with a mutable buffer, so an Optional version
-    // of withMutableByteBuffer is not provided.
 }

@@ -1,11 +1,11 @@
 import CNIOOpenSSL
 
-/// Specifies a cipher algorithm (e.g., AES128-ECB) to be used with a `Cipher`.
+/// Specifies an authenticated cipher algorithm (e.g., AES128-ECB) to be used with a `Cipher`.
 ///
 /// Common cipher algorithms are provided as static properties on this class.
 ///
 /// There are also static methods for creating `CipherAlgorithm` such as `CipherAlgorithm.named(_:)`
-public final class CipherAlgorithm {
+public final class AuthenticatedCipherAlgorithm {
     // MARK: Static
 
     /// Looks up a cipher function algorithm by name (e.g., "aes-128-cbc").
@@ -17,28 +17,16 @@ public final class CipherAlgorithm {
     ///     - name: Cipher function name
     /// - returns: Found `CipherAlgorithm`
     /// - throws: `CryptoError` if no cipher for that name is found.
-    public static func named(_ name: String) throws -> CipherAlgorithm {
+    public static func named(_ name: String) throws -> AuthenticatedCipherAlgorithm {
         guard let cipher = EVP_get_cipherbyname(name) else {
             throw CryptoError.openssl(identifier: "EVP_get_cipherbyname", reason: "No cipher named \(name) was found.")
         }
         return .init(c: cipher)
     }
 
-    /// AES-128 ECB cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
-    @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-    public static let aes128ecb: CipherAlgorithm = .init(c: EVP_aes_128_ecb())
-
-    /// AES-256 ECB cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
-    @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-    public static let aes256ecb: CipherAlgorithm = .init(c: EVP_aes_256_ecb())
-
-    /// AES-256 CBC cipher.
-    /// Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
-    public static let aes256cbc: CipherAlgorithm = .init(c: EVP_aes_256_cbc())
-
-    /// AES-256 CFB cipher. May not be available on all platforms.
-    /// Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
-    public static let aes256cfb: CipherAlgorithm = .init(c: EVP_aes_256_cfb128())
+    /// AES-256 GCM cipher. This is the recommended cipher.
+    /// See the global `AES256GCM` constant on usage.
+    public static let aes256gcm: AuthenticatedCipherAlgorithm = .init(c: EVP_aes_256_gcm())
 
     /// OpenSSL `EVP_CIPHER` context.
     public let c: UnsafePointer<EVP_CIPHER>
