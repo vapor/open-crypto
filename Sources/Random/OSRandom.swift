@@ -18,8 +18,9 @@ public struct OSRandom: DataGenerator {
 
         return bytes
     }
-
-    fileprivate func makeRandom(min: Int, max: Int) -> Int {
+    
+    /// Random number within range
+    public func makeRandom(min: Int = 0, max: Int = Int.max) -> Int {
         let top = max - min + 1
         #if os(Linux)
             // will always be initialized
