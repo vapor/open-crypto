@@ -12,6 +12,11 @@ import Bits
 ///
 public var AES256GCM: AuthenticatedCipher { return .init(algorithm: .aes256gcm) }
 
+/// Max Tag Length. Used for defining the size of input and output tags.
+///     Redefined from OpenSSL's EVP_AEAD_MAX_TAG_LENGTH, which seems to be improperly defined on some platforms.
+///     You can find the original #define here: https://github.com/libressl/libressl/blob/master/src/crypto/evp/evp.h#L1237-L1239
+public let AEAD_MAX_TAG_LENGTH: Int32 = 16
+
 public final class AuthenticatedCipher: OpenSSLStreamCipher {
     /// The `AuthenticatedCipherAlgorithm` (e.g., AES-256-GCM) to use.
     public let algorithm: OpenSSLCipherAlgorithm
@@ -98,9 +103,9 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///
     /// - throws: `CryptoError` if tag retrieval fails
     public func getTag() throws -> Data {
-        var buffer = Data(count: Int(EVP_AEAD_MAX_TAG_LENGTH))
+        var buffer = Data(count: Int(AEAD_MAX_TAG_LENGTH))
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, EVP_AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed getting tag (EVP_CTRL_CCM_GET_TAG).")
         }
 
@@ -117,11 +122,11 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
 
         /// Require that the tag length is full-sized. Although it is possible to use the leftmost bytes of a tag,
         /// shorter tags pose both a buffer size risk as well as an attack risk.
-        guard buffer.count == EVP_AEAD_MAX_TAG_LENGTH else {
-            throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Tag length too short: \(buffer.count) != \(EVP_AEAD_MAX_TAG_LENGTH) (EVP_AEAD_MAX_TAG_LENGTH).")
+        guard buffer.count == AEAD_MAX_TAG_LENGTH else {
+            throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Tag length too short: \(buffer.count) != \(AEAD_MAX_TAG_LENGTH) (AEAD_MAX_TAG_LENGTH).")
         }
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, EVP_AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed setting tag (EVP_CTRL_GCM_SET_TAG).")
         }
     }
