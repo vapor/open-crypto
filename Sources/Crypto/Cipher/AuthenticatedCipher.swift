@@ -6,14 +6,14 @@ import Bits
 ///
 ///     let key: Data // 32 bytes
 ///     let iv: Data // 12 RANDOM bytes; different for each plaintext to encrypt. MUST be passed alongside the ciphertext to the receiver.
-///     let ciphertext = try AES256.encrypt("vapor", key: key, iv: iv)
+///     let (ciphertext, tag) = try AES256GCM.encrypt("vapor", key: key, iv: iv)
 ///     print(ciphertext) // Encrypted Data
-///     AES256.decrypt(ciphertext, key: key, iv: iv).convert(to: String.self) // "vapor"
+///     AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: tag).convert(to: String.self) // "vapor"
 ///
 public var AES256GCM: AuthenticatedCipher { return .init(algorithm: .aes256gcm) }
 
 public final class AuthenticatedCipher: OpenSSLStreamCipher {
-    /// The `CipherAlgorithm` (e.g., AES-128 ECB) to use.
+    /// The `AuthenticatedCipherAlgorithm` (e.g., AES-256-GCM) to use.
     public let algorithm: OpenSSLCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
@@ -26,11 +26,11 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///
     /// You can use the convenience static variables for common algorithms.
     ///
-    ///     try AES128.encrypt(...)
+    ///     try AES256GCM.encrypt(...)
     ///
     /// You can also use this `init(algorithm:)` method manually to supply a custom `CipherAlgorithm`.
     ///
-    ///     try Cipher(algorithm: .named("aes-128-ecb").encrypt(...)
+    ///     try AuthenticatedCipher(algorithm: .named("aes-256-gcm").encrypt(...)
     ///
     public init(algorithm: AuthenticatedCipherAlgorithm) {
         self.algorithm = algorithm
@@ -42,7 +42,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///
     ///     let key: Data // 32-bytes
     ///     let iv: Data // 12-bytes
-    ///     let (ciphertext, tag) = try AES256.encryptGCM("vapor", key: key, iv: iv)
+    ///     let (ciphertext, tag) = try AES256GCM.encrypt("vapor", key: key, iv: iv)
     ///     print(ciphertext) /// Encrypted Data
     ///     print(tag) /// GCM authentication tag
     ///
@@ -69,9 +69,10 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     /// Decrypts the supplied ciphertext back to plaintext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
     /// and `finish(into:)` automatically.
     ///
-    ///     let key: Data // 16-bytes
-    ///     let ciphertext = try AES128.encrypt("vapor", key: key)
-    ///     try AES128.decrypt(ciphertext, key: key) // "vapor"
+    ///     let key: Data // 32-bytes
+    ///     let iv: Data // 12-bytes
+    ///     let (ciphertext, tag) = try AES256GCM.encrypt("vapor", key: key, iv: iv)
+    ///     try AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: tag) // "vapor"
     ///
     /// - parameters:
     ///     - data: Ciphertext data to decrypt.
@@ -94,7 +95,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
         return buffer
     }
 
-    /// Gets the GCM Tag from the CIPHER_CTX struct. Only usable with a GCM-mode cipher.
+    /// Gets the GCM Tag from the CIPHER_CTX struct.
     ///
     /// Note: This _must_ be called after `finish()` to retrieve the generated tag.
     ///
@@ -109,7 +110,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
         return buffer
     }
 
-    /// Sets the GCM Tag in the CIPHER_CTX struct. Only usable with a GCM-mode cipher.
+    /// Sets the GCM Tag in the CIPHER_CTX struct.
     ///
     /// Note: This _must_ be called before `finish()` to set the tag.
     ///
