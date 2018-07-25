@@ -5,7 +5,7 @@ import CNIOOpenSSL
 /// Common cipher algorithms are provided as static properties on this class.
 ///
 /// There are also static methods for creating `CipherAlgorithm` such as `CipherAlgorithm.named(_:)`
-public final class CipherAlgorithm {
+public final class CipherAlgorithm: OpenSSLCipherAlgorithm {
     // MARK: Static
 
     /// Looks up a cipher function algorithm by name (e.g., "aes-128-cbc").
@@ -46,27 +46,5 @@ public final class CipherAlgorithm {
     /// Internal init accepting a `EVP_CIPHER`.
     public init(c: UnsafePointer<EVP_CIPHER>) {
         self.c = c
-    }
-
-    // MARK: Instance
-
-    /// Returns the OpenSSL NID type for this algorithm.
-    public var type: Int32 {
-        return EVP_CIPHER_type(c)
-    }
-
-    /// This cipher's required key length.
-    public var keySize: Int32 {
-        return EVP_CIPHER_key_length(c)
-    }
-
-    /// This cipher's required initialization vector length.
-    public var ivSize: Int32 {
-        return EVP_CIPHER_iv_length(c)
-    }
-
-    /// This cipher's block size, used internally to allocate "out" buffers.
-    public var blockSize: Int32 {
-        return EVP_CIPHER_block_size(c)
     }
 }

@@ -195,9 +195,9 @@ public final class AuthenticatedCipher {
     ///
     /// - throws: `CryptoError` if tag retrieval fails
     public func gcmTag() throws -> Data {
-        var buffer = Data(count: Cipher.gcmTagLength)
+        var buffer = Data(count: AuthenticatedCipher.gcmTagLength)
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, Int32(Cipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, Int32(AuthenticatedCipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed getting tag (EVP_CTRL_CCM_GET_TAG).")
         }
 
@@ -212,7 +212,7 @@ public final class AuthenticatedCipher {
     public func gcmTag(_ tag: Data) throws {
         var buffer = tag
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Int32(Cipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Int32(AuthenticatedCipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed setting tag (EVP_CTRL_GCM_SET_TAG).")
         }
     }
