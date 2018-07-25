@@ -19,9 +19,6 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
     public let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
 
-    /// Byte length of a GCM tag
-    public static let gcmTagLength: Int = 16
-
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
     /// You can use the convenience static variables for common algorithms.
@@ -54,16 +51,16 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     /// - returns: Encrypted ciphertext and GCM tag.
     /// - throws: `CryptoError` if reset, update, finalization or tag retrieval steps fail or if data conversion fails.
-    public func encrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible) throws -> (Data, Data) {
+    public func encrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible) throws -> (ciphertext: Data, tag: Data) {
         var buffer = Data()
 
         try reset(key: key, iv: iv, mode: .encrypt)
         try update(data: data, into: &buffer)
         try finish(into: &buffer)
 
-        let tag = try gcmTag()
+        let tag = try getTag()
 
-        return (buffer, tag)
+        return (ciphertext: buffer, tag: tag)
     }
 
     /// Decrypts the supplied ciphertext back to plaintext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -89,36 +86,42 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
 
         try reset(key: key, iv: iv, mode: .decrypt)
         try update(data: data, into: &buffer)
-        try gcmTag(tag.convertToData())
+        try setTag(tag)
         try finish(into: &buffer)
 
         return buffer
     }
 
-    /// Gets the GCM Tag from the CIPHER_CTX struct.
+    /// Gets the Tag from the CIPHER_CTX struct.
     ///
     /// Note: This _must_ be called after `finish()` to retrieve the generated tag.
     ///
     /// - throws: `CryptoError` if tag retrieval fails
-    public func gcmTag() throws -> Data {
-        var buffer = Data(count: AuthenticatedCipher.gcmTagLength)
+    public func getTag() throws -> Data {
+        var buffer = Data(count: Int(EVP_AEAD_MAX_TAG_LENGTH))
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, Int32(AuthenticatedCipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, EVP_AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed getting tag (EVP_CTRL_CCM_GET_TAG).")
         }
 
         return buffer
     }
 
-    /// Sets the GCM Tag in the CIPHER_CTX struct.
+    /// Sets the Tag in the CIPHER_CTX struct.
     ///
     /// Note: This _must_ be called before `finish()` to set the tag.
     ///
     /// - throws: `CryptoError` if tag set fails
-    public func gcmTag(_ tag: Data) throws {
-        var buffer = tag
+    public func setTag(_ tag: LosslessDataConvertible) throws {
+        var buffer = tag.convertToData()
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Int32(AuthenticatedCipher.gcmTagLength), $0.baseAddress!) }) == 1 else {
+        /// Require that the tag length is full-sized. Although it is possible to use the leftmost bytes of a tag,
+        /// shorter tags pose both a buffer size risk as well as an attack risk.
+        guard buffer.count == EVP_AEAD_MAX_TAG_LENGTH else {
+            throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Tag length too short: \(buffer.count) != \(EVP_AEAD_MAX_TAG_LENGTH) (EVP_AEAD_MAX_TAG_LENGTH).")
+        }
+
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, EVP_AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed setting tag (EVP_CTRL_GCM_SET_TAG).")
         }
     }
@@ -128,5 +131,4 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
         EVP_CIPHER_CTX_cleanup(ctx)
         EVP_CIPHER_CTX_free(ctx)
     }
-
 }
