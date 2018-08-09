@@ -1,6 +1,8 @@
 import libbase32
 
 extension Data {
+    // MARK: Base32
+    
     /// Decodes a base32 encoded `String`.
     public init?(base32Encoded: String) {
         guard let data = base32Encoded.data(using: .utf8) else {
