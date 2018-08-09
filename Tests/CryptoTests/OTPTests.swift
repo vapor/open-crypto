@@ -16,8 +16,16 @@ class OTPTests: XCTestCase {
         try XCTAssertEqual(HOTP.SHA1.generate(digits: .eight, secret: key, counter: 1), "94463990")
     }
     
+    func testBase32() throws {
+        let message = "Hello, world!"
+        let encoded = message.data(using: .utf8)!.base32EncodedString()
+        let decoded = Data(base32Encoded: encoded) ?? .init()
+        XCTAssertEqual(String(data: decoded, encoding: .utf8), message)
+    }
+    
     static var allTests = [
         ("testTOTPBasic", testTOTPBasic),
         ("testHOTPBasic", testHOTPBasic),
+        ("testBase32", testBase32),
     ]
 }
