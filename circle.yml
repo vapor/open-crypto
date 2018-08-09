@@ -85,11 +85,11 @@ jobs:
           command: swift test
           working_directory: ~/mysql
 
-
   linux-postgresql:    
     docker:
       - image: codevapor/swift:4.1
-      - image: circleci/postgres:latest
+      - image: circleci/postgres:10
+        name: psql
         environment:
           POSTGRES_USER: vapor_username
           POSTGRES_DB: vapor_database
