@@ -15,7 +15,7 @@ public enum CipherMode: Int32 {
 
 /// Wrapper to allow for safely working with a potentially-nil Data's byte buffer.
 extension Optional where Wrapped == Data {
-    // Note: It's iffy to try this with a mutable buffer, so an Optional version
+    // - note: It's iffy to try this with a mutable buffer, so an Optional version
     // of withMutableByteBuffer is not provided.
     func withByteBuffer<T>(_ closure: (BytesBufferPointer?) throws -> T) rethrows -> T {
         switch self {
@@ -29,11 +29,22 @@ extension Optional where Wrapped == Data {
 
 /// OpenSSLStreamCipher is a protocol representing a higher-level interface for managing various OpenSSL stream ciphers.
 public protocol OpenSSLStreamCipher {
+    /// Resets / initializes the cipher algorithm context. Must be called before calling update.
+    /// See the default implementation extension on this protocol for more.
     func reset(key: LosslessDataConvertible, iv: LosslessDataConvertible?, mode: CipherMode) throws
+
+    /// Encrypts or decrypts a chunk of data into the supplied buffer.
+    /// See the default implementation extension on this protocol for more.
     func update(data: LosslessDataConvertible, into buffer: inout Data) throws
+
+    /// Finalizes the encryption or decryption, appending any additional data into the supplied buffer.
+    /// See the default implementation extension on this protocol for more.
     func finish(into buffer: inout Data) throws
 
+    /// The OpenSSLCipherAlgorithm this stream cipher is interacting with
     var algorithm: OpenSSLCipherAlgorithm { get }
+
+    /// The OpenSSL Cipher Stream Context
     var ctx: UnsafeMutablePointer<EVP_CIPHER_CTX> { get }
 }
 

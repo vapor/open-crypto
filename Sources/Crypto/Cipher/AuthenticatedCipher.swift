@@ -15,8 +15,10 @@ public var AES256GCM: AuthenticatedCipher { return .init(algorithm: .aes256gcm) 
 /// Max Tag Length. Used for defining the size of input and output tags.
 ///     Redefined from OpenSSL's EVP_AEAD_MAX_TAG_LENGTH, which seems to be improperly defined on some platforms.
 ///     You can find the original #define here: https://github.com/libressl/libressl/blob/master/src/crypto/evp/evp.h#L1237-L1239
-public let AEAD_MAX_TAG_LENGTH: Int32 = 16
+let AEAD_MAX_TAG_LENGTH: Int32 = 16
 
+/// AuthenticatedCipher supports AEAD-type ciphers. It feels a lot like 'Cipher' except that it supports the
+/// AEAD tag and related validation.
 public final class AuthenticatedCipher: OpenSSLStreamCipher {
     /// The `AuthenticatedCipherAlgorithm` (e.g., AES-256-GCM) to use.
     public let algorithm: OpenSSLCipherAlgorithm
@@ -99,7 +101,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
 
     /// Gets the Tag from the CIPHER_CTX struct.
     ///
-    /// Note: This _must_ be called after `finish()` to retrieve the generated tag.
+    /// - note: This _must_ be called after `finish()` to retrieve the generated tag.
     ///
     /// - throws: `CryptoError` if tag retrieval fails
     public func getTag() throws -> Data {
@@ -114,7 +116,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
 
     /// Sets the Tag in the CIPHER_CTX struct.
     ///
-    /// Note: This _must_ be called before `finish()` to set the tag.
+    /// - note: This _must_ be called before `finish()` to set the tag.
     ///
     /// - throws: `CryptoError` if tag set fails
     public func setTag(_ tag: LosslessDataConvertible) throws {
