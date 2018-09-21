@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import Foundation
 
 // MARK: Digests
@@ -55,7 +55,7 @@ public final class Digest {
     public let algorithm: DigestAlgorithm
 
     /// Internal OpenSSL `EVP_MD_CTX` context.
-    let ctx: UnsafeMutablePointer<EVP_MD_CTX>?
+    let ctx: OpaquePointer
 
     // MARK: Init
 
@@ -71,7 +71,7 @@ public final class Digest {
     ///
     public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_MD_CTX_create()
+        self.ctx = EVP_MD_CTX_new()
     }
 
     // MARK: Methods
@@ -144,5 +144,7 @@ public final class Digest {
         return hash.prefix(upTo: Int(count))
     }
 
-    deinit { EVP_MD_CTX_destroy(ctx) }
+    deinit {
+        EVP_MD_CTX_free(ctx)
+    }
 }

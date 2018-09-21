@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 
 /// Specifies a cipher algorithm (e.g., AES128-ECB) to be used with a `Cipher`.
 ///
@@ -45,10 +45,10 @@ public final class CipherAlgorithm {
     public static let aes256gcm: CipherAlgorithm = .init(c: EVP_aes_256_gcm())
 
     /// OpenSSL `EVP_CIPHER` context.
-    public let c: UnsafePointer<EVP_CIPHER>
+    public let c: OpaquePointer
 
     /// Internal init accepting a `EVP_CIPHER`.
-    public init(c: UnsafePointer<EVP_CIPHER>) {
+    public init(c: OpaquePointer) {
         self.c = c
     }
 

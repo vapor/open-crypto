@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import Debugging
 import Foundation
 
@@ -167,7 +167,7 @@ public final class RSA {
     // MARK: Private
     
     /// Typealias for OpenSSLs encrypt and decrypt signature
-    private typealias RSAPkeySymmetricCoder = @convention(c) (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, UnsafeMutablePointer<CNIOOpenSSL.RSA>?, Int32) -> Int32
+    private typealias RSAPkeySymmetricCoder = @convention(c) (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, OpaquePointer?, Int32) -> Int32
 
     /// Private cipher
     private static func cipher(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {

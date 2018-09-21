@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import Foundation
 import Bits
 
@@ -64,7 +64,7 @@ public final class Cipher {
     public let algorithm: CipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
-    let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
+    let ctx: OpaquePointer
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
@@ -222,9 +222,8 @@ public final class Cipher {
         buffer += chunk.prefix(upTo: Int(chunkLength))
     }
 
-    /// Cleans up and frees the allocated OpenSSL cipher context.
+    /// Frees the allocated OpenSSL cipher context.
     deinit {
-        EVP_CIPHER_CTX_cleanup(ctx)
         EVP_CIPHER_CTX_free(ctx)
     }
 

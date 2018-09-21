@@ -1,5 +1,5 @@
 import Bits
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import Foundation
 import Random
 

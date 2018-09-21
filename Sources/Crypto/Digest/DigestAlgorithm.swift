@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 
 /// Cryptographic hash function algorithm.
 ///
@@ -29,10 +29,10 @@ public final class DigestAlgorithm: Equatable {
     }
 
     /// OpenSSL `EVP_MD` context.
-    let c: UnsafePointer<EVP_MD>
+    let c: OpaquePointer
 
     /// Internal init accepting a `EVP_MD`.
-    init(c: UnsafePointer<EVP_MD>) {
+    init(c: OpaquePointer) {
         self.c = c
     }
 

@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import NIOOpenSSL
 import Foundation
 
@@ -65,8 +65,8 @@ public struct RSAKey {
     ///
     /// - throws: `CryptoError` if key generation fails.
     public static func components(n: String, e: String, d: String? = nil) throws -> RSAKey {
-        func parseBignum(_ s: String) -> UnsafeMutablePointer<BIGNUM>? {
-            return Data(base64URLEncoded: s)?.withByteBuffer { p in
+        func parseBignum(_ s: String) -> OpaquePointer {
+            return Data(base64URLEncoded: s)!.withByteBuffer { p in
                 return BN_bin2bn(p.baseAddress, Int32(p.count), nil)
             }
         }
@@ -75,15 +75,16 @@ public struct RSAKey {
             throw CryptoError.openssl(identifier: "rsaNull", reason: "RSA key creation failed")
         }
         
-        rsa.pointee.n = parseBignum(n)
-        rsa.pointee.e = parseBignum(e)
-        
+        let type: RSAKeyType
         if let d = d {
-            rsa.pointee.d = parseBignum(d)
-            return try .init(type: .private, key: CRSAKey(rsa))
+            type = .private
+            RSA_set0_key(rsa, parseBignum(n), parseBignum(e), parseBignum(d))
         } else {
-            return try .init(type: .public, key: CRSAKey(rsa))
+            type = .public
+            RSA_set0_key(rsa, parseBignum(n), parseBignum(e), nil)
         }
+        
+        return try .init(type: type, key: CRSAKey(rsa))
     }
 }
 
@@ -99,10 +100,10 @@ public enum RSAKeyType {
 /// This wrapper is important for ensuring the key is freed when it is no longer in use.
 final class CRSAKey {
     /// The wrapped pointer.
-    let pointer: UnsafeMutablePointer<rsa_st>
+    let pointer: OpaquePointer
 
     /// Creates a new `CRSAKey` from a pointer.
-    internal init(_ pointer: UnsafeMutablePointer<rsa_st>) {
+    internal init(_ pointer: OpaquePointer) {
         self.pointer = pointer
     }
 
@@ -116,7 +117,7 @@ final class CRSAKey {
             return BIO_puts(bio, key)
         }
 
-        let maybePkey: UnsafeMutablePointer<EVP_PKEY>?
+        let maybePkey: OpaquePointer?
 
         if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
