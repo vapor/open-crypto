@@ -15,29 +15,31 @@
 #include <openssl/x509v3.h>
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
-EVP_MD_CTX *EVP_MD_CTX_new() {
+EVP_MD_CTX *EVP_MD_CTX_new(void) {
     return EVP_MD_CTX_create();
 }
 
-int EVP_MD_CTX_free(EVP_MD_CTX *ctx) {
-    return EVP_MD_CTX_cleanup(ctx);
+void EVP_MD_CTX_free(EVP_MD_CTX *ctx) {
+    EVP_MD_CTX_cleanup(ctx);
+    free(ctx);
 }
 
-void RSA_set0_key(RSA *rsa, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+int RSA_set0_key(RSA *rsa, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
     rsa->n = n;
     rsa->e = e;
     rsa-> d = d;
+    return 0;
 }
 
-HMAC_CTX *HMAC_CTX_new() {
+HMAC_CTX *HMAC_CTX_new(void) {
     HMAC_CTX *ptr = malloc(sizeof(HMAC_CTX));
     HMAC_CTX_init(ptr);
     return ptr;
 }
 
-void HMAC_CTX_free(HMAC_CTX *ptr) {
-    HMAC_CTX_cleanup(ptr);
-    free(ptr);
+void HMAC_CTX_free(HMAC_CTX *ctx) {
+    HMAC_CTX_cleanup(ctx);
+    free(ctx);
 }
 #endif
 
