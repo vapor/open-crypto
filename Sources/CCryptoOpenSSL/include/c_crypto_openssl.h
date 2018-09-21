@@ -24,10 +24,10 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx) {
     free(ctx);
 }
 
-int RSA_set0_key(RSA *rsa, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
-    rsa->n = n;
-    rsa->e = e;
-    rsa-> d = d;
+int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+    r->n = n;
+    r->e = e;
+    r->d = d;
     return 0;
 }
 
