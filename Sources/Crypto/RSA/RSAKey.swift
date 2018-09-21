@@ -75,14 +75,22 @@ public struct RSAKey {
             throw CryptoError.openssl(identifier: "rsaNull", reason: "RSA key creation failed")
         }
         
+        // FIXME: we should be calling the other code with `RSA_set0_key` below
         let type: RSAKeyType
         if let d = d {
             type = .private
-            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), parseBignum(d).convert())
         } else {
             type = .public
-            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), nil)
         }
+        
+//        let type: RSAKeyType
+//        if let d = d {
+//            type = .private
+//            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), parseBignum(d).convert())
+//        } else {
+//            type = .public
+//            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), nil)
+//        }
         
         return try .init(type: type, key: CRSAKey(rsa.convert()))
     }
