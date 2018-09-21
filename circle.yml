@@ -92,6 +92,7 @@ jobs:
       - image: swift:4.2
     steps:
       - checkout
+      - run:
           name: Compile code with optimizations
           command: swift build -c release
   linux-41:
