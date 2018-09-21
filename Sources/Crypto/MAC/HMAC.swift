@@ -69,7 +69,7 @@ public final class HMAC {
     ///
     public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
-        ctx = HMAC_CTX_new()
+        ctx = HMAC_CTX_new().convert()
     }
 
     // MARK: Methods
@@ -104,7 +104,7 @@ public final class HMAC {
     public func reset(key: LosslessDataConvertible) throws {
         let key = key.convertToData()
         
-        guard key.withByteBuffer({ HMAC_Init_ex(ctx, $0.baseAddress!, Int32($0.count), algorithm.c, nil) }) == 1 else {
+        guard key.withByteBuffer({ HMAC_Init_ex(ctx.convert(), $0.baseAddress!, Int32($0.count), algorithm.c.convert(), nil) }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Init_ex", reason: "Failed initializing HMAC context.")
         }
     }
@@ -125,7 +125,7 @@ public final class HMAC {
     public func update(data: LosslessDataConvertible) throws {
         let data = data.convertToData()
 
-        guard data.withByteBuffer({ HMAC_Update(ctx, $0.baseAddress!, $0.count) }) == 1 else {
+        guard data.withByteBuffer({ HMAC_Update(ctx.convert(), $0.baseAddress!, $0.count) }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Update", reason: "Failed updating HMAC digest.")
         }
     }
@@ -146,13 +146,13 @@ public final class HMAC {
         var hash = Data(count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
         
-        guard hash.withMutableByteBuffer({ HMAC_Final(ctx, $0.baseAddress!, &count) }) == 1 else {
+        guard hash.withMutableByteBuffer({ HMAC_Final(ctx.convert(), $0.baseAddress!, &count) }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Final", reason: "Failed finalizing HMAC digest.")
         }
         return hash.prefix(upTo: Int(count))
     }
 
     deinit {
-        HMAC_CTX_free(ctx)
+        HMAC_CTX_free(ctx.convert())
     }
 }

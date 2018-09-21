@@ -12,7 +12,7 @@ import Bits
 ///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
 @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb())) }
+public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb().convert())) }
 
 /// AES-256 ECB Cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
 ///
@@ -22,7 +22,7 @@ public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb()))
 ///     AES256.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
 @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb())) }
+public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb().convert())) }
 
 /// AES-256 CBC Cipher. Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
 ///
@@ -78,7 +78,7 @@ public final class Cipher {
     ///
     public init(algorithm: CipherAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_CIPHER_CTX_new()
+        self.ctx = EVP_CIPHER_CTX_new().convert()
     }
 
     /// Encrypts the supplied plaintext into ciphertext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -146,19 +146,19 @@ public final class Cipher {
         let key = key.convertToData()
         let iv = iv?.convertToData()
 
-        let keyLength = EVP_CIPHER_key_length(algorithm.c)
+        let keyLength = EVP_CIPHER_key_length(algorithm.c.convert())
         guard keyLength == key.count else {
             throw CryptoError(identifier: "cipherKeySize", reason: "Invalid cipher key length \(key.count) != \(keyLength).")
         }
         
-        let ivLength = EVP_CIPHER_iv_length(algorithm.c)
+        let ivLength = EVP_CIPHER_iv_length(algorithm.c.convert())
         guard (ivLength == 0 && (iv == nil || iv?.count == 0)) || (iv != nil && iv?.count == Int(ivLength)) else {
             throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(iv?.count ?? 0) != \(ivLength).")
         }
 
         guard key.withByteBuffer({ keyBuffer in
             iv.withByteBuffer { ivBuffer in
-                EVP_CipherInit_ex(ctx, algorithm.c, nil, keyBuffer.baseAddress!, ivBuffer?.baseAddress, mode.rawValue)
+                EVP_CipherInit_ex(ctx.convert(), algorithm.c.convert(), nil, keyBuffer.baseAddress!, ivBuffer?.baseAddress, mode.rawValue)
             }
         }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherInit_ex", reason: "Failed initializing cipher context.")
@@ -188,7 +188,7 @@ public final class Cipher {
 
         guard chunk.withMutableByteBuffer({ chunkBuffer in
             input.withByteBuffer { inputBuffer in
-                EVP_CipherUpdate(ctx, chunkBuffer.baseAddress!, &chunkLength, inputBuffer.baseAddress!, Int32(truncatingIfNeeded: inputBuffer.count))
+                EVP_CipherUpdate(ctx.convert(), chunkBuffer.baseAddress!, &chunkLength, inputBuffer.baseAddress!, Int32(truncatingIfNeeded: inputBuffer.count))
             }
         }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherUpdate", reason: "Failed updating cipher.")
@@ -216,7 +216,7 @@ public final class Cipher {
         var chunk = Data(count: Int(algorithm.blockSize))
         var chunkLength: Int32 = 0
         
-        guard chunk.withMutableByteBuffer({ EVP_CipherFinal_ex(ctx, $0.baseAddress!, &chunkLength) }) == 1 else {
+        guard chunk.withMutableByteBuffer({ EVP_CipherFinal_ex(ctx.convert(), $0.baseAddress!, &chunkLength) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherFinal_ex", reason: "Failed finishing cipher.")
         }
         buffer += chunk.prefix(upTo: Int(chunkLength))
@@ -224,7 +224,7 @@ public final class Cipher {
 
     /// Frees the allocated OpenSSL cipher context.
     deinit {
-        EVP_CIPHER_CTX_free(ctx)
+        EVP_CIPHER_CTX_free(ctx.convert())
     }
 
 }

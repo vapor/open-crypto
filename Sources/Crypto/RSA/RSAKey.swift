@@ -67,7 +67,7 @@ public struct RSAKey {
     public static func components(n: String, e: String, d: String? = nil) throws -> RSAKey {
         func parseBignum(_ s: String) -> OpaquePointer {
             return Data(base64URLEncoded: s)!.withByteBuffer { p in
-                return BN_bin2bn(p.baseAddress, Int32(p.count), nil)
+                return BN_bin2bn(p.baseAddress, Int32(p.count), nil).convert()
             }
         }
         
@@ -78,13 +78,13 @@ public struct RSAKey {
         let type: RSAKeyType
         if let d = d {
             type = .private
-            RSA_set0_key(rsa, parseBignum(n), parseBignum(e), parseBignum(d))
+            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), parseBignum(d).convert())
         } else {
             type = .public
-            RSA_set0_key(rsa, parseBignum(n), parseBignum(e), nil)
+            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), nil)
         }
         
-        return try .init(type: type, key: CRSAKey(rsa))
+        return try .init(type: type, key: CRSAKey(rsa.convert()))
     }
 }
 
@@ -125,24 +125,24 @@ final class CRSAKey {
             }
 
             defer { X509_free(x509) }
-            maybePkey = X509_get_pubkey(x509)
+            maybePkey = X509_get_pubkey(x509).convert()
         } else {
             switch type {
-            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil)
-            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil)
+            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil).convert()
+            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil).convert()
             }
         }
 
         guard let pkey = maybePkey else {
             throw CryptoError.openssl(identifier: "rsaPkeyNull", reason: "RSA key creation failed")
         }
-        defer { EVP_PKEY_free(pkey) }
+        defer { EVP_PKEY_free(pkey.convert()) }
 
-        guard let rsa = EVP_PKEY_get1_RSA(pkey) else {
+        guard let rsa = EVP_PKEY_get1_RSA(pkey.convert()) else {
             throw CryptoError.openssl(identifier: "rsaPkeyGet1", reason: "RSA key creation failed")
         }
-        return .init(rsa)
+        return .init(rsa.convert())
     }
 
-    deinit { RSA_free(pointer) }
+    deinit { RSA_free(pointer.convert()) }
 }

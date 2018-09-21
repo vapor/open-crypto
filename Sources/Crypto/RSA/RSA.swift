@@ -70,7 +70,7 @@ public final class RSA {
         var siglen: UInt32 = 0
         var sig = Data(
             repeating: 0,
-            count: Int(RSA_size(key.c.pointer))
+            count: Int(RSA_size(key.c.pointer.convert()))
         )
 
         var input = input.convertToData()
@@ -88,7 +88,7 @@ public final class RSA {
                     UInt32(inputBuffer.count),
                     sigBuffer.baseAddress!,
                     &siglen,
-                    key.c.pointer
+                    key.c.pointer.convert()
                 )
             }
         }
@@ -128,7 +128,7 @@ public final class RSA {
                     UInt32(inputBuffer.count),
                     signatureBuffer.baseAddress!,
                     UInt32(signatureBuffer.count),
-                    key.c.pointer
+                    key.c.pointer.convert()
                 )
             }
         }
@@ -147,7 +147,9 @@ public final class RSA {
     /// - returns: Decrypted data.
     /// - throws: `CryptoError` if encrypting fails.
     public static func decrypt(_ input: LosslessDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
-        return try cipher(input, padding: padding, key: key, coder: RSA_private_decrypt)
+        return try cipher(input, padding: padding, key: key) {
+            RSA_private_decrypt($0, $1, $2, $3!.convert(), $4)
+        }
     }
 
     /// Encrypts the supplied input.
@@ -161,17 +163,20 @@ public final class RSA {
     /// - returns: Encrypted data.
     /// - throws: `CryptoError` if encrypting fails.
     public static func encrypt(_ input: LosslessDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
-        return try cipher(input, padding: padding, key: key, coder: RSA_public_encrypt)
+        return try cipher(input, padding: padding, key: key) {
+            RSA_public_encrypt($0, $1, $2, $3!.convert(), $4)
+        }
     }
     
     // MARK: Private
     
     /// Typealias for OpenSSLs encrypt and decrypt signature
-    private typealias RSAPkeySymmetricCoder = @convention(c) (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, OpaquePointer?, Int32) -> Int32
+    private typealias RSAPkeySymmetricCoder = @convention(c)
+        (Int32, UnsafePointer<UInt8>?, UnsafeMutablePointer<UInt8>?, OpaquePointer?, Int32) -> Int32
 
     /// Private cipher
     private static func cipher(_ input: LosslessDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
-        var outputData = Data(count: Int(RSA_size(key.c.pointer)))
+        var outputData = Data(count: Int(RSA_size(key.c.pointer.convert())))
 
         let outputLen = input.convertToData().withByteBuffer { inputBuffer in
             return outputData.withMutableByteBuffer { outputBuffer -> Int32 in
