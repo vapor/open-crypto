@@ -65,10 +65,6 @@ public struct RSAKey {
     ///
     /// - throws: `CryptoError` if key generation fails.
     public static func components(n: String, e: String, d: String? = nil) throws -> RSAKey {
-        return try RSAKey(n, e, d)
-    }
-    
-    private init(_ n: String, _ e: String, _ d: String?) throws {
         guard let rsa = RSA_new() else {
             throw CryptoError.openssl(identifier: "rsaNull", reason: "RSA key creation failed")
         }
@@ -78,7 +74,7 @@ public struct RSAKey {
         let d = d.flatMap { parseBignum($0) }
         
         RSA_set0_key(rsa, n.convert(), e.convert(), d?.convert())
-        try self.init(type: d == nil ? .public : .private, key: CRSAKey(rsa.convert()))
+        return try .init(type: d == nil ? .public : .private, key: CRSAKey(rsa.convert()))
     }
 }
 

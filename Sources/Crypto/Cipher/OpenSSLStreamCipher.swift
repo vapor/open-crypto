@@ -68,19 +68,19 @@ extension OpenSSLStreamCipher {
         let key = key.convertToData()
         let iv = iv?.convertToData()
 
-        let keyLength = EVP_CIPHER_key_length(algorithm.c)
+        let keyLength = EVP_CIPHER_key_length(algorithm.c.convert())
         guard keyLength == key.count else {
             throw CryptoError(identifier: "cipherKeySize", reason: "Invalid cipher key length \(key.count) != \(keyLength).")
         }
 
-        let ivLength = EVP_CIPHER_iv_length(algorithm.c)
+        let ivLength = EVP_CIPHER_iv_length(algorithm.c.convert())
         guard (ivLength == 0 && (iv == nil || iv?.count == 0)) || (iv != nil && iv?.count == Int(ivLength)) else {
             throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(iv?.count ?? 0) != \(ivLength).")
         }
 
         guard key.withByteBuffer({ keyBuffer in
             iv.withByteBuffer { ivBuffer in
-                EVP_CipherInit_ex(ctx, algorithm.c, nil, keyBuffer.baseAddress!, ivBuffer?.baseAddress, mode.rawValue)
+                EVP_CipherInit_ex(ctx.convert(), algorithm.c.convert(), nil, keyBuffer.baseAddress!, ivBuffer?.baseAddress, mode.rawValue)
             }
         }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherInit_ex", reason: "Failed initializing cipher context.")
@@ -110,7 +110,7 @@ extension OpenSSLStreamCipher {
 
         guard chunk.withMutableByteBuffer({ chunkBuffer in
             input.withByteBuffer { inputBuffer in
-                EVP_CipherUpdate(ctx, chunkBuffer.baseAddress!, &chunkLength, inputBuffer.baseAddress!, Int32(truncatingIfNeeded: inputBuffer.count))
+                EVP_CipherUpdate(ctx.convert(), chunkBuffer.baseAddress!, &chunkLength, inputBuffer.baseAddress!, Int32(truncatingIfNeeded: inputBuffer.count))
             }
         }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherUpdate", reason: "Failed updating cipher.")
@@ -138,7 +138,7 @@ extension OpenSSLStreamCipher {
         var chunk = Data(count: Int(algorithm.blockSize))
         var chunkLength: Int32 = 0
 
-        guard chunk.withMutableByteBuffer({ EVP_CipherFinal_ex(ctx, $0.baseAddress!, &chunkLength) }) == 1 else {
+        guard chunk.withMutableByteBuffer({ EVP_CipherFinal_ex(ctx.convert(), $0.baseAddress!, &chunkLength) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherFinal_ex", reason: "Failed finishing cipher.")
         }
         buffer += chunk.prefix(upTo: Int(chunkLength))

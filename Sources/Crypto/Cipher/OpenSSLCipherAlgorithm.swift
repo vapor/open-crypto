@@ -27,21 +27,21 @@ public protocol OpenSSLCipherAlgorithm {
 extension OpenSSLCipherAlgorithm {
     /// See `OpenSSLCipherAlgorithm`
     public var type: Int32 {
-        return EVP_CIPHER_type(c)
+        return EVP_CIPHER_type(c.convert())
     }
 
     /// See `OpenSSLCipherAlgorithm`
     public var keySize: Int32 {
-        return EVP_CIPHER_key_length(c)
+        return EVP_CIPHER_key_length(c.convert())
     }
 
     /// See `OpenSSLCipherAlgorithm`
     public var ivSize: Int32 {
-        return EVP_CIPHER_iv_length(c)
+        return EVP_CIPHER_iv_length(c.convert())
     }
 
     /// See `OpenSSLCipherAlgorithm`
     public var blockSize: Int32 {
-        return EVP_CIPHER_block_size(c)
+        return EVP_CIPHER_block_size(c.convert())
     }
 }

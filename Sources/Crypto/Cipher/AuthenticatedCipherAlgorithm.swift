@@ -21,12 +21,12 @@ public final class AuthenticatedCipherAlgorithm: OpenSSLCipherAlgorithm {
         guard let cipher = EVP_get_cipherbyname(name) else {
             throw CryptoError.openssl(identifier: "EVP_get_cipherbyname", reason: "No cipher named \(name) was found.")
         }
-        return .init(c: cipher)
+        return .init(c: cipher.convert())
     }
 
     /// AES-256 GCM cipher. This is the recommended cipher.
     /// See the global `AES256GCM` constant on usage.
-    public static let aes256gcm: AuthenticatedCipherAlgorithm = .init(c: EVP_aes_256_gcm())
+    public static let aes256gcm: AuthenticatedCipherAlgorithm = .init(c: EVP_aes_256_gcm().convert())
 
     /// OpenSSL `EVP_CIPHER` context.
     public let c: OpaquePointer
