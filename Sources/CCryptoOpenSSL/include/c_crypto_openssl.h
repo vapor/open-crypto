@@ -15,11 +15,12 @@
 #include <openssl/x509v3.h>
 
 
-int crypto_RSA_set(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+int crypto_RSA_set(void *r, void *n, void *e, void *d) {
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
-    r->n = n;
-    r->e = e;
-    r->d = d;
+    RSA *rsa = (RSA *)r;
+    rsa->n = n;
+    rsa->e = e;
+    rsa->d = d;
     return 0;
 #else
     return RSA_set0_key(r, n, e, d);
