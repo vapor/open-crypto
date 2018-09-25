@@ -14,6 +14,18 @@
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
 
+
+int crypto_RSA_set(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+    r->n = n;
+    r->e = e;
+    r->d = d;
+    return 0;
+#else
+    return RSA_set0_key(r, n, e, d);
+#endif
+}
+
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 EVP_MD_CTX *EVP_MD_CTX_new(void) {
     return EVP_MD_CTX_create();
@@ -22,13 +34,6 @@ EVP_MD_CTX *EVP_MD_CTX_new(void) {
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx) {
     EVP_MD_CTX_cleanup(ctx);
     free(ctx);
-}
-
-int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
-    r->n = n;
-    r->e = e;
-    r->d = d;
-    return 0;
 }
 
 HMAC_CTX *HMAC_CTX_new(void) {
