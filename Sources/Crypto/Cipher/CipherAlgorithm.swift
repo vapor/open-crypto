@@ -5,7 +5,7 @@ import CCryptoOpenSSL
 /// Common cipher algorithms are provided as static properties on this class.
 ///
 /// There are also static methods for creating `CipherAlgorithm` such as `CipherAlgorithm.named(_:)`
-public final class CipherAlgorithm {
+public final class CipherAlgorithm: OpenSSLCipherAlgorithm {
     // MARK: Static
 
     /// Looks up a cipher function algorithm by name (e.g., "aes-128-cbc").
@@ -39,10 +39,6 @@ public final class CipherAlgorithm {
     /// AES-256 CFB cipher. May not be available on all platforms.
     /// Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
     public static let aes256cfb: CipherAlgorithm = .init(c: EVP_aes_256_cfb128().convert())
-
-    /// AES-256 GCM cipher. This is the recommended cipher.
-    /// See the global `AES256GCM` constant on usage.
-    public static let aes256gcm: CipherAlgorithm = .init(c: EVP_aes_256_gcm().convert())
 
     /// OpenSSL `EVP_CIPHER` context.
     public let c: OpaquePointer

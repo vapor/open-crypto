@@ -38,10 +38,50 @@ class CipherTests: XCTestCase {
         }
     }
 
+    func testAES256GCM() throws {
+        let message = "vapor"
+        let key = "passwordpasswordpasswordpassword"
+        let iv = "123456789012"
+        let (ciphertext, tag) = try AES256GCM.encrypt(message, key: key, iv: iv)
+        XCTAssertEqual(ciphertext.hexEncodedString(), "4fa166802c")
+        try XCTAssertEqual(AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: tag).convert(), message)
+    }
+
+    func testAES256GCMAuthenticationFailure() throws {
+        let message = "vapor"
+        let key = "passwordpasswordpasswordpassword"
+        let iv = "123456789012"
+        var (ciphertext, tag) = try AES256GCM.encrypt(message, key: key, iv: iv)
+        XCTAssertEqual(ciphertext.hexEncodedString(), "4fa166802c")
+
+        // Forcibly overwrite bytes in the tag data to fail authentication
+        tag[2] = 0
+        tag[3] = 1
+        tag[4] = 2
+
+        XCTAssertThrowsError(try AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: tag))
+    }
+
+    func testAES256GCMShortTag() throws {
+        let message = "vapor"
+        let key = "passwordpasswordpasswordpassword"
+        let iv = "123456789012"
+        var (ciphertext, tag) = try AES256GCM.encrypt(message, key: key, iv: iv)
+        XCTAssertEqual(ciphertext.hexEncodedString(), "4fa166802c")
+
+        // Delete one byte from the tag to force short-tag authentication failure
+        tag.remove(at: 2)
+
+        XCTAssertThrowsError(try AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: tag))
+    }
+
     static var allTests = [
         ("testAES256Basic", testAES256Basic),
         ("testAES256WellKnownDecode", testAES256WellKnownDecode),
         ("testCipherReuse", testCipherReuse),
+        ("testAES256GCM", testAES256GCM),
+        ("testAES256GCMShortTag", testAES256GCMShortTag),
+        ("testAES256GCMAuthenticationFailure", testAES256GCMAuthenticationFailure),
     ]
 }
 
