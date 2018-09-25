@@ -78,10 +78,10 @@ public struct RSAKey {
         let type: RSAKeyType
         if let d = d {
             type = .private
-            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), parseBignum(d).convert())
+            crypto_RSA_set(rsa, parseBignum(n).convert(), parseBignum(e).convert(), parseBignum(d).convert())
         } else {
             type = .public
-            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), nil)
+            crypto_RSA_set(rsa, parseBignum(n).convert(), parseBignum(e).convert(), nil)
         }
         
         return try .init(type: type, key: CRSAKey(rsa.convert()))
