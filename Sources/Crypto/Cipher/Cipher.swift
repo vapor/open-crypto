@@ -157,9 +157,9 @@ public final class Cipher {
         }
 
         guard key.withByteBuffer({ keyBuffer in
-            iv.withByteBuffer { ivBuffer in
+            return iv.withByteBuffer ({ ivBuffer in
                 EVP_CipherInit_ex(ctx.convert(), algorithm.c.convert(), nil, keyBuffer.baseAddress!, ivBuffer?.baseAddress, mode.rawValue)
-            }
+            })
         }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CipherInit_ex", reason: "Failed initializing cipher context.")
         }
@@ -185,13 +185,12 @@ public final class Cipher {
         let input = data.convertToData()
         var chunk = Data(count: input.count + Int(algorithm.blockSize) - 1)
         var chunkLength: Int32 = 0
-
         guard chunk.withMutableByteBuffer({ chunkBuffer in
-            input.withByteBuffer { inputBuffer in
+            return input.withByteBuffer({ inputBuffer in
                 EVP_CipherUpdate(ctx.convert(), chunkBuffer.baseAddress!, &chunkLength, inputBuffer.baseAddress!, Int32(truncatingIfNeeded: inputBuffer.count))
-            }
+            })
         }) == 1 else {
-            throw CryptoError.openssl(identifier: "EVP_CipherUpdate", reason: "Failed updating cipher.")
+            throw CryptoError.openssl(identifier: "EVP_CipherUpdate", reason: "Failed updating cipher")
         }
         buffer += chunk.prefix(upTo: Int(chunkLength))
     }
@@ -215,9 +214,9 @@ public final class Cipher {
     public func finish(into buffer: inout Data) throws {
         var chunk = Data(count: Int(algorithm.blockSize))
         var chunkLength: Int32 = 0
-        
+
         guard chunk.withMutableByteBuffer({ EVP_CipherFinal_ex(ctx.convert(), $0.baseAddress!, &chunkLength) }) == 1 else {
-            throw CryptoError.openssl(identifier: "EVP_CipherFinal_ex", reason: "Failed finishing cipher.")
+            throw CryptoError.openssl(identifier: "EVP_CipherFinal_ex", reason: "Failed finishing cipher")
         }
         buffer += chunk.prefix(upTo: Int(chunkLength))
     }

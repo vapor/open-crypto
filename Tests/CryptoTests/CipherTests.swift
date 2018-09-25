@@ -2,64 +2,46 @@ import XCTest
 import Crypto
 
 class CipherTests: XCTestCase {
-    func testAES128Basic() throws {
-        let message = "vapor"
-        let key = "passwordpassword"
-        let ciphertext = try AES128.encrypt(message, key: key)
-        XCTAssertEqual(ciphertext.hexEncodedString(), "6fb70cc0bebacac2b3efebe62b1a092e")
-        try XCTAssertEqual(AES128.decrypt(ciphertext, key: key).convert(), message)
-    }
-
-    func testAES128WellKnownDecode() throws {
-        let key = "passwordpassword"
-        let ciphertext = Data(bytes: [0x6F, 0xB7, 0x0C, 0xC0, 0xBE, 0xBA, 0xCA, 0xC2, 0xB3, 0xEF, 0xEB, 0xE6, 0x2B, 0x1A, 0x09, 0x2E])
-        try XCTAssertEqual(AES128.decrypt(ciphertext, key: key).convert(), "vapor")
-    }
-
-    func testCipherReuse() throws {
-        let cipher = AES128
-        do {
-            let message = "vapor1"
-            let key = "passwordpasswor1"
-            let ciphertext = try cipher.encrypt(message, key: key)
-            XCTAssertEqual(ciphertext.hexEncodedString(), "6a074f4ae8305d64d3d8c6e97630c6ca")
-            try XCTAssertEqual(cipher.decrypt(ciphertext, key: key).convert(), message)
-        }
-        do {
-            let message = "vapor2"
-            let key = "passwordpasswor2"
-            let ciphertext = try cipher.encrypt(message, key: key)
-            XCTAssertEqual(ciphertext.hexEncodedString(), "84b1bba5f1cb060902b25dab3dfce5cb")
-            try XCTAssertEqual(cipher.decrypt(ciphertext, key: key).convert(), message)
-        }
-    }
-
     func testAES256Basic() throws {
         let message = "vapor"
         let key = "passwordpasswordpasswordpassword"
-        let ciphertext = try AES256.encrypt(message, key: key)
-        XCTAssertEqual(ciphertext.hexEncodedString(), "8eb630e88555b42eed039b21c0fa9ce1")
-        try XCTAssertEqual(AES256.decrypt(ciphertext, key: key).convert(), message)
+        let iv = "passwordpassword"
+        let ciphertext = try AES256CBC.encrypt(message, key: key, iv: iv)
+        XCTAssertEqual(ciphertext.hexEncodedString(), "0c0beecdc724b2b79a14c4d1e49d0de6")
+        try XCTAssertEqual(AES256CBC.decrypt(ciphertext, key: key, iv: iv).convert(), message)
     }
-
-    func testAES128Manual() throws {
-        let key = "passwordpassword"
-        let aes128 = Cipher(algorithm: .aes128ecb)
-        try aes128.reset(key: key, mode: .encrypt)
-        var buffer = Data()
-        try aes128.update(data: "hello", into: &buffer)
-        try aes128.update(data: "world", into: &buffer)
-        try aes128.finish(into: &buffer)
-        XCTAssertEqual(buffer.hexEncodedString(), "30474812739e34062c8fbb3610f95830")
-        try XCTAssertEqual(AES128.decrypt(buffer, key: key).convert(), "helloworld")
+    
+    func testAES256WellKnownDecode() throws {
+        let key = "passwordpasswordpasswordpassword"
+        let iv = "passwordpassword"
+        let ciphertext = Data(bytes: [0x0c, 0x0b, 0xee, 0xcd, 0xc7, 0x24, 0xb2, 0xb7, 0x9a, 0x14, 0xc4, 0xd1, 0xe4, 0x9d, 0x0d, 0xe6])
+        try XCTAssertEqual(AES256CBC.decrypt(ciphertext, key: key, iv: iv).convert(), "vapor")
+    }
+    
+    func testCipherReuse() throws {
+        let cipher = AES256CBC
+        do {
+            let message = "vapor1"
+            let key = "passwordpasswor1passwordpasswor1"
+            let iv = "passwordpassword"
+            let ciphertext = try cipher.encrypt(message, key: key, iv: iv)
+            XCTAssertEqual(ciphertext.hexEncodedString(), "1a66ca18f527d803c7da9aa947e23522")
+            try XCTAssertEqual(cipher.decrypt(ciphertext, key: key, iv: iv).convert(), message)
+        }
+        do {
+            let message = "vapor2"
+            let key = "passwordpasswor2passwordpasswor2"
+            let iv = "passwor1passwor2"
+            let ciphertext = try cipher.encrypt(message, key: key, iv: iv)
+            XCTAssertEqual(ciphertext.hexEncodedString(), "2359dbd0d34fa59d64f2316113a54330")
+            try XCTAssertEqual(cipher.decrypt(ciphertext, key: key, iv: iv).convert(), message)
+        }
     }
 
     static var allTests = [
-        ("testAES128Basic", testAES128Basic),
-        ("testAES128WellKnownDecode", testAES128WellKnownDecode),
-        ("testCipherReuse", testCipherReuse),
         ("testAES256Basic", testAES256Basic),
-        ("testAES128Manual", testAES128Manual),
+        ("testAES256WellKnownDecode", testAES256WellKnownDecode),
+        ("testCipherReuse", testCipherReuse),
     ]
 }
 
