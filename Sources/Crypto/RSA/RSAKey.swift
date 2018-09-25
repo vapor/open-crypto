@@ -65,12 +65,6 @@ public struct RSAKey {
     ///
     /// - throws: `CryptoError` if key generation fails.
     public static func components(n: String, e: String, d: String? = nil) throws -> RSAKey {
-        func parseBignum(_ s: String) -> OpaquePointer {
-            return Data(base64URLEncoded: s)!.withByteBuffer { p in
-                return BN_bin2bn(p.baseAddress, Int32(p.count), nil).convert()
-            }
-        }
-        
         guard let rsa = RSA_new() else {
             throw CryptoError.openssl(identifier: "rsaNull", reason: "RSA key creation failed")
         }
@@ -78,13 +72,19 @@ public struct RSAKey {
         let type: RSAKeyType
         if let d = d {
             type = .private
-            crypto_RSA_set(rsa, parseBignum(n).convert(), parseBignum(e).convert(), parseBignum(d).convert())
+            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), parseBignum(d).convert())
         } else {
             type = .public
-            crypto_RSA_set(rsa, parseBignum(n).convert(), parseBignum(e).convert(), nil)
+            RSA_set0_key(rsa, parseBignum(n).convert(), parseBignum(e).convert(), nil)
         }
         
         return try .init(type: type, key: CRSAKey(rsa.convert()))
+    }
+}
+
+private func parseBignum(_ s: String) -> OpaquePointer {
+    return Data(base64URLEncoded: s)!.withByteBuffer { p in
+        return BN_bin2bn(p.baseAddress, Int32(p.count), nil).convert()
     }
 }
 
