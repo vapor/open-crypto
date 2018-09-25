@@ -15,7 +15,7 @@ public var AES256GCM: AuthenticatedCipher { return .init(algorithm: .aes256gcm) 
 /// Max Tag Length. Used for defining the size of input and output tags.
 ///     Redefined from OpenSSL's EVP_AEAD_MAX_TAG_LENGTH, which seems to be improperly defined on some platforms.
 ///     You can find the original #define here: https://github.com/libressl/libressl/blob/master/src/crypto/evp/evp.h#L1237-L1239
-let AEAD_MAX_TAG_LENGTH: Int32 = 16
+private let AEAD_MAX_TAG_LENGTH: Int32 = 16
 
 /// AuthenticatedCipher supports AEAD-type ciphers. It feels a lot like 'Cipher' except that it supports the
 /// AEAD tag and related validation.
@@ -24,7 +24,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     public let algorithm: OpenSSLCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
-    public let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
+    public let ctx: OpaquePointer
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
@@ -135,7 +135,6 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
 
     /// Cleans up and frees the allocated OpenSSL cipher context.
     deinit {
-        EVP_CIPHER_CTX_cleanup(ctx)
         EVP_CIPHER_CTX_free(ctx)
     }
 }

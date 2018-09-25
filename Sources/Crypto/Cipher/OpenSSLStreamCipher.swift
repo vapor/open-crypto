@@ -45,7 +45,7 @@ public protocol OpenSSLStreamCipher {
     var algorithm: OpenSSLCipherAlgorithm { get }
 
     /// The OpenSSL Cipher Stream Context
-    var ctx: UnsafeMutablePointer<EVP_CIPHER_CTX> { get }
+    var ctx: OpaquePointer { get }
 }
 
 extension OpenSSLStreamCipher {
