@@ -13,14 +13,27 @@ let package = Package(
 
         /// Bindings to OpenSSL-compatible libraries for TLS support in SwiftNIO
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "1.0.0"),
+        
+        /// Links OpenSSL / LibreSSL to SPM.
+        .package(url: "https://github.com/apple/swift-nio-ssl-support.git", from: "1.0.0"),
     ],
     targets: [
+        .target(name: "CBase32"),
+        .target(name: "CBcrypt"),
+        .target(name: "CCryptoOpenSSL"),
         .target(name: "Crypto", dependencies: [
-            "Async", "Bits", "Core", "COperatingSystem", "Debugging", "libbase32", "libbcrypt", "NIOOpenSSL", "Random"
+            "Async",
+            "Bits",
+            "CBase32",
+            "CBcrypt",
+            "CCryptoOpenSSL",
+            "Core",
+            "COperatingSystem",
+            "Debugging",
+            "NIOOpenSSL",
+            "Random"
         ]),
         .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
-        .target(name: "libbase32"),
-        .target(name: "libbcrypt"),
         .target(name: "Random", dependencies: ["Bits"]),
         .testTarget(name: "RandomTests", dependencies: ["Random"]),
     ]

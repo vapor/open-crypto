@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import Foundation
 import Bits
 
@@ -12,7 +12,7 @@ import Bits
 ///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
 @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb())) }
+public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb().convert())) }
 
 /// AES-256 ECB Cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
 ///
@@ -22,7 +22,7 @@ public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb()))
 ///     AES256.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
 @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb())) }
+public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb().convert())) }
 
 /// AES-256 CBC Cipher. Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
 ///
@@ -53,7 +53,7 @@ public final class Cipher: OpenSSLStreamCipher {
     public let algorithm: OpenSSLCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
-    public let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
+    public let ctx: OpaquePointer
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
@@ -67,7 +67,7 @@ public final class Cipher: OpenSSLStreamCipher {
     ///
     public init(algorithm: CipherAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_CIPHER_CTX_new()
+        self.ctx = EVP_CIPHER_CTX_new().convert()
     }
 
     /// Encrypts the supplied plaintext into ciphertext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -116,13 +116,11 @@ public final class Cipher: OpenSSLStreamCipher {
         try reset(key: key, iv: iv, mode: .decrypt)
         try update(data: data, into: &buffer)
         try finish(into: &buffer)
-
         return buffer
     }
 
-    /// Cleans up and frees the allocated OpenSSL cipher context.
+    /// Frees the allocated OpenSSL cipher context.
     deinit {
-        EVP_CIPHER_CTX_cleanup(ctx)
-        EVP_CIPHER_CTX_free(ctx)
+        EVP_CIPHER_CTX_free(ctx.convert())
     }
 }

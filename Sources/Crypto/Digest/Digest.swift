@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import Foundation
 
 // MARK: Digests
@@ -55,7 +55,7 @@ public final class Digest {
     public let algorithm: DigestAlgorithm
 
     /// Internal OpenSSL `EVP_MD_CTX` context.
-    let ctx: UnsafeMutablePointer<EVP_MD_CTX>?
+    let ctx: OpaquePointer
 
     // MARK: Init
 
@@ -71,7 +71,7 @@ public final class Digest {
     ///
     public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_MD_CTX_create()
+        self.ctx = EVP_MD_CTX_new().convert()
     }
 
     // MARK: Methods
@@ -98,7 +98,7 @@ public final class Digest {
     ///
     /// - throws: `CryptoError` if reset fails.
     public func reset() throws {
-        guard EVP_DigestInit_ex(ctx, algorithm.c, nil) == 1 else {
+        guard EVP_DigestInit_ex(ctx.convert(), algorithm.c.convert(), nil) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestInit_ex", reason: "Failed initializing digest context.")
         }
     }
@@ -118,7 +118,7 @@ public final class Digest {
     public func update(data: LosslessDataConvertible) throws {
         let data = data.convertToData()
         
-        guard data.withByteBuffer({ EVP_DigestUpdate(ctx, $0.baseAddress!, $0.count) }) == 1 else {
+        guard data.withByteBuffer({ EVP_DigestUpdate(ctx.convert(), $0.baseAddress!, $0.count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestUpdate", reason: "Failed updating digest.")
         }
     }
@@ -138,11 +138,13 @@ public final class Digest {
         var hash = Data(count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
 
-        guard hash.withMutableByteBuffer({ EVP_DigestFinal_ex(ctx, $0.baseAddress!, &count) }) == 1 else {
+        guard hash.withMutableByteBuffer({ EVP_DigestFinal_ex(ctx.convert(), $0.baseAddress!, &count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestFinal_ex", reason: "Failed finalizing digest.")
         }
         return hash.prefix(upTo: Int(count))
     }
 
-    deinit { EVP_MD_CTX_destroy(ctx) }
+    deinit {
+        EVP_MD_CTX_free(ctx.convert())
+    }
 }

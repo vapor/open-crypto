@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 import NIOOpenSSL
 import Foundation
 
@@ -65,25 +65,22 @@ public struct RSAKey {
     ///
     /// - throws: `CryptoError` if key generation fails.
     public static func components(n: String, e: String, d: String? = nil) throws -> RSAKey {
-        func parseBignum(_ s: String) -> UnsafeMutablePointer<BIGNUM>? {
-            return Data(base64URLEncoded: s)?.withByteBuffer { p in
-                return BN_bin2bn(p.baseAddress, Int32(p.count), nil)
-            }
-        }
-        
         guard let rsa = RSA_new() else {
             throw CryptoError.openssl(identifier: "rsaNull", reason: "RSA key creation failed")
         }
         
-        rsa.pointee.n = parseBignum(n)
-        rsa.pointee.e = parseBignum(e)
+        let n = parseBignum(n)
+        let e = parseBignum(e)
+        let d = d.flatMap { parseBignum($0) }
         
-        if let d = d {
-            rsa.pointee.d = parseBignum(d)
-            return try .init(type: .private, key: CRSAKey(rsa))
-        } else {
-            return try .init(type: .public, key: CRSAKey(rsa))
-        }
+        RSA_set0_key(rsa, n.convert(), e.convert(), d?.convert())
+        return try .init(type: d == nil ? .public : .private, key: CRSAKey(rsa.convert()))
+    }
+}
+
+private func parseBignum(_ s: String) -> OpaquePointer {
+    return Data(base64URLEncoded: s)!.withByteBuffer { p in
+        return BN_bin2bn(p.baseAddress, Int32(p.count), nil).convert()
     }
 }
 
@@ -99,10 +96,10 @@ public enum RSAKeyType {
 /// This wrapper is important for ensuring the key is freed when it is no longer in use.
 final class CRSAKey {
     /// The wrapped pointer.
-    let pointer: UnsafeMutablePointer<rsa_st>
+    let pointer: OpaquePointer
 
     /// Creates a new `CRSAKey` from a pointer.
-    internal init(_ pointer: UnsafeMutablePointer<rsa_st>) {
+    internal init(_ pointer: OpaquePointer) {
         self.pointer = pointer
     }
 
@@ -116,7 +113,7 @@ final class CRSAKey {
             return BIO_puts(bio, key)
         }
 
-        let maybePkey: UnsafeMutablePointer<EVP_PKEY>?
+        let maybePkey: OpaquePointer?
 
         if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
@@ -124,24 +121,24 @@ final class CRSAKey {
             }
 
             defer { X509_free(x509) }
-            maybePkey = X509_get_pubkey(x509)
+            maybePkey = X509_get_pubkey(x509).convert()
         } else {
             switch type {
-            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil)
-            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil)
+            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil).convert()
+            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil).convert()
             }
         }
 
         guard let pkey = maybePkey else {
             throw CryptoError.openssl(identifier: "rsaPkeyNull", reason: "RSA key creation failed")
         }
-        defer { EVP_PKEY_free(pkey) }
+        defer { EVP_PKEY_free(pkey.convert()) }
 
-        guard let rsa = EVP_PKEY_get1_RSA(pkey) else {
+        guard let rsa = EVP_PKEY_get1_RSA(pkey.convert()) else {
             throw CryptoError.openssl(identifier: "rsaPkeyGet1", reason: "RSA key creation failed")
         }
-        return .init(rsa)
+        return .init(rsa.convert())
     }
 
-    deinit { RSA_free(pointer) }
+    deinit { RSA_free(pointer.convert()) }
 }

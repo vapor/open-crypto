@@ -15,7 +15,7 @@ public var AES256GCM: AuthenticatedCipher { return .init(algorithm: .aes256gcm) 
 /// Max Tag Length. Used for defining the size of input and output tags.
 ///     Redefined from OpenSSL's EVP_AEAD_MAX_TAG_LENGTH, which seems to be improperly defined on some platforms.
 ///     You can find the original #define here: https://github.com/libressl/libressl/blob/master/src/crypto/evp/evp.h#L1237-L1239
-let AEAD_MAX_TAG_LENGTH: Int32 = 16
+private let AEAD_MAX_TAG_LENGTH: Int32 = 16
 
 /// AuthenticatedCipher supports AEAD-type ciphers. It feels a lot like 'Cipher' except that it supports the
 /// AEAD tag and related validation.
@@ -24,7 +24,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     public let algorithm: OpenSSLCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
-    public let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
+    public let ctx: OpaquePointer
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
@@ -38,7 +38,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///
     public init(algorithm: AuthenticatedCipherAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_CIPHER_CTX_new()
+        self.ctx = EVP_CIPHER_CTX_new().convert()
     }
 
     /// Encrypts the supplied plaintext into ciphertext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -107,7 +107,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     public func getTag() throws -> Data {
         var buffer = Data(count: Int(AEAD_MAX_TAG_LENGTH))
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx.convert(), EVP_CTRL_GCM_GET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed getting tag (EVP_CTRL_CCM_GET_TAG).")
         }
 
@@ -128,14 +128,13 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Tag length too short: \(buffer.count) != \(AEAD_MAX_TAG_LENGTH) (AEAD_MAX_TAG_LENGTH).")
         }
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx.convert(), EVP_CTRL_GCM_SET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed setting tag (EVP_CTRL_GCM_SET_TAG).")
         }
     }
 
     /// Cleans up and frees the allocated OpenSSL cipher context.
     deinit {
-        EVP_CIPHER_CTX_cleanup(ctx)
-        EVP_CIPHER_CTX_free(ctx)
+        EVP_CIPHER_CTX_free(ctx.convert())
     }
 }

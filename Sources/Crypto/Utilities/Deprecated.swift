@@ -5,3 +5,30 @@ extension Digest {
         return try hash(data)
     }
 }
+
+
+extension OpaquePointer {
+    func convert<T>() -> UnsafePointer<T> {
+        return .init(self)
+    }
+    
+    func convert<T>() -> UnsafeMutablePointer<T> {
+        return .init(self)
+    }
+    
+    func convert() -> OpaquePointer {
+        return self
+    }
+}
+
+extension UnsafePointer {
+    func convert() -> OpaquePointer {
+        return .init(self)
+    }
+}
+
+extension UnsafeMutablePointer {
+    func convert() -> OpaquePointer {
+        return .init(self)
+    }
+}
