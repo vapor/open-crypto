@@ -147,8 +147,15 @@ public final class RSA {
     /// - returns: Decrypted data.
     /// - throws: `CryptoError` if encrypting fails.
     public static func decrypt(_ input: LosslessDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
-        return try cipher(input, padding: padding, key: key) {
-            RSA_private_decrypt($0, $1, $2, $3!.convert(), $4)
+        switch key.type {
+        case .public:
+            return try cipher(input, padding: padding, key: key) {
+                RSA_public_decrypt($0, $1, $2, $3!.convert(), $4)
+            }
+        case .private:
+            return try cipher(input, padding: padding, key: key) {
+                RSA_private_decrypt($0, $1, $2, $3!.convert(), $4)
+            }
         }
     }
 
@@ -163,8 +170,15 @@ public final class RSA {
     /// - returns: Encrypted data.
     /// - throws: `CryptoError` if encrypting fails.
     public static func encrypt(_ input: LosslessDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
-        return try cipher(input, padding: padding, key: key) {
-            RSA_public_encrypt($0, $1, $2, $3!.convert(), $4)
+        switch key.type {
+        case .public:
+            return try cipher(input, padding: padding, key: key) {
+                RSA_public_encrypt($0, $1, $2, $3!.convert(), $4)
+            }
+        case .private:
+            return try cipher(input, padding: padding, key: key) {
+                RSA_private_encrypt($0, $1, $2, $3!.convert(), $4)
+            }
         }
     }
     

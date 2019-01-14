@@ -11,8 +11,7 @@ public struct CryptoError: Debuggable {
 
     /// Internal error creation from OpenSSLL
     internal static func openssl(identifier: String, reason: String) -> CryptoError {
-        let errmsg: UnsafeMutablePointer<Int8>? = nil
-        ERR_error_string(ERR_get_error(), errmsg)
+        let errmsg = ERR_error_string(ERR_get_error(), nil)
 
         let cReason: String
         if let e = errmsg {

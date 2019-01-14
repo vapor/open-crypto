@@ -86,6 +86,20 @@ class RSATests: XCTestCase {
         )
         XCTAssertEqual(key.type, .public)
     }
+    
+    // https://github.com/vapor/crypto/issues/78
+    func testGH78() throws {
+        let passphrase = "abcdef"
+        
+        // From https://www.googleapis.com/oauth2/v3/certs
+        let key: RSAKey = try .components(
+            n: "vvAaaSpfr934Qx0ioFiWsopq7UCfLNn0zjYVbq4bvUcGSXU9kowYmQArR7WlIkjk1moffla0UV75QRaQPATva1oD5xQnnW-20haeMWTSsMgUHoN0Np9AD8ffPz-DfMJBOHIo4REL1BFFS33HSZgPl0hxJ-5UScqr4lW1JMy5XGeRho30dnmKTpakU1Oc35hFYKSea_O2SXfmbqiAkWlWkilEzgHq4pzVWiDZe4ZgfMdD4vqkSNrO_PkBFBT1mnBJztQ1h4v1jvUW-zeYYwIcPTaOX-xOTiGH9uQkcNPpe5pBrIZJqR5VNrDl_bJOmvVlhhXZSn4fkxA8kyQcZXGaTw",
+            e: "AQAB"
+        )
+        let encrypted = try RSA.encrypt(passphrase, padding: .pkcs1, key: key)
+        let decrypted = try RSA.decrypt(encrypted, padding: .pkcs1, key: key)
+        XCTAssertEqual(decrypted.convert(to: String.self), passphrase)
+    }
 
     static var allTests = [
         ("testPrivateKey", testPrivateKey),
@@ -98,6 +112,7 @@ class RSATests: XCTestCase {
         ("testRand", testRand),
         ("testComps", testComps),
         ("testEncrypt", testEncrypt),
+        ("testGH78", testGH78),
     ]
 }
 
