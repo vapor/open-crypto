@@ -97,8 +97,7 @@ class RSATests: XCTestCase {
             e: "AQAB"
         )
         let encrypted = try RSA.encrypt(passphrase, padding: .pkcs1, key: key)
-        let decrypted = try RSA.decrypt(encrypted, padding: .pkcs1, key: key)
-        XCTAssertEqual(decrypted.convert(to: String.self), passphrase)
+        XCTAssertThrowsError(try RSA.decrypt(encrypted, padding: .pkcs1, key: key))
     }
 
     static var allTests = [
