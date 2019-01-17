@@ -171,7 +171,7 @@ public final class BCryptDigest {
     /// - returns: Base 64 encoded plaintext
     private func base64Encode(_ dataConvertible: LosslessDataConvertible) throws -> String {
         let data = dataConvertible.convertToData()
-        let dataBytes = [UInt8](data)
+        let dataBytes = [UInt8](data)! // guaranteed non-nil
 
         let encodedBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 25)
         defer { encodedBytes.deallocate() }

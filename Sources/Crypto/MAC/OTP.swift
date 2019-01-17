@@ -139,7 +139,7 @@ private func generateOTP(secret: LosslessDataConvertible, algorithm: DigestAlgor
     // get last 4 bits of hash for use as offset
     let offset = Int(digest[digest.count - 1] & 0x0f)
     // get 4 bytes of the hash using offset
-    let subdigest = Data(digest[offset...offset + 3])
+    let subdigest = Data(digest[offset...offset + 3])! // Identity initializer
     // convert data to UInt32
     var num = subdigest.withUnsafeBytes { $0.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee.bigEndian }
     // remove most sig bit
