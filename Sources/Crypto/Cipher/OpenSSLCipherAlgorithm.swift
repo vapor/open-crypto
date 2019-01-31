@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 
 /// OpenSSLCipherAlgorithm represents a common set of properties shared by
 /// OpenSSL cipher algorithms.
