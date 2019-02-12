@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Debugging
 
 /// An error encountered while working with crypto.
 public struct CryptoError: Debuggable {

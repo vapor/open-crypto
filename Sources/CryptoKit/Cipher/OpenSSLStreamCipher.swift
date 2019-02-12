@@ -1,6 +1,5 @@
 import CCryptoOpenSSL
 import Foundation
-import Bits
 
 /// Available cipher modes. Either `encrypt` or `decrypt`.
 ///

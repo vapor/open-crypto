@@ -1,5 +1,3 @@
-@_exported import Core
-
 extension Collection where Element: Equatable {
     /// Performs a full-comparison of all elements in two collections. If the two collections have
     /// a different number of elements, the function will compare all elements in the smaller collection

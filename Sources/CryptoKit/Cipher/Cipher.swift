@@ -1,6 +1,5 @@
 import CCryptoOpenSSL
 import Foundation
-import Bits
 
 // MARK: Ciphers
 

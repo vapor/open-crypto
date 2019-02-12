@@ -1,6 +1,5 @@
 import CCryptoOpenSSL
 import Foundation
-import Bits
 
 /// AES-256 GCM Cipher. This is the reccomended cipher mode. (see https://github.com/vapor/crypto/issues/59).
 ///

@@ -1,5 +1,4 @@
 import libbcrypt
-import Random
 
 /// Creates and verifies BCrypt hashes. Normally you will not need to initialize one of these classes and you will
 /// use the global `BCrypt` convenience instead.
