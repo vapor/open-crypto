@@ -38,7 +38,7 @@ public final class URandom: DataGenerator {
             throw Error.read(errno)
         }
 
-        return Data(bytes: bytes)
+        return Data(bytes)
     }
 
     /// Get a random array of Bytes

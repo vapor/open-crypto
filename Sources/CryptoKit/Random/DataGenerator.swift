@@ -8,14 +8,14 @@ public protocol DataGenerator {
 
 extension Data {
     internal func cast<T>(to: T.Type = T.self) -> T {
-        return withUnsafeBytes { (p: UnsafePointer<T>) in p.pointee }
+        return withUnsafeBytes { (p: UnsafeRawBufferPointer) in p.baseAddress!.assumingMemoryBound(to: T.self).pointee }
     }
 }
 
 extension DataGenerator {
     /// Generates a random type `T`.
     public func generate<T>(_ type: T.Type = T.self) throws -> T {
-        return try generateData(count: MemoryLayout<T>.size)
+        return try self.generateData(count: MemoryLayout<T>.size)
             .cast(to: T.self)
     }
 }

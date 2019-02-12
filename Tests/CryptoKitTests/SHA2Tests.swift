@@ -14,7 +14,7 @@ class SHA2Tests: XCTestCase {
     ]
     
     func testSHA224Basic() throws {
-        let tests: [(key: String, expected: String)] = [
+        let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
                 "730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525"
@@ -36,7 +36,7 @@ class SHA2Tests: XCTestCase {
     }
     
     func testSHA256Basic() throws {
-        let tests: [(key: String, expected: String)] = [
+        let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
                 "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"
@@ -58,7 +58,7 @@ class SHA2Tests: XCTestCase {
     }
     
     func testSHA384Basic() throws {
-        let tests: [(key: String, expected: String)] = [
+        let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
                 "ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1"
@@ -80,7 +80,7 @@ class SHA2Tests: XCTestCase {
     }
 
     func testSHA512Basic() throws {
-        let tests: [(key: String, expected: String)] = [
+        let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
                 "07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6"

@@ -10,7 +10,7 @@ class SHA1Tests: XCTestCase {
 
     func testBasic() throws {
         // Source: https://en.wikipedia.org/wiki/SHA-1#Example_hashes
-        let tests: [(key: String, expected: String)] = [
+        let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
                 "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"
@@ -49,7 +49,7 @@ class SHA1Tests: XCTestCase {
     
     func testNotCrashing() throws {
         let data = Data(repeating: 0x02, count: 263)
-        _ = try SHA1.hash(data)
+        _ = try SHA1.hash(.data(data))
     }
 
     func testHMAC() throws {

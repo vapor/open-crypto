@@ -85,9 +85,9 @@ public final class Digest {
     ///     - data: Data to digest
     /// - returns: Digest
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func hash(_ data: CustomDataConvertible) throws -> Data {
+    public func hash(_ data: CryptoData) throws -> CryptoData {
         try reset()
-        try update(data: data)
+        try update(data)
         return try finish()
     }
 
@@ -115,10 +115,8 @@ public final class Digest {
     /// - parameters:
     ///     - data: Message chunk to digest.
     /// - throws: `CryptoError` if update fails or data conversion fails.
-    public func update(data: CustomDataConvertible) throws {
-        let data = data.data
-        
-        guard data.withUnsafeBytes({ EVP_DigestUpdate(ctx, $0.baseAddress!, $0.count) }) == 1 else {
+    public func update(_ data: CryptoData) throws {
+        guard data.withUnsafeBytes({ EVP_DigestUpdate(ctx, $0.baseAddress, $0.count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestUpdate", reason: "Failed updating digest.")
         }
     }
@@ -134,20 +132,14 @@ public final class Digest {
     ///
     /// - returns: Digest data
     /// - throws: `CryptoError` if the finalization step fails.
-    public func finish() throws -> Data {
-        var hash = Data(count: Int(EVP_MAX_MD_SIZE))
+    public func finish() throws -> CryptoData {
+        var hash: [UInt8] = .init(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
 
-        guard hash.withUnsafeMutableBytes({
-            return EVP_DigestFinal_ex(
-                ctx,
-                $0.baseAddress!.assumingMemoryBound(to: UInt8.self),
-                &count
-            )
-        }) == 1 else {
+        guard hash.withUnsafeMutableBytes({ EVP_DigestFinal_ex(ctx, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestFinal_ex", reason: "Failed finalizing digest.")
         }
-        return hash.prefix(upTo: Int(count))
+        return .arraySlice(hash[0..<Int(count)])
     }
 
     deinit {

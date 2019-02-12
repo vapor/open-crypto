@@ -60,7 +60,7 @@ public final class RSA {
     ///     - key: `RSAKey` to use for signing this data.
     /// - returns: RSA signature for this data.
     /// - throws: `CryptoError` if signing fails or data conversion fails.
-    public func sign(_ input: CustomDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Data {
+    public func sign(_ input: CryptoData, format: RSAInputFormat = .message, key: RSAKey) throws -> Data {
         switch key.type {
         case .public: throw CryptoError(identifier: "rsaSign", reason: "Cannot create RSA signature with a public key. A private key is required.")
         case .private: break
@@ -72,7 +72,7 @@ public final class RSA {
             count: Int(RSA_size(key.c.pointer))
         )
 
-        var input = input.data
+        var input = input
 
         switch format {
         case .digest: break // leave input as is
@@ -110,8 +110,8 @@ public final class RSA {
     ///     - key: `RSAKey` to use for signing this data.
     /// - returns: `true` if signature matches plaintext input.
     /// - throws: `CryptoError` if verification fails or data conversion fails.
-    public func verify(_ signature: CustomDataConvertible, signs input: CustomDataConvertible, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
-        var input = input.data
+    public func verify(_ signature: CustomDataConvertible, signs input: CryptoData, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
+        var input = input
         var sig = signature.data
 
         switch format {

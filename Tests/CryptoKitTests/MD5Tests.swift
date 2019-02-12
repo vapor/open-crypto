@@ -9,7 +9,7 @@ class MD5Tests: XCTestCase {
 
     func testBasic() throws {
         // Source: https://github.com/bcgit/bc-java/blob/adecd89d33edf278a5c601af2de696f0a6f65251/core/src/test/java/org/bouncycastle/crypto/test/MD5DigestTest.java
-        let tests = [
+        let tests: [(CryptoData, String)] = [
             ("", "d41d8cd98f00b204e9800998ecf8427e"),
             ("a", "0cc175b9c0f1b6a831c399e269772661"),
             ("abc", "900150983cd24fb0d6963f7d28e17f72"),
@@ -20,8 +20,7 @@ class MD5Tests: XCTestCase {
         ]
         
         for test in tests {
-            let result = try MD5.hash(test.0).hexEncodedString().lowercased()
-            XCTAssertEqual(result, test.1.lowercased())
+            try XCTAssertEqual(MD5.hash(test.0).hexEncodedString(), test.1)
         }
     }
     
@@ -35,7 +34,7 @@ class MD5Tests: XCTestCase {
         try hash.reset()
         
         for buffer in buffers {
-            try hash.update(data: buffer)
+            try hash.update(.data(buffer))
         }
 
         try XCTAssertEqual(hash.finish().hexEncodedString().lowercased(), "57edf4a22be3c955ac49da2e2107b67a")

@@ -33,6 +33,10 @@ class RandomTests: XCTestCase {
         XCTAssertNotEqual(tail, zeros)
     }
     
+    func testSwiftRandom() {
+        let random = [UInt8].random(count: 1024_000)
+    }
+    
     func testArray() throws {
         let array = [1, 2, 3]
         var results: [Int: Int] = [:]

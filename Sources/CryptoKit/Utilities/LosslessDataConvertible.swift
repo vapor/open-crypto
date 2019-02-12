@@ -48,7 +48,7 @@ extension String: LosslessDataConvertible, CustomDataConvertible {
 extension Array: LosslessDataConvertible, CustomDataConvertible where Element == UInt8 {
     /// Converts this `[UInt8]` to `Data`.
     public var data: Data {
-        return Data(bytes: self)
+        return Data(self)
     }
     
     /// Converts `Data` to `[UInt8]`.
