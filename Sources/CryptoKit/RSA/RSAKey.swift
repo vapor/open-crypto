@@ -76,11 +76,11 @@ public struct RSAKey {
     }
 }
 
-private func parseBignum(_ s: String) -> UnsafeMutablePointer<BIGNUM>? {
+private func parseBignum(_ s: String) -> OpaquePointer? {
     guard let data = Data(base64URLEncoded: s) else {
         return nil
     }
-    return data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> UnsafeMutablePointer<BIGNUM> in
+    return data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
         return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
     }
 }
@@ -97,10 +97,10 @@ public enum RSAKeyType {
 /// This wrapper is important for ensuring the key is freed when it is no longer in use.
 final class CRSAKey {
     /// The wrapped pointer.
-    let pointer: UnsafeMutablePointer<rsa_st>
+    let pointer: OpaquePointer
     
     /// Creates a new `CRSAKey` from a pointer.
-    internal init(_ pointer: UnsafeMutablePointer<rsa_st>) {
+    internal init(_ pointer: OpaquePointer) {
         self.pointer = pointer
     }
 
@@ -114,7 +114,7 @@ final class CRSAKey {
             return BIO_puts(bio, p.baseAddress?.assumingMemoryBound(to: Int8.self))
         }
 
-        let maybePkey: UnsafeMutablePointer<EVP_PKEY>?
+        let maybePkey: OpaquePointer?
 
         if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {

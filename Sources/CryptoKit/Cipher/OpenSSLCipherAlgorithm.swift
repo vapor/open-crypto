@@ -4,10 +4,10 @@ import CCryptoOpenSSL
 /// OpenSSL cipher algorithms.
 public protocol OpenSSLCipherAlgorithm {
     /// An initializer accepting the EVP_CIPHER to work with
-    init(c: UnsafePointer<EVP_CIPHER>)
+    init(c: OpaquePointer)
 
     /// OpenSSL `EVP_CIPHER` context.
-    var c: UnsafePointer<EVP_CIPHER> { get }
+    var c: OpaquePointer { get }
 
     /// Returns the OpenSSL NID type for this algorithm.
     var type: Int32 { get }

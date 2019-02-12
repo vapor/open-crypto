@@ -1,4 +1,7 @@
 import Foundation
+#if os(Linux)
+import Glibc
+#endif
 
 /// Uses the operating system's Random function uses `random` on Linux and `arc4random` on macOS.
 public struct OSRandom: DataGenerator {
@@ -22,7 +25,7 @@ public struct OSRandom: DataGenerator {
         #if os(Linux)
             // will always be initialized
             guard randomInitialized else { fatalError() }
-            return Int(COperatingSystem.random() % top) + min
+            return Int(random() % top) + min
         #else
             return Int(arc4random_uniform(UInt32(top))) + min
         #endif
@@ -32,7 +35,6 @@ public struct OSRandom: DataGenerator {
 extension Int {
     fileprivate static let maxByte: Int = Int(UInt8.max)
 }
-
 #if os(Linux)
     /// Generates a random number between (and inclusive of)
     /// the given minimum and maximum.
@@ -41,7 +43,7 @@ extension Int {
         /// not existing and still guarantee thread safety
         let current = Date().timeIntervalSinceReferenceDate
         let salt = current.truncatingRemainder(dividingBy: 1) * 100000000
-        COperatingSystem.srand(UInt32(current + salt))
+        srand(UInt32(current + salt))
         return true
     }()
 #endif

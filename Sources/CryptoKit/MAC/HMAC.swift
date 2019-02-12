@@ -53,7 +53,7 @@ public final class HMAC {
     public let algorithm: DigestAlgorithm
 
     /// Internal OpenSSL `HMAC_CTX` context.
-    var ctx: UnsafeMutablePointer<HMAC_CTX>
+    var ctx: OpaquePointer
 
     // MARK: Init
 

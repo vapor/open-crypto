@@ -23,7 +23,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     public let algorithm: OpenSSLCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
-    public let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
+    public let ctx: OpaquePointer
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///

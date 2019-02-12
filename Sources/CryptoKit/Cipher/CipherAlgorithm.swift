@@ -41,10 +41,10 @@ public final class CipherAlgorithm: OpenSSLCipherAlgorithm {
     public static let aes256cfb: CipherAlgorithm = .init(c: EVP_aes_256_cfb128())
 
     /// OpenSSL `EVP_CIPHER` context.
-    public let c: UnsafePointer<EVP_CIPHER>
+    public let c: OpaquePointer
 
     /// Internal init accepting a `EVP_CIPHER`.
-    public init(c: UnsafePointer<EVP_CIPHER>) {
+    public init(c: OpaquePointer) {
         self.c = c
     }
 }

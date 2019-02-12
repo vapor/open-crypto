@@ -55,7 +55,7 @@ public final class Digest {
     public let algorithm: DigestAlgorithm
 
     /// Internal OpenSSL `EVP_MD_CTX` context.
-    let ctx: UnsafeMutablePointer<EVP_MD_CTX>
+    let ctx: OpaquePointer
 
     // MARK: Init
 
