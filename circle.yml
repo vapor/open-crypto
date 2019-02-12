@@ -17,7 +17,7 @@ jobs:
     steps:
       - run:
           name: Clone Vapor
-          command: git clone -b master https://github.com/vapor/vapor.git
+          command: git clone -b 3 https://github.com/vapor/vapor.git
           working_directory: ~/
       - run:
           name: Switch Vapor to this Crypto revision
@@ -77,7 +77,7 @@ jobs:
     steps:
       - run:
           name: Clone PostgreSQL
-          command: git clone -b master https://github.com/vapor/postgresql.git
+          command: git clone -b 1 https://github.com/vapor/postgresql.git
           working_directory: ~/
       - run:
           name: Switch PostgreSQL to this Crypto revision
