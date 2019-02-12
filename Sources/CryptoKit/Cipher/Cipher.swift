@@ -11,7 +11,7 @@ import Foundation
 ///     AES128.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
 @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb().convert())) }
+public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb())) }
 
 /// AES-256 ECB Cipher. Deprecated (see https://github.com/vapor/crypto/issues/59).
 ///
@@ -21,7 +21,7 @@ public var AES128: Cipher { return .init(algorithm: .init(c: EVP_aes_128_ecb().c
 ///     AES256.decrypt(ciphertext, key: key).convert(to: String.self) // "vapor"
 ///
 @available(*, deprecated, message: "Stream encryption in ECB mode is unsafe (see https://github.com/vapor/crypto/issues/59). Use AES256 in GCM mode instead.")
-public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb().convert())) }
+public var AES256: Cipher { return .init(algorithm: .init(c: EVP_aes_256_ecb())) }
 
 /// AES-256 CBC Cipher. Only use this if you know what you are doing; use AES-256 GCM otherwise (see https://github.com/vapor/crypto/issues/59).
 ///
@@ -52,7 +52,7 @@ public final class Cipher: OpenSSLStreamCipher {
     public let algorithm: OpenSSLCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
-    public let ctx: OpaquePointer
+    public let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
@@ -66,7 +66,7 @@ public final class Cipher: OpenSSLStreamCipher {
     ///
     public init(algorithm: CipherAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_CIPHER_CTX_new().convert()
+        self.ctx = EVP_CIPHER_CTX_new()
     }
 
     /// Encrypts the supplied plaintext into ciphertext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -84,7 +84,7 @@ public final class Cipher: OpenSSLStreamCipher {
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     /// - returns: Encrypted ciphertext.
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func encrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible? = nil) throws -> Data {
+    public func encrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible? = nil) throws -> Data {
         var buffer = Data()
 
         try reset(key: key, iv: iv, mode: .encrypt)
@@ -109,7 +109,7 @@ public final class Cipher: OpenSSLStreamCipher {
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     /// - returns: Decrypted plaintext.
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func decrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible? = nil) throws -> Data {
+    public func decrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible? = nil) throws -> Data {
         var buffer = Data()
 
         try reset(key: key, iv: iv, mode: .decrypt)
@@ -120,6 +120,6 @@ public final class Cipher: OpenSSLStreamCipher {
 
     /// Frees the allocated OpenSSL cipher context.
     deinit {
-        EVP_CIPHER_CTX_free(ctx.convert())
+        EVP_CIPHER_CTX_free(self.ctx)
     }
 }

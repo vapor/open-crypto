@@ -1,6 +1,5 @@
 import XCTest
-import Bits
-@testable import Random
+@testable import CryptoKit
 
 class RandomTests: XCTestCase {
     static var allTests = [
@@ -29,8 +28,8 @@ class RandomTests: XCTestCase {
 
     func testForTrailingZeros() throws {
         let rand = try URandom().generateData(count: 65_536)
-        let tail = Bytes(rand.suffix(8))
-        let zeros = Bytes(repeating: 0, count: 8)
+        let tail = [UInt8](rand.suffix(8))
+        let zeros = [UInt8](repeating: 0, count: 8)
         XCTAssertNotEqual(tail, zeros)
     }
     

@@ -1,3 +1,5 @@
+import Foundation
+
 // MARK: TOTP
 
 /// Generates Time-based One-time Passwords using HMAC.
@@ -41,7 +43,7 @@ public struct TOTP {
     ///               Defaults to six.
     ///     - secret: Cleartext (_not_ Base32 encoded) secret key.
     ///     - date: Date to generate the TOTP for. This will be divided into intervals automatically.
-    public func generateRange(degree: Int, digits: OTPDigits = .six, secret: LosslessDataConvertible, at date: Date = .init()) throws -> [String] {
+    public func generateRange(degree: Int, digits: OTPDigits = .six, secret: CustomDataConvertible, at date: Date = .init()) throws -> [String] {
         var res: [String] = try [
             generate(digits: digits, secret: secret, offset: 0, at: date)
         ]
@@ -64,7 +66,7 @@ public struct TOTP {
     ///     - offset: Specific offset (in intervals) from the supplied date.
     ///               Defaults to 0.
     ///     - date: Date to generate the TOTP for. This will be divided into intervals automatically.
-    public func generate(digits: OTPDigits = .six, secret: LosslessDataConvertible, offset: Int = 0, at date: Date = .init()) throws -> String {
+    public func generate(digits: OTPDigits = .six, secret: CustomDataConvertible, offset: Int = 0, at date: Date = .init()) throws -> String {
         let counter = floor(floor(date.timeIntervalSince1970) / 30)
         return try generateOTP(secret: secret, algorithm: algorithm, counter: UInt(counter - Double(offset)), digits: digits)
     }
@@ -106,7 +108,7 @@ public struct HOTP {
     ///               Defaults to six.
     ///     - secret: Cleartext (_not_ Base32 encoded) secret key.
     ///     - counter: Password offset.
-    public func generate(digits: OTPDigits = .six, secret: LosslessDataConvertible, counter: UInt) throws -> String {
+    public func generate(digits: OTPDigits = .six, secret: CustomDataConvertible, counter: UInt) throws -> String {
         return try generateOTP(secret: secret, algorithm: algorithm, counter: counter, digits: digits)
     }
 }
@@ -134,14 +136,14 @@ public enum OTPDigits: Int {
 
 // MARK: Private
 
-private func generateOTP(secret: LosslessDataConvertible, algorithm: DigestAlgorithm = .sha1, counter: UInt, digits: OTPDigits) throws -> String {
+private func generateOTP(secret: CustomDataConvertible, algorithm: DigestAlgorithm = .sha1, counter: UInt, digits: OTPDigits) throws -> String {
     let digest = try HMAC(algorithm: algorithm).authenticate(counter.bigEndian.data, key: secret)
     // get last 4 bits of hash for use as offset
     let offset = Int(digest[digest.count - 1] & 0x0f)
     // get 4 bytes of the hash using offset
     let subdigest = Data(digest[offset...offset + 3])
     // convert data to UInt32
-    var num = subdigest.withUnsafeBytes { $0.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee.bigEndian }
+    var num = subdigest!.withUnsafeBytes { $0.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee.bigEndian }
     // remove most sig bit
     num &= 0x7fffffff
     // modulo num by digits

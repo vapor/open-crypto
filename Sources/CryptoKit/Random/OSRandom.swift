@@ -11,7 +11,7 @@ public struct OSRandom: DataGenerator {
 
         for _ in 0..<count {
             let random = makeRandom(min: 0, max: .maxByte)
-            bytes.append(Byte(random))
+            bytes.append(UInt8(random))
         }
 
         return bytes
@@ -30,7 +30,7 @@ public struct OSRandom: DataGenerator {
 }
 
 extension Int {
-    fileprivate static let maxByte: Int = Int(Byte.max)
+    fileprivate static let maxByte: Int = Int(UInt8.max)
 }
 
 #if os(Linux)

@@ -6,18 +6,18 @@ public struct RSAKey {
     // MARK: Static
 
     /// Creates a new `RSAKey` from a private key pem file.
-    public static func `private`(pem: LosslessDataConvertible) throws -> RSAKey {
-        return try .init(type: .private, key: .make(type: .private, from: pem.convertToData()))
+    public static func `private`(pem: CustomDataConvertible) throws -> RSAKey {
+        return try .init(type: .private, key: .make(type: .private, from: pem.data))
     }
 
     /// Creates a new `RSAKey` from a public key pem file.
-    public static func `public`(pem: LosslessDataConvertible) throws -> RSAKey {
-        return try .init(type: .public, key: .make(type: .public, from: pem.convertToData()))
+    public static func `public`(pem: CustomDataConvertible) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: pem.data))
     }
 
     /// Creates a new `RSAKey` from a public key certificate file.
-    public static func `public`(certificate: LosslessDataConvertible) throws -> RSAKey {
-        return try .init(type: .public, key: .make(type: .public, from: certificate.convertToData(), x509: true))
+    public static func `public`(certificate: CustomDataConvertible) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: certificate.data, x509: true))
     }
 
     // MARK: Properties
@@ -71,15 +71,17 @@ public struct RSAKey {
         let n = parseBignum(n)
         let e = parseBignum(e)
         let d = d.flatMap { parseBignum($0) }
-        
-        RSA_set0_key(rsa, n.convert(), e.convert(), d?.convert())
-        return try .init(type: d == nil ? .public : .private, key: CRSAKey(rsa.convert()))
+        RSA_set0_key(rsa, n, e, d)
+        return try .init(type: d == nil ? .public : .private, key: CRSAKey(rsa))
     }
 }
 
-private func parseBignum(_ s: String) -> OpaquePointer {
-    return Data(base64URLEncoded: s)!.withByteBuffer { p in
-        return BN_bin2bn(p.baseAddress, Int32(p.count), nil).convert()
+private func parseBignum(_ s: String) -> UnsafeMutablePointer<BIGNUM>? {
+    guard let data = Data(base64URLEncoded: s) else {
+        return nil
+    }
+    return data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> UnsafeMutablePointer<BIGNUM> in
+        return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
     }
 }
 
@@ -95,10 +97,10 @@ public enum RSAKeyType {
 /// This wrapper is important for ensuring the key is freed when it is no longer in use.
 final class CRSAKey {
     /// The wrapped pointer.
-    let pointer: OpaquePointer
-
+    let pointer: UnsafeMutablePointer<rsa_st>
+    
     /// Creates a new `CRSAKey` from a pointer.
-    internal init(_ pointer: OpaquePointer) {
+    internal init(_ pointer: UnsafeMutablePointer<rsa_st>) {
         self.pointer = pointer
     }
 
@@ -107,12 +109,12 @@ final class CRSAKey {
         let bio = BIO_new(BIO_s_mem())
         defer { BIO_free(bio) }
 
-        let nullTerminatedData = data + Data(bytes: [0])
-        _ = nullTerminatedData.withUnsafeBytes { key in
-            return BIO_puts(bio, key)
+        let nullTerminatedData = data + Data([0])
+        _ = nullTerminatedData.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> Int32 in
+            return BIO_puts(bio, p.baseAddress?.assumingMemoryBound(to: Int8.self))
         }
 
-        let maybePkey: OpaquePointer?
+        let maybePkey: UnsafeMutablePointer<EVP_PKEY>?
 
         if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
@@ -120,24 +122,24 @@ final class CRSAKey {
             }
 
             defer { X509_free(x509) }
-            maybePkey = X509_get_pubkey(x509).convert()
+            maybePkey = X509_get_pubkey(x509)
         } else {
             switch type {
-            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil).convert()
-            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil).convert()
+            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil)
+            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil)
             }
         }
 
         guard let pkey = maybePkey else {
             throw CryptoError.openssl(identifier: "rsaPkeyNull", reason: "RSA key creation failed")
         }
-        defer { EVP_PKEY_free(pkey.convert()) }
+        defer { EVP_PKEY_free(pkey) }
 
-        guard let rsa = EVP_PKEY_get1_RSA(pkey.convert()) else {
+        guard let rsa = EVP_PKEY_get1_RSA(pkey) else {
             throw CryptoError.openssl(identifier: "rsaPkeyGet1", reason: "RSA key creation failed")
         }
-        return .init(rsa.convert())
+        return .init(rsa)
     }
 
-    deinit { RSA_free(pointer.convert()) }
+    deinit { RSA_free(self.pointer) }
 }

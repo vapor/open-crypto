@@ -53,7 +53,7 @@ public final class HMAC {
     public let algorithm: DigestAlgorithm
 
     /// Internal OpenSSL `HMAC_CTX` context.
-    var ctx: OpaquePointer
+    var ctx: UnsafeMutablePointer<HMAC_CTX>
 
     // MARK: Init
 
@@ -69,7 +69,7 @@ public final class HMAC {
     ///
     public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
-        ctx = HMAC_CTX_new().convert()
+        ctx = HMAC_CTX_new()
     }
 
     // MARK: Methods
@@ -87,7 +87,7 @@ public final class HMAC {
     ///     - key: HMAC key
     /// - returns: Digested data
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or data conversion fails.
-    public func authenticate(_ data: LosslessDataConvertible, key: LosslessDataConvertible) throws -> Data {
+    public func authenticate(_ data: CustomDataConvertible, key: CustomDataConvertible) throws -> Data {
         try reset(key: key)
         try update(data: data)
         return try finish()
@@ -101,10 +101,12 @@ public final class HMAC {
     /// - parameters:
     ///     - key: HMAC key
     /// - throws: `CryptoError` if the initialization / reset fails or data conversion fails.
-    public func reset(key: LosslessDataConvertible) throws {
-        let key = key.convertToData()
+    public func reset(key: CustomDataConvertible) throws {
+        let key = key.data
         
-        guard key.withByteBuffer({ HMAC_Init_ex(ctx.convert(), $0.baseAddress!, Int32($0.count), algorithm.c.convert(), nil) }) == 1 else {
+        guard key.withUnsafeBytes({
+            return HMAC_Init_ex(ctx, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), algorithm.c, nil)
+        }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Init_ex", reason: "Failed initializing HMAC context.")
         }
     }
@@ -122,10 +124,12 @@ public final class HMAC {
     /// - parameters:
     ///     - data: Message chunk to digest / authenticate
     /// - throws: `CryptoError` if the update fails or data conversion fails.
-    public func update(data: LosslessDataConvertible) throws {
-        let data = data.convertToData()
+    public func update(data: CustomDataConvertible) throws {
+        let data = data.data
 
-        guard data.withByteBuffer({ HMAC_Update(ctx.convert(), $0.baseAddress!, $0.count) }) == 1 else {
+        guard data.withUnsafeBytes({
+            return HMAC_Update(ctx, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), $0.count)
+        }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Update", reason: "Failed updating HMAC digest.")
         }
     }
@@ -146,13 +150,15 @@ public final class HMAC {
         var hash = Data(count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
         
-        guard hash.withMutableByteBuffer({ HMAC_Final(ctx.convert(), $0.baseAddress!, &count) }) == 1 else {
+        guard hash.withUnsafeMutableBytes({
+            return HMAC_Final(ctx, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
+        }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Final", reason: "Failed finalizing HMAC digest.")
         }
         return hash.prefix(upTo: Int(count))
     }
 
     deinit {
-        HMAC_CTX_free(ctx.convert())
+        HMAC_CTX_free(ctx)
     }
 }

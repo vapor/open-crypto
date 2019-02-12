@@ -23,7 +23,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     public let algorithm: OpenSSLCipherAlgorithm
 
     /// Internal OpenSSL `EVP_CIPHER_CTX` context.
-    public let ctx: OpaquePointer
+    public let ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
 
     /// Creates a new `Cipher` using the supplied `CipherAlgorithm`.
     ///
@@ -37,7 +37,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///
     public init(algorithm: AuthenticatedCipherAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_CIPHER_CTX_new().convert()
+        self.ctx = EVP_CIPHER_CTX_new()
     }
 
     /// Encrypts the supplied plaintext into ciphertext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -57,7 +57,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     /// - returns: Encrypted ciphertext and GCM tag.
     /// - throws: `CryptoError` if reset, update, finalization or tag retrieval steps fail or if data conversion fails.
-    public func encrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible) throws -> (ciphertext: Data, tag: Data) {
+    public func encrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible) throws -> (ciphertext: Data, tag: Data) {
         var buffer = Data()
 
         try reset(key: key, iv: iv, mode: .encrypt)
@@ -87,7 +87,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///           The tag must be 16 bytes
     /// - returns: Decrypted plaintext.
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func decrypt(_ data: LosslessDataConvertible, key: LosslessDataConvertible, iv: LosslessDataConvertible, tag: LosslessDataConvertible) throws -> Data {
+    public func decrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible, tag: CustomDataConvertible) throws -> Data {
         var buffer = Data()
 
         try reset(key: key, iv: iv, mode: .decrypt)
@@ -106,7 +106,7 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     public func getTag() throws -> Data {
         var buffer = Data(count: Int(AEAD_MAX_TAG_LENGTH))
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx.convert(), EVP_CTRL_GCM_GET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withUnsafeMutableBytes({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed getting tag (EVP_CTRL_CCM_GET_TAG).")
         }
 
@@ -118,8 +118,8 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     /// - note: This _must_ be called before `finish()` to set the tag.
     ///
     /// - throws: `CryptoError` if tag set fails
-    public func setTag(_ tag: LosslessDataConvertible) throws {
-        var buffer = tag.convertToData()
+    public func setTag(_ tag: CustomDataConvertible) throws {
+        var buffer = tag.data
 
         /// Require that the tag length is full-sized. Although it is possible to use the leftmost bytes of a tag,
         /// shorter tags pose both a buffer size risk as well as an attack risk.
@@ -127,13 +127,13 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Tag length too short: \(buffer.count) != \(AEAD_MAX_TAG_LENGTH) (AEAD_MAX_TAG_LENGTH).")
         }
 
-        guard buffer.withMutableByteBuffer({ EVP_CIPHER_CTX_ctrl(ctx.convert(), EVP_CTRL_GCM_SET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withUnsafeMutableBytes({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed setting tag (EVP_CTRL_GCM_SET_TAG).")
         }
     }
 
     /// Cleans up and frees the allocated OpenSSL cipher context.
     deinit {
-        EVP_CIPHER_CTX_free(ctx.convert())
+        EVP_CIPHER_CTX_free(ctx)
     }
 }

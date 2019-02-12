@@ -1,7 +1,7 @@
 import CCryptoOpenSSL
 
 /// An error encountered while working with crypto.
-public struct CryptoError: Debuggable {
+public struct CryptoError: Error {
     /// See `Debuggable.identifier`
     public var identifier: String
 

@@ -55,7 +55,7 @@ public final class Digest {
     public let algorithm: DigestAlgorithm
 
     /// Internal OpenSSL `EVP_MD_CTX` context.
-    let ctx: OpaquePointer
+    let ctx: UnsafeMutablePointer<EVP_MD_CTX>
 
     // MARK: Init
 
@@ -71,7 +71,7 @@ public final class Digest {
     ///
     public init(algorithm: DigestAlgorithm) {
         self.algorithm = algorithm
-        self.ctx = EVP_MD_CTX_new().convert()
+        self.ctx = EVP_MD_CTX_new()
     }
 
     // MARK: Methods
@@ -85,7 +85,7 @@ public final class Digest {
     ///     - data: Data to digest
     /// - returns: Digest
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func hash(_ data: LosslessDataConvertible) throws -> Data {
+    public func hash(_ data: CustomDataConvertible) throws -> Data {
         try reset()
         try update(data: data)
         return try finish()
@@ -98,7 +98,7 @@ public final class Digest {
     ///
     /// - throws: `CryptoError` if reset fails.
     public func reset() throws {
-        guard EVP_DigestInit_ex(ctx.convert(), algorithm.c.convert(), nil) == 1 else {
+        guard EVP_DigestInit_ex(ctx, algorithm.c, nil) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestInit_ex", reason: "Failed initializing digest context.")
         }
     }
@@ -115,10 +115,10 @@ public final class Digest {
     /// - parameters:
     ///     - data: Message chunk to digest.
     /// - throws: `CryptoError` if update fails or data conversion fails.
-    public func update(data: LosslessDataConvertible) throws {
-        let data = data.convertToData()
+    public func update(data: CustomDataConvertible) throws {
+        let data = data.data
         
-        guard data.withByteBuffer({ EVP_DigestUpdate(ctx.convert(), $0.baseAddress!, $0.count) }) == 1 else {
+        guard data.withUnsafeBytes({ EVP_DigestUpdate(ctx, $0.baseAddress!, $0.count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestUpdate", reason: "Failed updating digest.")
         }
     }
@@ -138,13 +138,19 @@ public final class Digest {
         var hash = Data(count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
 
-        guard hash.withMutableByteBuffer({ EVP_DigestFinal_ex(ctx.convert(), $0.baseAddress!, &count) }) == 1 else {
+        guard hash.withUnsafeMutableBytes({
+            return EVP_DigestFinal_ex(
+                ctx,
+                $0.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                &count
+            )
+        }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestFinal_ex", reason: "Failed finalizing digest.")
         }
         return hash.prefix(upTo: Int(count))
     }
 
     deinit {
-        EVP_MD_CTX_free(ctx.convert())
+        EVP_MD_CTX_free(ctx)
     }
 }

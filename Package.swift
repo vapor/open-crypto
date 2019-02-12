@@ -15,7 +15,7 @@ let package = Package(
             pkgConfig: "openssl",
             providers: [
                 .apt(["openssl libssl-dev"]),
-                .brew(["openssl"])
+                .brew(["libressl"])
             ]
         ),
         .target(name: "CryptoKit", dependencies: [

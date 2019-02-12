@@ -20,7 +20,7 @@ public final class DigestAlgorithm: Equatable {
         guard let digest = EVP_get_digestbyname(name) else {
             throw CryptoError.openssl(identifier: "EVP_get_digestbyname", reason: "No digest named \(name) was found.")
         }
-        return .init(c: digest.convert())
+        return .init(c: digest)
     }
 
     /// See `Equatable`.
@@ -29,50 +29,50 @@ public final class DigestAlgorithm: Equatable {
     }
 
     /// OpenSSL `EVP_MD` context.
-    let c: OpaquePointer
+    let c: UnsafePointer<EVP_MD>
 
     /// Internal init accepting a `EVP_MD`.
-    init(c: OpaquePointer) {
+    init(c: UnsafePointer<EVP_MD>) {
         self.c = c
     }
 
     /// Returns the OpenSSL NID type for this algorithm.
     public var type: Int32 {
-        return EVP_MD_type(c.convert())
+        return EVP_MD_type(self.c)
     }
 
     /// MD4 digest.
     ///
     /// https://en.wikipedia.org/wiki/MD4
-    public static let md4: DigestAlgorithm = .init(c: EVP_md4().convert())
+    public static let md4: DigestAlgorithm = .init(c: EVP_md4())
 
     /// MD5 digest.
     ///
     /// https://en.wikipedia.org/wiki/MD5
-    public static let md5: DigestAlgorithm = .init(c: EVP_md5().convert())
+    public static let md5: DigestAlgorithm = .init(c: EVP_md5())
 
     /// SHA-1 digest.
     ///
     /// https://en.wikipedia.org/wiki/SHA-1
-    public static let sha1: DigestAlgorithm = .init(c: EVP_sha1().convert())
+    public static let sha1: DigestAlgorithm = .init(c: EVP_sha1())
 
     /// SHA-224 (SHA-2) digest.
     ///
     /// https://en.wikipedia.org/wiki/SHA-2
-    public static let sha224: DigestAlgorithm = .init(c: EVP_sha224().convert())
+    public static let sha224: DigestAlgorithm = .init(c: EVP_sha224())
 
     /// SHA-256 (SHA-2) digest.
     ///
     /// https://en.wikipedia.org/wiki/SHA-2
-    public static let sha256: DigestAlgorithm = .init(c: EVP_sha256().convert())
+    public static let sha256: DigestAlgorithm = .init(c: EVP_sha256())
 
     /// SHA-384 (SHA-2) digest.
     ///
     /// https://en.wikipedia.org/wiki/SHA-2
-    public static let sha384: DigestAlgorithm = .init(c: EVP_sha384().convert())
+    public static let sha384: DigestAlgorithm = .init(c: EVP_sha384())
 
     /// SHA-512 (SHA-2) digest.
     ///
     /// https://en.wikipedia.org/wiki/SHA-2
-    public static let sha512: DigestAlgorithm = .init(c: EVP_sha512().convert())
+    public static let sha512: DigestAlgorithm = .init(c: EVP_sha512())
 }

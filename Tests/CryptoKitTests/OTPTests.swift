@@ -1,5 +1,5 @@
 import XCTest
-import Crypto
+import CryptoKit
 
 class OTPTests: XCTestCase {
     func testTOTPBasic() throws {

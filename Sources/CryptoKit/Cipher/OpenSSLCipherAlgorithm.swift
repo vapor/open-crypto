@@ -4,10 +4,10 @@ import CCryptoOpenSSL
 /// OpenSSL cipher algorithms.
 public protocol OpenSSLCipherAlgorithm {
     /// An initializer accepting the EVP_CIPHER to work with
-    init(c: OpaquePointer)
+    init(c: UnsafePointer<EVP_CIPHER>)
 
     /// OpenSSL `EVP_CIPHER` context.
-    var c: OpaquePointer { get }
+    var c: UnsafePointer<EVP_CIPHER> { get }
 
     /// Returns the OpenSSL NID type for this algorithm.
     var type: Int32 { get }
@@ -27,21 +27,21 @@ public protocol OpenSSLCipherAlgorithm {
 extension OpenSSLCipherAlgorithm {
     /// See `OpenSSLCipherAlgorithm`
     public var type: Int32 {
-        return EVP_CIPHER_type(c.convert())
+        return EVP_CIPHER_type(self.c)
     }
 
     /// See `OpenSSLCipherAlgorithm`
     public var keySize: Int32 {
-        return EVP_CIPHER_key_length(c.convert())
+        return EVP_CIPHER_key_length(self.c)
     }
 
     /// See `OpenSSLCipherAlgorithm`
     public var ivSize: Int32 {
-        return EVP_CIPHER_iv_length(c.convert())
+        return EVP_CIPHER_iv_length(self.c)
     }
 
     /// See `OpenSSLCipherAlgorithm`
     public var blockSize: Int32 {
-        return EVP_CIPHER_block_size(c.convert())
+        return EVP_CIPHER_block_size(self.c)
     }
 }

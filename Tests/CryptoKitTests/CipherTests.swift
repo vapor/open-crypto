@@ -1,5 +1,5 @@
 import XCTest
-import Crypto
+import CryptoKit
 
 class CipherTests: XCTestCase {
     func testAES256Basic() throws {
@@ -87,6 +87,6 @@ class CipherTests: XCTestCase {
 
 extension Data {
     public func convert<T>(to type: T.Type = T.self) -> T where T: LosslessDataConvertible {
-        return T.convertFromData(self)
+        return T(self)!
     }
 }

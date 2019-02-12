@@ -1,4 +1,5 @@
 import libbase32
+import Foundation
 
 extension Data {
     // MARK: Base32

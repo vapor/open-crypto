@@ -1,5 +1,5 @@
 import XCTest
-import Crypto
+import CryptoKit
 
 class SHA2Tests: XCTestCase {
     static var allTests = [

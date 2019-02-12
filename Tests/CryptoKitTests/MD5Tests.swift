@@ -1,6 +1,5 @@
 import XCTest
-import Bits
-import Crypto
+import CryptoKit
 
 class MD5Tests: XCTestCase {
     static var allTests = [

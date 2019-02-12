@@ -11,7 +11,7 @@ public struct CryptoRandom: DataGenerator {
 
     /// See `DataGenerator`.
     public func generateData(count: Int) throws -> Data {
-        var random = Bytes(repeating: 0, count: count)
+        var random = [UInt8](repeating: 0, count: count)
         guard RAND_bytes(&random, Int32(count)) == 1 else {
             // If the requested number of random bytes couldn't be read,
             // we need to throw an error

@@ -1,5 +1,5 @@
 import XCTest
-@testable import Crypto
+@testable import CryptoKit
 
 class BCryptTests: XCTestCase {
     static let allTests = [

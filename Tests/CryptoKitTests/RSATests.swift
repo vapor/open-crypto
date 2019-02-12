@@ -1,6 +1,5 @@
 import XCTest
-import Bits
-import Crypto
+import CryptoKit
 
 class RSATests: XCTestCase {
     func testPrivateKey() throws {
@@ -70,7 +69,7 @@ class RSATests: XCTestCase {
         let rand = CryptoRandom()
         let data1 = try rand.generateData(count: 4)
         let data2 = try rand.generateData(count: 4)
-        XCTAssertNotEqual(data1.hexDebug, data2.hexDebug)
+        XCTAssertNotEqual(data1.hexEncodedString(), data2.hexEncodedString())
     }
 
     func testComps() throws {
