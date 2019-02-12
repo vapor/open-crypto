@@ -1,4 +1,4 @@
-import CNIOOpenSSL
+import CCryptoOpenSSL
 
 /// Specifies an authenticated cipher algorithm (e.g., AES-256-GCM) to be used with an `AuthenticatedCipher`.
 ///

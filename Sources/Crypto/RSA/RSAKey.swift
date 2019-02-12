@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import NIOOpenSSL
 import Foundation
 
 /// Represents an in-memory RSA key.
