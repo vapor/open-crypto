@@ -28,6 +28,18 @@ public enum CryptoData {
     }
 }
 
+extension CryptoData: Codable {
+    public init(from decoder: Decoder) throws {
+        let single = try decoder.singleValueContainer()
+        self = try .string(single.decode(String.self))
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var single = encoder.singleValueContainer()
+        try single.encode(self.string())
+    }
+}
+
 extension CryptoData: ExpressibleByStringLiteral {
     public init(stringLiteral value: StaticString) {
         self = .staticString(value)
