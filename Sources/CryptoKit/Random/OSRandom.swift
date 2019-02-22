@@ -37,6 +37,7 @@ extension Int {
     fileprivate static let maxByte: Int = Int(UInt8.max)
 }
 #if os(Linux)
+import Foundation
     /// Generates a random number between (and inclusive of)
     /// the given minimum and maximum.
     private let randomInitialized: Bool = {
