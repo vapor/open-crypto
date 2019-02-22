@@ -29,7 +29,7 @@ public final class RSA {
     // MARK: Properties
 
     /// The hashing algorithm to use, (e.g., SHA512). See `DigestAlgorithm`.
-    public let algorithm: DigestAlgorithm
+    public let algorithm: Digest.Algorithm
 
     // MARK: Init
 
@@ -43,7 +43,7 @@ public final class RSA {
     ///
     ///     let rsa = RSA(algorithm: .sha512)
     ///
-    public init(algorithm: DigestAlgorithm) {
+    public init(algorithm: Digest.Algorithm) {
         self.algorithm = algorithm
     }
 

@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Foundation
 
 /// Uses OpenSSL `RAND_bytes` to generate random data.
 ///

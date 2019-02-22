@@ -1,4 +1,4 @@
-import Foundation
+import struct Foundation.Data
 
 extension Data {
     /// Decodes a base64-url encoded string to data.

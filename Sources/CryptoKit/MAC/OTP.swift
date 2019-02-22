@@ -1,4 +1,9 @@
-import Foundation
+@_exported import struct Foundation.Date
+#if os(Linux)
+import Glibc
+#else
+import Darwin
+#endif
 
 // MARK: TOTP
 
@@ -19,10 +24,10 @@ public struct TOTP {
     public static var SHA512: TOTP { return .init(algorithm: .sha512) }
     
     /// `DigestAlgorithm` being used.
-    public let algorithm: DigestAlgorithm
+    public let algorithm: Digest.Algorithm
     
     /// Creates a new `TOTP` using the supplied `DigestAlgorithm`.
-    public init(algorithm: DigestAlgorithm) {
+    public init(algorithm: Digest.Algorithm) {
         self.algorithm = algorithm
     }
     
@@ -91,10 +96,10 @@ public struct HOTP {
     public static var SHA512: HOTP { return .init(algorithm: .sha512) }
     
     /// the specific `DigestAlgorithm`.
-    public let algorithm: DigestAlgorithm
+    public let algorithm: Digest.Algorithm
     
     /// Creates a new `HOTP` using the supplied `DigestAlgorithm`.
-    public init(algorithm: DigestAlgorithm) {
+    public init(algorithm: Digest.Algorithm) {
         self.algorithm = algorithm
     }
     
@@ -135,8 +140,9 @@ public enum OTPDigits: Int {
 }
 
 // MARK: Private
+import struct Foundation.Data
 
-private func generateOTP(secret: CryptoData, algorithm: DigestAlgorithm = .sha1, counter: UInt, digits: OTPDigits) throws -> String {
+private func generateOTP(secret: CryptoData, algorithm: Digest.Algorithm = .sha1, counter: UInt, digits: OTPDigits) throws -> String {
     var digest = try HMAC(algorithm: algorithm).authenticate(.data(counter.bigEndian.data), key: secret).bytes()
     // get last 4 bits of hash for use as offset
     let offset = Int(digest[digest.count - 1] & 0x0f)
@@ -153,6 +159,7 @@ private func generateOTP(secret: CryptoData, algorithm: DigestAlgorithm = .sha1,
     return String(repeating: "0", count: digits.rawValue - desc.count) + desc
     
 }
+
 
 private extension FixedWidthInteger {
     var data: Data {

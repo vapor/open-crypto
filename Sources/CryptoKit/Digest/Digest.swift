@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Foundation
 
 // MARK: Digests
 
@@ -49,10 +48,88 @@ public var SHA512: Digest { return .init(algorithm: .sha512) }
 ///
 /// Read more about OpenSSL's [EVP message digest](https://www.openssl.org/docs/man1.1.0/crypto/EVP_MD_CTX_free.html)/
 public final class Digest {
+    /// Cryptographic hash function algorithm.
+    ///
+    ///     let algorithm = try DigestAlgorithm.named("sha256")
+    ///
+    /// https://en.wikipedia.org/wiki/Cryptographic_hash_function
+    /// https://www.openssl.org/docs/man1.1.0/crypto/EVP_MD_CTX_free.html
+    public final class Algorithm: Equatable {
+        /// Looks up a hash function algorithm by name (e.g., "sha256").
+        /// Uses OpenSSL's `EVP_get_digestbyname` function.
+        ///
+        ///     let algorithm = try DigestAlgorithm.named("sha256")
+        ///
+        /// - parameters:
+        ///     - name: Hash function name
+        /// - returns: Found DigestAlgorithm
+        /// - throws: `CryptoError` if no digest for that name is found.
+        public static func named(_ name: String) throws -> Algorithm {
+            guard let digest = EVP_get_digestbyname(name) else {
+                throw CryptoError.openssl(identifier: "EVP_get_digestbyname", reason: "No digest named \(name) was found.")
+            }
+            return .init(c: digest)
+        }
+        
+        /// See `Equatable`.
+        public static func == (lhs: Algorithm, rhs: Algorithm) -> Bool {
+            return lhs.type == rhs.type
+        }
+        
+        /// OpenSSL `EVP_MD` context.
+        let c: OpaquePointer
+        
+        /// Internal init accepting a `EVP_MD`.
+        init(c: OpaquePointer) {
+            self.c = c
+        }
+        
+        /// Returns the OpenSSL NID type for this algorithm.
+        public var type: Int32 {
+            return EVP_MD_type(self.c)
+        }
+        
+        /// MD4 digest.
+        ///
+        /// https://en.wikipedia.org/wiki/MD4
+        public static let md4: Algorithm = .init(c: EVP_md4())
+        
+        /// MD5 digest.
+        ///
+        /// https://en.wikipedia.org/wiki/MD5
+        public static let md5: Algorithm = .init(c: EVP_md5())
+        
+        /// SHA-1 digest.
+        ///
+        /// https://en.wikipedia.org/wiki/SHA-1
+        public static let sha1: Algorithm = .init(c: EVP_sha1())
+        
+        /// SHA-224 (SHA-2) digest.
+        ///
+        /// https://en.wikipedia.org/wiki/SHA-2
+        public static let sha224: Algorithm = .init(c: EVP_sha224())
+        
+        /// SHA-256 (SHA-2) digest.
+        ///
+        /// https://en.wikipedia.org/wiki/SHA-2
+        public static let sha256: Algorithm = .init(c: EVP_sha256())
+        
+        /// SHA-384 (SHA-2) digest.
+        ///
+        /// https://en.wikipedia.org/wiki/SHA-2
+        public static let sha384: Algorithm = .init(c: EVP_sha384())
+        
+        /// SHA-512 (SHA-2) digest.
+        ///
+        /// https://en.wikipedia.org/wiki/SHA-2
+        public static let sha512: Algorithm = .init(c: EVP_sha512())
+    }
+
+    
     // MARK: Properties
 
     /// The `DigestAlgorithm` (e.g., SHA1, MD5, SHA256) to use.
-    public let algorithm: DigestAlgorithm
+    public let algorithm: Algorithm
 
     /// Internal OpenSSL `EVP_MD_CTX` context.
     let ctx: OpaquePointer
@@ -69,7 +146,7 @@ public final class Digest {
     ///
     ///     try Digest(algorithm: .named("sha256")).hash(...)
     ///
-    public init(algorithm: DigestAlgorithm) {
+    public init(algorithm: Algorithm) {
         self.algorithm = algorithm
         self.ctx = EVP_MD_CTX_new()
     }

@@ -1,5 +1,5 @@
 import libbase32
-import Foundation
+import struct Foundation.Data
 
 extension Data {
     // MARK: Base32

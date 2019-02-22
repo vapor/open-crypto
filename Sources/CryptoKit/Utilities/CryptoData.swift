@@ -1,4 +1,4 @@
-import Foundation
+import struct Foundation.Data
 
 public enum CryptoData {
     case data(Data)

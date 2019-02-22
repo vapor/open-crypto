@@ -1,9 +1,7 @@
-import Foundation
-
 extension Collection where Element == UInt8 {
     /// Converts `Data` to a hex-encoded `String`.
     ///
-    ///     Data("hello".utf8).hexEncodedString() // 68656c6c6f
+    ///     "hello".utf8.hexEncodedString() // 68656c6c6f
     ///
     /// - parameters:
     ///     - uppercase: If `true`, uppercase letters will be used when encoding.

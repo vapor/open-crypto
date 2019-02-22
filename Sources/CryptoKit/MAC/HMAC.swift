@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Foundation
 
 /// HMAC is a MAC (message authentication code), i.e. a keyed hash function used for message authentication, which is based on a hash function.
 ///
@@ -50,7 +49,7 @@ public final class HMAC {
     // MARK: Properties
 
     /// The `DigestAlgorithm` (e.g., SHA1, MD5, SHA256) to base the message authentication on.
-    public let algorithm: DigestAlgorithm
+    public let algorithm: Digest.Algorithm
 
     /// Internal OpenSSL `HMAC_CTX` context.
     var ctx: OpaquePointer
@@ -67,7 +66,7 @@ public final class HMAC {
     ///
     ///     try HMAC(algorithm: .named("sha256")).authenticate(...)
     ///
-    public init(algorithm: DigestAlgorithm) {
+    public init(algorithm: Digest.Algorithm) {
         self.algorithm = algorithm
         ctx = HMAC_CTX_new()
     }

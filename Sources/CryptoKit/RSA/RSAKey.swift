@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Foundation
 
 /// Represents an in-memory RSA key.
 public struct RSAKey {
@@ -76,15 +75,6 @@ public struct RSAKey {
     }
 }
 
-private func parseBignum(_ s: String) -> OpaquePointer? {
-    guard let data = Data(base64URLEncoded: s) else {
-        return nil
-    }
-    return data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
-        return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
-    }
-}
-
 /// Supported RSA key types.
 public enum RSAKeyType {
     /// A public RSA key. Used for verifying signatures.
@@ -143,4 +133,17 @@ final class CRSAKey {
     }
 
     deinit { RSA_free(self.pointer) }
+}
+
+// MARK: Private
+
+import struct Foundation.Data
+
+private func parseBignum(_ s: String) -> OpaquePointer? {
+    guard let data = Data(base64URLEncoded: s) else {
+        return nil
+    }
+    return data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
+        return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
+    }
 }

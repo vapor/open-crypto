@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Foundation
 
 /// RSA Paddings
 public enum RSAPadding: Int32 {
