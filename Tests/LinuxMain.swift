@@ -8,7 +8,6 @@ XCTMain([
     testCase(RSATests.allTests),
     testCase(SHA1Tests.allTests),
     testCase(SHA2Tests.allTests),
-    testCase(RSATests.allTests),
     testCase(OTPTests.allTests),
     testCase(RandomTests.allTests),
     testCase(PBKDF2Tests.allTests),
