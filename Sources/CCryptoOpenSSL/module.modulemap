@@ -1,0 +1,5 @@
+module CCryptoOpenSSL [system] {
+    header "shim.h"
+    link "ssl"
+    link "crypto"
+}

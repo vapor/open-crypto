@@ -1,36 +1,28 @@
-// swift-tools-version:4.0
+// swift-tools-version:5.0
 import PackageDescription
 
 let package = Package(
-    name: "Crypto",
+    name: "crypto-kit",
     products: [
-        .library(name: "Crypto", targets: ["Crypto"]),
-        .library(name: "Random", targets: ["Random"]),
+        .library(name: "CryptoKit", targets: ["CryptoKit"]),
     ],
-    dependencies: [
-        // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
-        .package(url: "https://github.com/vapor/core.git", from: "3.0.0"),
-        
-        /// Links OpenSSL / LibreSSL to SPM.
-        .package(url: "https://github.com/apple/swift-nio-ssl-support.git", from: "1.0.0"),
-    ],
+    dependencies: [],
     targets: [
         .target(name: "CBase32"),
         .target(name: "CBcrypt"),
-        .target(name: "CCryptoOpenSSL"),
-        .target(name: "Crypto", dependencies: [
-            "Async",
-            "Bits",
+        .systemLibrary(
+            name: "CCryptoOpenSSL",
+            pkgConfig: "openssl",
+            providers: [
+                .apt(["openssl libssl-dev"]),
+                .brew(["openssl@1.1"])
+            ]
+        ),
+        .target(name: "CryptoKit", dependencies: [
             "CBase32",
             "CBcrypt",
-            "CCryptoOpenSSL",
-            "Core",
-            "COperatingSystem",
-            "Debugging",
-            "Random"
+            "CCryptoOpenSSL"
         ]),
-        .testTarget(name: "CryptoTests", dependencies: ["Crypto"]),
-        .target(name: "Random", dependencies: ["Bits"]),
-        .testTarget(name: "RandomTests", dependencies: ["Random"]),
+        .testTarget(name: "CryptoKitTests", dependencies: ["CryptoKit"]),
     ]
 )
