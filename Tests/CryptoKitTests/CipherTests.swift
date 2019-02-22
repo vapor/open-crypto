@@ -1,8 +1,8 @@
 import XCTest
 import CryptoKit
 
-class CipherTests: XCTestCase {
-    func testAES256Basic() throws {
+public class CipherTests: XCTestCase {
+    public func testAES256Basic() throws {
         let message: CryptoData = "vapor"
         let key: CryptoData = "passwordpasswordpasswordpassword"
         let iv: CryptoData = "passwordpassword"
@@ -11,14 +11,14 @@ class CipherTests: XCTestCase {
         try XCTAssertEqual(AES256CBC.decrypt(ciphertext, key: key, iv: iv), message)
     }
     
-    func testAES256WellKnownDecode() throws {
+    public func testAES256WellKnownDecode() throws {
         let key: CryptoData = "passwordpasswordpasswordpassword"
         let iv: CryptoData = "passwordpassword"
         let ciphertext: CryptoData = .bytes([0x0c, 0x0b, 0xee, 0xcd, 0xc7, 0x24, 0xb2, 0xb7, 0x9a, 0x14, 0xc4, 0xd1, 0xe4, 0x9d, 0x0d, 0xe6])
         try XCTAssertEqual(AES256CBC.decrypt(ciphertext, key: key, iv: iv), "vapor")
     }
     
-    func testCipherReuse() throws {
+    public func testCipherReuse() throws {
         let cipher = AES256CBC
         do {
             let message: CryptoData = "vapor1"
@@ -38,7 +38,7 @@ class CipherTests: XCTestCase {
         }
     }
 
-    func testAES256GCM() throws {
+    public func testAES256GCM() throws {
         let message: CryptoData = "vapor"
         let key: CryptoData = "passwordpasswordpasswordpassword"
         let iv: CryptoData = "123456789012"
@@ -47,7 +47,7 @@ class CipherTests: XCTestCase {
         try XCTAssertEqual(AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: tag), message)
     }
 
-    func testAES256GCMAuthenticationFailure() throws {
+    public func testAES256GCMAuthenticationFailure() throws {
         let message: CryptoData = "vapor"
         let key: CryptoData = "passwordpasswordpasswordpassword"
         let iv: CryptoData = "123456789012"
@@ -63,7 +63,7 @@ class CipherTests: XCTestCase {
         XCTAssertThrowsError(try AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: .bytes(invalidTag)))
     }
 
-    func testAES256GCMShortTag() throws {
+    public func testAES256GCMShortTag() throws {
         let message: CryptoData = "vapor"
         let key: CryptoData = "passwordpasswordpasswordpassword"
         let iv: CryptoData = "123456789012"
@@ -77,7 +77,7 @@ class CipherTests: XCTestCase {
         XCTAssertThrowsError(try AES256GCM.decrypt(ciphertext, key: key, iv: iv, tag: .bytes(invalidTag)))
     }
 
-    static var allTests = [
+    public static var allTests = [
         ("testAES256Basic", testAES256Basic),
         ("testAES256WellKnownDecode", testAES256WellKnownDecode),
         ("testCipherReuse", testCipherReuse),

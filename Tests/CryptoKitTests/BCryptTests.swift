@@ -1,8 +1,57 @@
 import XCTest
-@testable import CryptoKit
+import CryptoKit
 
-class BCryptTests: XCTestCase {
-    static let allTests = [
+public class BCryptTests: XCTestCase {
+    public func testVersion() throws {
+        let digest = try BCrypt.hash("foo", cost: 6)
+        XCTAssert(digest.string().hasPrefix("$2b$06$"))
+    }
+
+    public func testFail() throws {
+        let digest = try BCrypt.hash("foo", cost: 6)
+        let res = try BCrypt.verify("bar", created: digest)
+        XCTAssertEqual(res, false)
+    }
+    
+    public func testInvalidMinCost() throws {
+        XCTAssertThrowsError(try BCrypt.hash("foo", cost: 2))
+    }
+
+    public func testInvalidMaxCost() throws {
+        XCTAssertThrowsError(try BCrypt.hash("foo", cost: 32))
+    }
+
+    public func testInvalidSalt() throws {
+        do {
+            _ = try BCrypt.verify("", created: "foo")
+            XCTFail("Should have failed")
+        } catch let error as CryptoError {
+            print(error)
+        }
+    }
+
+    public func testVerify() throws {
+        for (desired, message) in tests {
+            let result = try BCrypt.verify(message, created: desired)
+            XCTAssert(result, "\(message): did not match \(desired)")
+        }
+    }
+
+    public func testNotVerify() throws {
+        let testCase = tests.first!
+        let message = "vapor_" + testCase.1.string()
+        let shouldNotMatch = testCase.0.string()
+        let result = try BCrypt.verify(.string(message), created: .string(shouldNotMatch))
+        XCTAssertFalse(result, "\(shouldNotMatch): matched \(message)")
+    }
+    
+    public func testExample1() throws {
+        let hash = try BCrypt.hash("vapor", cost: 4)
+        try XCTAssertEqual(BCrypt.verify("vapor", created: hash), true)
+        try XCTAssertEqual(BCrypt.verify("foo", created: hash), false)
+    }
+    
+    public static let allTests = [
         ("testVersion", testVersion),
         ("testFail", testFail),
         ("testInvalidSalt", testInvalidSalt),
@@ -12,55 +61,6 @@ class BCryptTests: XCTestCase {
         ("testInvalidMaxCost", testInvalidMaxCost),
         ("testExample1", testExample1),
     ]
-
-    func testVersion() throws {
-        let digest = try BCrypt.hash("foo", cost: 6)
-        XCTAssert(digest.string().hasPrefix("$2b$06$"))
-    }
-
-    func testFail() throws {
-        let digest = try BCrypt.hash("foo", cost: 6)
-        let res = try BCrypt.verify("bar", created: digest)
-        XCTAssertEqual(res, false)
-    }
-    
-    func testInvalidMinCost() throws {
-        XCTAssertThrowsError(try BCrypt.hash("foo", cost: 2))
-    }
-
-    func testInvalidMaxCost() throws {
-        XCTAssertThrowsError(try BCrypt.hash("foo", cost: 32))
-    }
-
-    func testInvalidSalt() throws {
-        do {
-            _ = try BCrypt.verify("", created: "foo")
-            XCTFail("Should have failed")
-        } catch let error as CryptoError {
-            print(error)
-        }
-    }
-
-    func testVerify() throws {
-        for (desired, message) in tests {
-            let result = try BCrypt.verify(message, created: desired)
-            XCTAssert(result, "\(message): did not match \(desired)")
-        }
-    }
-
-    func testNotVerify() throws {
-        let testCase = tests.first!
-        let message = "vapor_" + testCase.1.string()
-        let shouldNotMatch = testCase.0.string()
-        let result = try BCrypt.verify(.string(message), created: .string(shouldNotMatch))
-        XCTAssertFalse(result, "\(shouldNotMatch): matched \(message)")
-    }
-    
-    func testExample1() throws {
-        let hash = try BCrypt.hash("vapor", cost: 4)
-        try XCTAssertEqual(BCrypt.verify("vapor", created: hash), true)
-        try XCTAssertEqual(BCrypt.verify("foo", created: hash), false)
-    }
 }
 
 let tests: [(CryptoData, CryptoData)] = [

@@ -1,5 +1,5 @@
 import XCTest
-@testable import CryptoKitTests
+import CryptoKitTests
 
 XCTMain([
     testCase(BCryptTests.allTests),

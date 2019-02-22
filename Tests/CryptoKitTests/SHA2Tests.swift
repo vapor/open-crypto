@@ -1,19 +1,8 @@
 import XCTest
 import CryptoKit
 
-class SHA2Tests: XCTestCase {
-    static var allTests = [
-        ("testSHA224Basic", testSHA224Basic),
-        ("testSHA256Basic", testSHA256Basic),
-        ("testSHA384Basic", testSHA384Basic),
-        ("testSHA512Basic", testSHA512Basic),
-        ("testSHA224Performance", testSHA224Performance),
-        ("testSHA256Performance", testSHA256Performance),
-        ("testSHA384Performance", testSHA384Performance),
-        ("testSHA512Performance", testSHA512Performance),
-    ]
-    
-    func testSHA224Basic() throws {
+public class SHA2Tests: XCTestCase {
+    public func testSHA224Basic() throws {
         let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
@@ -35,7 +24,7 @@ class SHA2Tests: XCTestCase {
         }
     }
     
-    func testSHA256Basic() throws {
+    public func testSHA256Basic() throws {
         let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
@@ -57,7 +46,7 @@ class SHA2Tests: XCTestCase {
         }
     }
     
-    func testSHA384Basic() throws {
+    public func testSHA384Basic() throws {
         let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
@@ -79,7 +68,7 @@ class SHA2Tests: XCTestCase {
         }
     }
 
-    func testSHA512Basic() throws {
+    public func testSHA512Basic() throws {
         let tests: [(key: CryptoData, expected: String)] = [
             (
                 "The quick brown fox jumps over the lazy dog",
@@ -101,28 +90,39 @@ class SHA2Tests: XCTestCase {
         }
     }
 
-    func testSHA224Performance() throws {
+    public func testSHA224Performance() throws {
         measure {
             _ = try? SHA224.hash("kaas")
         }
     }
     
-    func testSHA256Performance() throws {
+    public func testSHA256Performance() throws {
         measure {
             _ = try? SHA256.hash("kaas")
         }
     }
     
-    func testSHA384Performance() throws {
+    public func testSHA384Performance() throws {
         measure {
             _ = try? SHA384.hash("kaas")
         }
     }
 
-    func testSHA512Performance() throws {
+    public func testSHA512Performance() throws {
         measure {
             _ = try? SHA512.hash("kaas")
         }
     }
+    
+    public static var allTests = [
+        ("testSHA224Basic", testSHA224Basic),
+        ("testSHA256Basic", testSHA256Basic),
+        ("testSHA384Basic", testSHA384Basic),
+        ("testSHA512Basic", testSHA512Basic),
+        ("testSHA224Performance", testSHA224Performance),
+        ("testSHA256Performance", testSHA256Performance),
+        ("testSHA384Performance", testSHA384Performance),
+        ("testSHA512Performance", testSHA512Performance),
+    ]
+    
 }
-

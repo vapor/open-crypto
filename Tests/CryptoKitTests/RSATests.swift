@@ -1,31 +1,31 @@
 import XCTest
 import CryptoKit
 
-class RSATests: XCTestCase {
-    func testPrivateKey() throws {
+public class RSATests: XCTestCase {
+    public func testPrivateKey() throws {
         let key: RSAKey = try .private(pem: privateKeyString)
         let ciphertext = try RSA.SHA512.sign("vapor", key: key)
         let verified = try RSA.SHA512.verify(ciphertext, signs: "vapor", key: key)
         XCTAssertTrue(verified)
     }
 
-    func testPublicKey() throws {
+    public func testPublicKey() throws {
         let key: RSAKey = try .public(pem: publicKeyString)
         try XCTAssertTrue(RSA.SHA512.verify(testSignature, signs: "vapor", key: key))
     }
 
-    func testFailure() throws {
+    public func testFailure() throws {
         let key: RSAKey = try .public(pem: publicKeyString)
         try XCTAssertFalse(RSA.SHA512.verify("fake", signs: "vapor", key: key))
     }
 
-    func testKey1024() throws {
+    public func testKey1024() throws {
         let ciphertext = try RSA.SHA512.sign("vapor", key: .private(pem: privateKey2String))
         let verified = try RSA.SHA512.verify(ciphertext, signs: "vapor", key: .public(pem: publicKey2String))
         XCTAssertTrue(verified)
     }
 
-    func testKey2048() throws {
+    public func testKey2048() throws {
         let rsaPublic: RSAKey = try .public(pem: publicKey3String)
         let rsaPrivate: RSAKey = try .private(pem: privateKey3String)
         let ciphertext = try RSA.SHA512.sign("vapor", key: rsaPrivate)
@@ -33,7 +33,7 @@ class RSATests: XCTestCase {
         XCTAssertTrue(verified)
     }
 
-    func testKey4096() throws {
+    public func testKey4096() throws {
         let rsaPublic: RSAKey = try .public(pem: publicKey4String)
         let rsaPrivate: RSAKey = try .private(pem: privateKey4String)
         let ciphertext = try RSA.SHA512.sign("vapor", key: rsaPrivate)
@@ -41,7 +41,7 @@ class RSATests: XCTestCase {
         XCTAssertTrue(verified)
     }
 
-    func testKeyCert() throws {
+    public func testKeyCert() throws {
         let rsaPublic: RSAKey = try .public(certificate: publicCertString)
         let rsaPrivate: RSAKey = try .private(pem: privateCertString)
         let ciphertext = try RSA.SHA512.sign("vapor", key: rsaPrivate)
@@ -49,7 +49,7 @@ class RSATests: XCTestCase {
         XCTAssertTrue(verified)
     }
 
-    func testEncrypt() throws {
+    public func testEncrypt() throws {
         let rsaPublic: RSAKey = try .public(certificate: publicCertString)
         let rsaPrivate: RSAKey = try .private(pem: privateCertString)
         let encryptedData = try RSA.encrypt("vapor", padding: .pkcs1, key: rsaPublic)
@@ -57,20 +57,14 @@ class RSATests: XCTestCase {
         XCTAssertEqual(decryptedData, "vapor")
     }
 
-    func testRand() throws {
+    public func testRand() throws {
         let rand = CryptoRandom()
         let data1 = try rand.generateData(count: 4)
         let data2 = try rand.generateData(count: 4)
         XCTAssertNotEqual(data1.hexEncodedString(), data2.hexEncodedString())
     }
 
-    func testComps() throws {
-        //"kty": "RSA",
-        //"alg": "RS256",
-        //"use": "sig",
-        //"kid": "3b547886ff85a3428df4f61db73c1c23982a928e",
-        //"n": "mjJLokVSf3F_7MAPPEZzT0fQO2AQwlpzDdYG1EHH9WTxm0Dk4KB8vIBCp6lWm0fV8-pv0N7zF9rJ0CHKgkxuC02VwHVtuegE7XikfRCZJaPAn-MHm-eowW2SpSmsudi0_Gs1cvjxms_lVvoHUBaDTjhHWqCRGX_oOiNCglJKPFaYtyTA4ZiUfQ3FE_uVeoC_gYTYxuUzVxLsKJynrFaOVGIvnp9uRdbS0WtUhs7BY-tgqzJEt42_PFo-DAgWFIpdUzfG0AxAHZQ7TxDM09MaWBVoUMrBMqpMT6TaRtWiKOYeGEfV-ZH2d8qWoJHaKbZjMiSL64sgTNw2T_pZAyTI3Q",
-        //"e": "AQAB"
+    public func testComps() throws {
         let key: RSAKey = try .components(
             n: "mjJLokVSf3F_7MAPPEZzT0fQO2AQwlpzDdYG1EHH9WTxm0Dk4KB8vIBCp6lWm0fV8-pv0N7zF9rJ0CHKgkxuC02VwHVtuegE7XikfRCZJaPAn-MHm-eowW2SpSmsudi0_Gs1cvjxms_lVvoHUBaDTjhHWqCRGX_oOiNCglJKPFaYtyTA4ZiUfQ3FE_uVeoC_gYTYxuUzVxLsKJynrFaOVGIvnp9uRdbS0WtUhs7BY-tgqzJEt42_PFo-DAgWFIpdUzfG0AxAHZQ7TxDM09MaWBVoUMrBMqpMT6TaRtWiKOYeGEfV-ZH2d8qWoJHaKbZjMiSL64sgTNw2T_pZAyTI3Q",
             e: "AQAB"
@@ -79,7 +73,7 @@ class RSATests: XCTestCase {
     }
     
     // https://github.com/vapor/crypto/issues/78
-    func testGH78() throws {
+    public func testGH78() throws {
         let passphrase: CryptoData = "abcdef"
         
         // From https://www.googleapis.com/oauth2/v3/certs
@@ -91,7 +85,7 @@ class RSATests: XCTestCase {
         XCTAssertThrowsError(try RSA.decrypt(encrypted, padding: .pkcs1, key: key))
     }
 
-    static var allTests = [
+    public static var allTests = [
         ("testPrivateKey", testPrivateKey),
         ("testPublicKey", testPublicKey),
         ("testFailure", testFailure),

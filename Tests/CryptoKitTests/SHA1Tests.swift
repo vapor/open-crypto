@@ -1,14 +1,8 @@
 import XCTest
 import CryptoKit
 
-class SHA1Tests: XCTestCase {
-    static var allTests = [
-        ("testBasic", testBasic),
-//        ("testPerformance", testPerformance),
-        ("testHMAC", testHMAC),
-    ]
-
-    func testBasic() throws {
+public class SHA1Tests: XCTestCase {
+    public func testBasic() throws {
         // Source: https://en.wikipedia.org/wiki/SHA-1#Example_hashes
         let tests: [(key: CryptoData, expected: String)] = [
             (
@@ -47,12 +41,12 @@ class SHA1Tests: XCTestCase {
         }
     }
     
-    func testNotCrashing() throws {
+    public func testNotCrashing() throws {
         let data = Data(repeating: 0x02, count: 263)
         _ = try SHA1.hash(.data(data))
     }
 
-    func testHMAC() throws {
+    public func testHMAC() throws {
         let tests: [(key: CryptoData, message: CryptoData, expected: CryptoData)] = [
             (
                 "vapor",
@@ -77,5 +71,11 @@ class SHA1Tests: XCTestCase {
             .bytes([0xfb,0xdb,0x1d,0x1b,0x18,0xaa,0x6c,0x08,0x32,0x4b,0x7d,0x64,0xb7,0x1f,0xb7,0x63,0x70,0x69,0x0e,0x1d])
         )
     }
+    
+    public static var allTests = [
+        ("testBasic", testBasic),
+        ("testNotCrashing", testNotCrashing),
+        ("testHMAC", testHMAC),
+    ]
 }
 

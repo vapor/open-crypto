@@ -1,13 +1,8 @@
 import XCTest
 import CryptoKit
 
-class MD5Tests: XCTestCase {
-    static var allTests = [
-        ("testBasic", testBasic),
-        ("testHMAC", testHMAC),
-    ]
-
-    func testBasic() throws {
+public class MD5Tests: XCTestCase {
+    public func testBasic() throws {
         // Source: https://github.com/bcgit/bc-java/blob/adecd89d33edf278a5c601af2de696f0a6f65251/core/src/test/java/org/bouncycastle/crypto/test/MD5DigestTest.java
         let tests: [(CryptoData, String)] = [
             ("", "d41d8cd98f00b204e9800998ecf8427e"),
@@ -24,7 +19,7 @@ class MD5Tests: XCTestCase {
         }
     }
     
-    func testUpdated() throws {
+    public func testUpdated() throws {
         let hash = Digest(algorithm: .md5)
         let buffers = [
             Data("1234567890123456789012345678901234".utf8),
@@ -40,7 +35,7 @@ class MD5Tests: XCTestCase {
         try XCTAssertEqual(hash.finish().hexEncodedString().lowercased(), "57edf4a22be3c955ac49da2e2107b67a")
     }
 
-    func testHMAC() throws {
+    public func testHMAC() throws {
         let tests: [(key: CryptoData, message: CryptoData, expected: CryptoData)] = [
             (
                 "vapor",
@@ -59,4 +54,10 @@ class MD5Tests: XCTestCase {
             XCTAssertEqual(result, test.expected.string().lowercased())
         }
     }
+    
+    public static var allTests = [
+        ("testBasic", testBasic),
+        ("testUpdated", testUpdated),
+        ("testHMAC", testHMAC),
+    ]
 }
