@@ -9,18 +9,18 @@ extension Collection where Element == UInt8 {
     ///     - uppercase: If `true`, uppercase letters will be used when encoding.
     ///                  Default value is `false`.
     public func hexEncodedString(uppercase: Bool = false) -> String {
-        return String(decoding: hexEncodedData(uppercase: uppercase), as: Unicode.UTF8.self)
+        return String(decoding: hexEncodedBytes(uppercase: uppercase), as: Unicode.UTF8.self)
     }
     
     
     /// Applies hex-encoding to `Data`.
     ///
-    ///     Data("hello".utf8).hexEncodedData() // 68656c6c6f
+    ///     "hello".utf8.hexEncodedBytes() // 68656c6c6f
     ///
     /// - parameters:
     ///     - uppercase: If `true`, uppercase letters will be used when encoding.
     ///                  Default value is `false`.
-    public func hexEncodedData(uppercase: Bool = false) -> [UInt8] {
+    public func hexEncodedBytes(uppercase: Bool = false) -> [UInt8] {
         var bytes = [UInt8]()
         bytes.reserveCapacity(count * 2)
         
