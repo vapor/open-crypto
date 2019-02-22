@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Foundation
 
 /// RSA is an asymmetric cryptographic algorithm for signing and verifying data.
 ///
@@ -60,14 +59,14 @@ public final class RSA {
     ///     - key: `RSAKey` to use for signing this data.
     /// - returns: RSA signature for this data.
     /// - throws: `CryptoError` if signing fails or data conversion fails.
-    public func sign(_ input: CryptoData, format: RSAInputFormat = .message, key: RSAKey) throws -> Data {
+    public func sign(_ input: CryptoData, format: RSAInputFormat = .message, key: RSAKey) throws -> CryptoData {
         switch key.type {
         case .public: throw CryptoError(identifier: "rsaSign", reason: "Cannot create RSA signature with a public key. A private key is required.")
         case .private: break
         }
 
         var siglen: UInt32 = 0
-        var sig = Data(
+        var sig = [UInt8](
             repeating: 0,
             count: Int(RSA_size(key.c.pointer))
         )
@@ -96,7 +95,7 @@ public final class RSA {
             throw CryptoError.openssl(identifier: "rsaSign", reason: "RSA signature creation failed")
         }
 
-        return sig
+        return .bytes(sig)
     }
 
     /// Returns `true` if the supplied signature was created by signing the plaintext data.
@@ -110,22 +109,20 @@ public final class RSA {
     ///     - key: `RSAKey` to use for signing this data.
     /// - returns: `true` if signature matches plaintext input.
     /// - throws: `CryptoError` if verification fails or data conversion fails.
-    public func verify(_ signature: CustomDataConvertible, signs input: CryptoData, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
+    public func verify(_ signature: CryptoData, signs input: CryptoData, format: RSAInputFormat = .message, key: RSAKey) throws -> Bool {
         var input = input
-        var sig = signature.data
-
         switch format {
         case .digest: break // leave input as is
         case .message: input = try Digest(algorithm: algorithm).hash(input)
         }
 
         let ret = input.withUnsafeBytes { (inputBuffer: UnsafeRawBufferPointer) -> Int32 in
-            return sig.withUnsafeMutableBytes { (sigBuffer: UnsafeMutableRawBufferPointer) -> Int32 in
+            return signature.withUnsafeBytes { (sigBuffer: UnsafeRawBufferPointer) -> Int32 in
                 return RSA_verify(
                     algorithm.type,
-                    inputBuffer.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                    inputBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
                     UInt32(inputBuffer.count),
-                    sigBuffer.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                    sigBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
                     UInt32(sigBuffer.count),
                     key.c.pointer
                 )
@@ -145,7 +142,7 @@ public final class RSA {
     ///     - key: `RSAKey` to use for decrypting this data.
     /// - returns: Decrypted data.
     /// - throws: `CryptoError` if encrypting fails.
-    public static func decrypt(_ input: CustomDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
+    public static func decrypt(_ input: CryptoData, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> CryptoData {
         switch key.type {
         case .public:
             return try cipher(input, padding: padding, key: key) {
@@ -168,7 +165,7 @@ public final class RSA {
     ///     - key: `RSAKey` to use for encrypting this data.
     /// - returns: Encrypted data.
     /// - throws: `CryptoError` if encrypting fails.
-    public static func encrypt(_ input: CustomDataConvertible, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> Data {
+    public static func encrypt(_ input: CryptoData, padding: RSAPadding = .pkcs1, key: RSAKey) throws -> CryptoData {
         switch key.type {
         case .public:
             return try cipher(input, padding: padding, key: key) {
@@ -188,11 +185,11 @@ public final class RSA {
         (Int32, UnsafePointer<UInt8>, UnsafeMutablePointer<UInt8>, OpaquePointer, Int32) -> Int32
 
     /// Private cipher
-    private static func cipher(_ input: CustomDataConvertible, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> Data {
+    private static func cipher(_ input: CryptoData, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> CryptoData {
         print(key)
-        var outputData = Data(count: Int(RSA_size(key.c.pointer)))
+        var outputData = [UInt8](repeating: 0, count: Int(RSA_size(key.c.pointer)))
 
-        let outputLen = input.data.withUnsafeBytes { (inputBuffer: UnsafeRawBufferPointer) -> Int32 in
+        let outputLen = input.withUnsafeBytes { (inputBuffer: UnsafeRawBufferPointer) -> Int32 in
             return outputData.withUnsafeMutableBytes { (outputBuffer: UnsafeMutableRawBufferPointer) -> Int32 in
                 return coder(
                     Int32(inputBuffer.count), // flen - input length
@@ -207,7 +204,7 @@ public final class RSA {
         guard outputLen >= 0 else {
             throw CryptoError.openssl(identifier: "rsaPkeyCrypt", reason: "RSA data encryption operation failed.")
         }
-        return outputData.prefix(upTo: Int(outputLen))
+        return .bytesSlice(outputData.prefix(upTo: Int(outputLen)))
     }
 
 }

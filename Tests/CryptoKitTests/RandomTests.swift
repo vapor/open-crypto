@@ -11,7 +11,7 @@ class RandomTests: XCTestCase {
         let rand = try OSRandom().generate(Int64.self)
         print(rand)
         let bytes = OSRandom().generateData(count: 32)
-        print(String(data: bytes, encoding: .utf8) ?? "n/a")
+        print(String(bytes: bytes, encoding: .utf8) ?? "n/a")
     }
 
     func testURandomCount() throws {
@@ -31,21 +31,12 @@ class RandomTests: XCTestCase {
         XCTAssertEqual(random.count, 1024)
     }
     
-    func testArray() throws {
-        let array = [1, 2, 3]
-        var results: [Int: Int] = [:]
-        for _ in 0..<65_536 {
-            if let foo = array.random {
-                results[foo] = (results[foo] ?? 0) + 1
-            }
-        }
-        print(results)
-    }
     
     static var allTests = [
         ("testURandom", testURandom),
         ("testOSRandom", testOSRandom),
         ("testURandomCount", testURandomCount),
-        ("testForTrailingZeros", testForTrailingZeros)
+        ("testForTrailingZeros", testForTrailingZeros),
+        ("testSwiftRandom", testSwiftRandom),
     ]
 }

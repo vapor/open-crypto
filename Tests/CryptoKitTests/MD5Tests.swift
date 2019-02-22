@@ -41,7 +41,7 @@ class MD5Tests: XCTestCase {
     }
 
     func testHMAC() throws {
-        let tests: [(key: String, message: String, expected: String)] = [
+        let tests: [(key: CryptoData, message: CryptoData, expected: CryptoData)] = [
             (
                 "vapor",
                 "hello",
@@ -56,7 +56,7 @@ class MD5Tests: XCTestCase {
 
         for test in tests {
             let result = try HMAC.MD5.authenticate(test.message, key: test.key).hexEncodedString().lowercased()
-            XCTAssertEqual(result, test.expected.lowercased())
+            XCTAssertEqual(result, test.expected.string().lowercased())
         }
     }
 }

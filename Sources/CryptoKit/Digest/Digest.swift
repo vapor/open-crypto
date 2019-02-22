@@ -139,7 +139,7 @@ public final class Digest {
         guard hash.withUnsafeMutableBytes({ EVP_DigestFinal_ex(ctx, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count) }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_DigestFinal_ex", reason: "Failed finalizing digest.")
         }
-        return .arraySlice(hash[0..<Int(count)])
+        return .bytesSlice(hash[0..<Int(count)])
     }
 
     deinit {

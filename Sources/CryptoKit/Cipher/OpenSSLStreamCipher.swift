@@ -12,33 +12,19 @@ public enum CipherMode: Int32 {
     case decrypt = 0
 }
 
-///// Wrapper to allow for safely working with a potentially-nil Data's byte buffer.
-//extension Optional where Wrapped == Data {
-//    // - note: It's iffy to try this with a mutable buffer, so an Optional version
-//    // of withMutableByteBuffer is not provided.
-//    func withByteBuffer<T>(_ closure: (BytesBufferPointer?) throws -> T) rethrows -> T {
-//        switch self {
-//        case .some(let data):
-//            return try data.withByteBuffer({ try closure($0) })
-//        case .none:
-//            return try closure(nil)
-//        }
-//    }
-//}
-
 /// OpenSSLStreamCipher is a protocol representing a higher-level interface for managing various OpenSSL stream ciphers.
 public protocol OpenSSLStreamCipher {
     /// Resets / initializes the cipher algorithm context. Must be called before calling update.
     /// See the default implementation extension on this protocol for more.
-    func reset(key: CustomDataConvertible, iv: CustomDataConvertible?, mode: CipherMode) throws
+    func reset(key: CryptoData, iv: CryptoData?, mode: CipherMode) throws
 
     /// Encrypts or decrypts a chunk of data into the supplied buffer.
     /// See the default implementation extension on this protocol for more.
-    func update(data: CustomDataConvertible, into buffer: inout Data) throws
+    func update(data: CryptoData, into buffer: inout [UInt8]) throws
 
     /// Finalizes the encryption or decryption, appending any additional data into the supplied buffer.
     /// See the default implementation extension on this protocol for more.
-    func finish(into buffer: inout Data) throws
+    func finish(into buffer: inout [UInt8]) throws
 
     /// The OpenSSLCipherAlgorithm this stream cipher is interacting with
     var algorithm: OpenSSLCipherAlgorithm { get }
@@ -63,10 +49,7 @@ extension OpenSSLStreamCipher {
     ///             This is set to `CipherModel.encrypt` by default.
     ///
     /// - throws: `CryptoError` if reset fails, data conversion fails, or key/iv lengths are not correct.
-    public func reset(key: CustomDataConvertible, iv: CustomDataConvertible? = nil, mode: CipherMode = .encrypt) throws {
-        var key = key.data
-        var iv = iv?.data
-
+    public func reset(key: CryptoData, iv: CryptoData? = nil, mode: CipherMode = .encrypt) throws {
         let keyLength = EVP_CIPHER_key_length(algorithm.c)
         guard keyLength == key.count else {
             throw CryptoError(identifier: "cipherKeySize", reason: "Invalid cipher key length \(key.count) != \(keyLength).")
@@ -77,14 +60,14 @@ extension OpenSSLStreamCipher {
             throw CryptoError(identifier: "cipherIVSize", reason: "Invalid cipher IV length \(iv?.count ?? 0) != \(ivLength).")
         }
 
-        guard key.withUnsafeMutableBytes({ (keyBuffer: UnsafeMutableRawBufferPointer) -> Int32 in
-            return iv!.withUnsafeMutableBytes { (ivBuffer: UnsafeMutableRawBufferPointer) -> Int32 in
+        guard key.withUnsafeBytes({ (keyBuffer: UnsafeRawBufferPointer) -> Int32 in
+            return iv.withUnsafeBytes { (ivBuffer: UnsafeRawBufferPointer?) -> Int32 in
                 EVP_CipherInit_ex(
                     ctx,
                     algorithm.c,
                     nil,
                     keyBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
-                    ivBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                    ivBuffer?.baseAddress?.assumingMemoryBound(to: UInt8.self),
                     mode.rawValue
                 )
             }
@@ -109,13 +92,12 @@ extension OpenSSLStreamCipher {
     ///     - data: Message chunk to encrypt or decrypt.
     ///     - buffer: Mutable buffer to append newly encrypted or decrypted data to.
     /// - throws: `CryptoError` if update fails or data conversion fails.
-    public func update(data: CustomDataConvertible, into buffer: inout Data) throws {
-        var input = data.data
-        var chunk = Data(count: input.count + Int(algorithm.blockSize) - 1)
+    public func update(data: CryptoData, into buffer: inout [UInt8]) throws {
+        var chunk = [UInt8](repeating: 0, count: data.count + Int(algorithm.blockSize) - 1)
         var chunkLength: Int32 = 0
 
         guard chunk.withUnsafeMutableBytes({ chunkBuffer in
-            input.withUnsafeMutableBytes { inputBuffer in
+            data.withUnsafeBytes { inputBuffer in
                 return EVP_CipherUpdate(
                     ctx,
                     chunkBuffer.baseAddress!.assumingMemoryBound(to: UInt8.self),
@@ -146,7 +128,7 @@ extension OpenSSLStreamCipher {
     /// - parameters:
     ///     - buffer: Mutable buffer to append any remaining encrypted or decrypted data to.
     /// - throws: `CryptoError` if finalization fails.
-    public func finish(into buffer: inout Data) throws {
+    public func finish(into buffer: inout [UInt8]) throws {
         var chunk = Data(count: Int(algorithm.blockSize))
         var chunkLength: Int32 = 0
 

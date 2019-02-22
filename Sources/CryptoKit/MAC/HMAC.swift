@@ -87,7 +87,7 @@ public final class HMAC {
     ///     - key: HMAC key
     /// - returns: Digested data
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or data conversion fails.
-    public func authenticate(_ data: CustomDataConvertible, key: CustomDataConvertible) throws -> Data {
+    public func authenticate(_ data: CryptoData, key: CryptoData) throws -> CryptoData {
         try reset(key: key)
         try update(data: data)
         return try finish()
@@ -101,9 +101,7 @@ public final class HMAC {
     /// - parameters:
     ///     - key: HMAC key
     /// - throws: `CryptoError` if the initialization / reset fails or data conversion fails.
-    public func reset(key: CustomDataConvertible) throws {
-        let key = key.data
-        
+    public func reset(key: CryptoData) throws {
         guard key.withUnsafeBytes({
             return HMAC_Init_ex(ctx, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), algorithm.c, nil)
         }) == 1 else {
@@ -124,9 +122,7 @@ public final class HMAC {
     /// - parameters:
     ///     - data: Message chunk to digest / authenticate
     /// - throws: `CryptoError` if the update fails or data conversion fails.
-    public func update(data: CustomDataConvertible) throws {
-        let data = data.data
-
+    public func update(data: CryptoData) throws {
         guard data.withUnsafeBytes({
             return HMAC_Update(ctx, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), $0.count)
         }) == 1 else {
@@ -146,8 +142,8 @@ public final class HMAC {
     ///
     /// - returns: Digest data
     /// - throws: `CryptoError` if the finalization step fails.
-    public func finish() throws -> Data {
-        var hash = Data(count: Int(EVP_MAX_MD_SIZE))
+    public func finish() throws -> CryptoData {
+        var hash = [UInt8](repeating: 0, count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
         
         guard hash.withUnsafeMutableBytes({
@@ -155,7 +151,7 @@ public final class HMAC {
         }) == 1 else {
             throw CryptoError.openssl(identifier: "HMAC_Final", reason: "Failed finalizing HMAC digest.")
         }
-        return hash.prefix(upTo: Int(count))
+        return .bytesSlice(hash.prefix(upTo: Int(count)))
     }
 
     deinit {

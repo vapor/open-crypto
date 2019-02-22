@@ -84,14 +84,14 @@ public final class Cipher: OpenSSLStreamCipher {
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     /// - returns: Encrypted ciphertext.
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func encrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible? = nil) throws -> Data {
-        var buffer = Data()
+    public func encrypt(_ data: CryptoData, key: CryptoData, iv: CryptoData? = nil) throws -> CryptoData {
+        var buffer: [UInt8] = []
 
         try reset(key: key, iv: iv, mode: .encrypt)
         try update(data: data, into: &buffer)
         try finish(into: &buffer)
 
-        return buffer
+        return .bytes(buffer)
     }
 
     /// Decrypts the supplied ciphertext back to plaintext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -109,13 +109,13 @@ public final class Cipher: OpenSSLStreamCipher {
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     /// - returns: Decrypted plaintext.
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func decrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible? = nil) throws -> Data {
-        var buffer = Data()
+    public func decrypt(_ data: CryptoData, key: CryptoData, iv: CryptoData? = nil) throws -> CryptoData {
+        var buffer: [UInt8] = []
 
         try reset(key: key, iv: iv, mode: .decrypt)
         try update(data: data, into: &buffer)
         try finish(into: &buffer)
-        return buffer
+        return .bytes(buffer)
     }
 
     /// Frees the allocated OpenSSL cipher context.

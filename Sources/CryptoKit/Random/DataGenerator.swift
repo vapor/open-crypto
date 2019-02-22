@@ -3,19 +3,15 @@ import Foundation
 /// Capable of generating random `Data`.
 public protocol DataGenerator {
     /// Generate `count` bytes of data.
-    func generateData(count: Int) throws -> Data
-}
-
-extension Data {
-    internal func cast<T>(to: T.Type = T.self) -> T {
-        return withUnsafeBytes { (p: UnsafeRawBufferPointer) in p.baseAddress!.assumingMemoryBound(to: T.self).pointee }
-    }
+    func generateData(count: Int) throws -> [UInt8]
 }
 
 extension DataGenerator {
     /// Generates a random type `T`.
-    public func generate<T>(_ type: T.Type = T.self) throws -> T {
+    public func generate<T>(_ type: T.Type = T.self) throws -> T
+        where T: FixedWidthInteger
+    {
         return try self.generateData(count: MemoryLayout<T>.size)
-            .cast(to: T.self)
+            .withUnsafeBytes { $0.baseAddress!.assumingMemoryBound(to: T.self).pointee }
     }
 }

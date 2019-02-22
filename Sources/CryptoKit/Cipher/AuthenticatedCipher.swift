@@ -1,5 +1,4 @@
 import CCryptoOpenSSL
-import Foundation
 
 /// AES-256 GCM Cipher. This is the reccomended cipher mode. (see https://github.com/vapor/crypto/issues/59).
 ///
@@ -57,16 +56,14 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///           The IV must be an appropriate length for the cipher you are using. See `CipherAlgorithm.ivSize`.
     /// - returns: Encrypted ciphertext and GCM tag.
     /// - throws: `CryptoError` if reset, update, finalization or tag retrieval steps fail or if data conversion fails.
-    public func encrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible) throws -> (ciphertext: Data, tag: Data) {
-        var buffer = Data()
+    public func encrypt(_ data: CryptoData, key: CryptoData, iv: CryptoData) throws -> (ciphertext: CryptoData, tag: CryptoData) {
+        var buffer: [UInt8] = []
 
         try reset(key: key, iv: iv, mode: .encrypt)
         try update(data: data, into: &buffer)
         try finish(into: &buffer)
 
-        let tag = try getTag()
-
-        return (ciphertext: buffer, tag: tag)
+        return try (ciphertext: .bytes(buffer), tag: self.getTag())
     }
 
     /// Decrypts the supplied ciphertext back to plaintext. This method will call `reset(key:iv:mode:)`, `update(data:into:)`,
@@ -87,15 +84,15 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     ///           The tag must be 16 bytes
     /// - returns: Decrypted plaintext.
     /// - throws: `CryptoError` if reset, update, or finalization steps fail or if data conversion fails.
-    public func decrypt(_ data: CustomDataConvertible, key: CustomDataConvertible, iv: CustomDataConvertible, tag: CustomDataConvertible) throws -> Data {
-        var buffer = Data()
+    public func decrypt(_ data: CryptoData, key: CryptoData, iv: CryptoData, tag: CryptoData) throws -> CryptoData {
+        var buffer: [UInt8] = []
 
         try reset(key: key, iv: iv, mode: .decrypt)
         try update(data: data, into: &buffer)
         try setTag(tag)
         try finish(into: &buffer)
 
-        return buffer
+        return .bytes(buffer)
     }
 
     /// Gets the Tag from the CIPHER_CTX struct.
@@ -103,14 +100,16 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     /// - note: This _must_ be called after `finish()` to retrieve the generated tag.
     ///
     /// - throws: `CryptoError` if tag retrieval fails
-    public func getTag() throws -> Data {
-        var buffer = Data(count: Int(AEAD_MAX_TAG_LENGTH))
+    public func getTag() throws -> CryptoData {
+        var buffer = [UInt8](repeating: 0, count: Int(AEAD_MAX_TAG_LENGTH))
 
-        guard buffer.withUnsafeMutableBytes({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withUnsafeMutableBytes({
+            EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress)
+        }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed getting tag (EVP_CTRL_CCM_GET_TAG).")
         }
 
-        return buffer
+        return .bytes(buffer)
     }
 
     /// Sets the Tag in the CIPHER_CTX struct.
@@ -118,8 +117,8 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
     /// - note: This _must_ be called before `finish()` to set the tag.
     ///
     /// - throws: `CryptoError` if tag set fails
-    public func setTag(_ tag: CustomDataConvertible) throws {
-        var buffer = tag.data
+    public func setTag(_ tag: CryptoData) throws {
+        var buffer = tag.bytes()
 
         /// Require that the tag length is full-sized. Although it is possible to use the leftmost bytes of a tag,
         /// shorter tags pose both a buffer size risk as well as an attack risk.
@@ -127,7 +126,9 @@ public final class AuthenticatedCipher: OpenSSLStreamCipher {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Tag length too short: \(buffer.count) != \(AEAD_MAX_TAG_LENGTH) (AEAD_MAX_TAG_LENGTH).")
         }
 
-        guard buffer.withUnsafeMutableBytes({ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress!) }) == 1 else {
+        guard buffer.withUnsafeMutableBytes({
+            EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AEAD_MAX_TAG_LENGTH, $0.baseAddress)
+        }) == 1 else {
             throw CryptoError.openssl(identifier: "EVP_CIPHER_CTX_ctrl", reason: "Failed setting tag (EVP_CTRL_GCM_SET_TAG).")
         }
     }

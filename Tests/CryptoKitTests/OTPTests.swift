@@ -3,13 +3,13 @@ import CryptoKit
 
 class OTPTests: XCTestCase {
     func testTOTPBasic() throws {
-        let key = "hi"
+        let key: CryptoData = "hi"
         let code = try TOTP.SHA1.generateRange(degree: 1, secret: key)
         XCTAssertEqual(code.count, 3)
     }
 
     func testHOTPBasic() throws {
-        let key = "hi"
+        let key: CryptoData = "hi"
         try XCTAssertEqual(HOTP.SHA1.generate(secret: key, counter: 0), "208503")
         try XCTAssertEqual(HOTP.SHA1.generate(digits: .seven, secret: key, counter: 0), "3208503")
         try XCTAssertEqual(HOTP.SHA1.generate(digits: .eight, secret: key, counter: 0), "63208503")
@@ -17,10 +17,10 @@ class OTPTests: XCTestCase {
     }
     
     func testBase32() throws {
-        let message = "Hello, world!"
-        let encoded = message.data(using: .utf8)!.base32EncodedString()
+        let message: CryptoData = "Hello, world!"
+        let encoded = message.base32EncodedString()
         let decoded = Data(base32Encoded: encoded) ?? .init()
-        XCTAssertEqual(String(data: decoded, encoding: .utf8), message)
+        XCTAssertEqual(.data(decoded), message)
     }
     
     static var allTests = [

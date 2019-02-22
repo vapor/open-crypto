@@ -28,7 +28,7 @@ public final class URandom: DataGenerator {
     }
 
     /// Internal read method.
-    private func read(numBytes: Int) throws -> Data {
+    private func read(numBytes: Int) throws -> [UInt8] {
         // Initialize an empty array with space for numBytes bytes
         var bytes = [UInt8](repeating: 0, count: numBytes)
 
@@ -38,11 +38,11 @@ public final class URandom: DataGenerator {
             throw Error.read(errno)
         }
 
-        return Data(bytes)
+        return bytes
     }
 
     /// Get a random array of Bytes
-    public func generateData(count: Int) throws -> Data {
-        return try read(numBytes: count)
+    public func generateData(count: Int) throws -> [UInt8] {
+        return try self.read(numBytes: count)
     }
 }

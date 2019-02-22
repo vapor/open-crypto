@@ -1,6 +1,7 @@
-import Foundation
 #if os(Linux)
 import Glibc
+#else
+import Darwin
 #endif
 
 /// Uses the operating system's Random function uses `random` on Linux and `arc4random` on macOS.
@@ -9,8 +10,8 @@ public struct OSRandom: DataGenerator {
     public init() {}
 
     /// See `DataGenerator`.
-    public func generateData(count: Int) -> Data {
-        var bytes = Data()
+    public func generateData(count: Int) -> [UInt8] {
+        var bytes: [UInt8] = []
 
         for _ in 0..<count {
             let random = makeRandom(min: 0, max: .maxByte)

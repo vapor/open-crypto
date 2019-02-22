@@ -1,5 +1,4 @@
 import libbcrypt
-import Foundation
 
 /// Creates and verifies BCrypt hashes. Normally you will not need to initialize one of these classes and you will
 /// use the global `BCrypt` convenience instead.
@@ -130,12 +129,12 @@ public final class BCryptDigest {
     ///     - algorithm: Revision to use (2b by default)
     ///     - seed: Salt (without revision data). Generated if not provided. Must be 16 chars long.
     /// - returns: Complete salt
-    private func generateSalt(cost: Int, algorithm: Algorithm = ._2b, seed: String? = nil) throws -> String {
-        let randomData: Data
-        if let seed = seed, let seedData = seed.data(using: .utf8) {
-            randomData = seedData
+    private func generateSalt(cost: Int, algorithm: Algorithm = ._2b, seed: CryptoData? = nil) throws -> String {
+        let randomData: CryptoData
+        if let seed = seed {
+            randomData = seed
         } else {
-            randomData = try URandom().generateData(count: 16)
+            randomData = try .bytes(URandom().generateData(count: 16))
         }
         let encodedSalt = try base64Encode(randomData)
 
@@ -168,14 +167,13 @@ public final class BCryptDigest {
     /// - parameters
     ///     - dataConvertible: Data to be base64 encoded.
     /// - returns: Base 64 encoded plaintext
-    private func base64Encode(_ dataConvertible: CustomDataConvertible) throws -> String {
-        let data = dataConvertible.data
-        let dataBytes = [UInt8](data)!
-
+    private func base64Encode(_ data: CryptoData) throws -> String {
         let encodedBytes = UnsafeMutablePointer<Int8>.allocate(capacity: 25)
         defer { encodedBytes.deallocate() }
-        encode_base64(encodedBytes, dataBytes, dataBytes.count)
-
+        let res = data.withUnsafeBytes { bytes in
+            encode_base64(encodedBytes, bytes.baseAddress?.assumingMemoryBound(to: UInt8.self), bytes.count)
+        }
+        assert(res == 0, "base64 convert failed")
         return String(cString: encodedBytes)
     }
 

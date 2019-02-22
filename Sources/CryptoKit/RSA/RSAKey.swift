@@ -6,18 +6,18 @@ public struct RSAKey {
     // MARK: Static
 
     /// Creates a new `RSAKey` from a private key pem file.
-    public static func `private`(pem: CustomDataConvertible) throws -> RSAKey {
-        return try .init(type: .private, key: .make(type: .private, from: pem.data))
+    public static func `private`(pem: CryptoData) throws -> RSAKey {
+        return try .init(type: .private, key: .make(type: .private, from: pem))
     }
 
     /// Creates a new `RSAKey` from a public key pem file.
-    public static func `public`(pem: CustomDataConvertible) throws -> RSAKey {
-        return try .init(type: .public, key: .make(type: .public, from: pem.data))
+    public static func `public`(pem: CryptoData) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: pem))
     }
 
     /// Creates a new `RSAKey` from a public key certificate file.
-    public static func `public`(certificate: CustomDataConvertible) throws -> RSAKey {
-        return try .init(type: .public, key: .make(type: .public, from: certificate.data, x509: true))
+    public static func `public`(certificate: CryptoData) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: certificate, x509: true))
     }
 
     // MARK: Properties
@@ -105,11 +105,12 @@ final class CRSAKey {
     }
 
     /// Creates a new `CRSAKey` from type, data. Specifying `x509` true will treat the data as a certificate.
-    static func make(type: RSAKeyType, from data: Data, x509: Bool = false) throws -> CRSAKey {
+    static func make(type: RSAKeyType, from data: CryptoData, x509: Bool = false) throws -> CRSAKey {
         let bio = BIO_new(BIO_s_mem())
         defer { BIO_free(bio) }
-
-        let nullTerminatedData = data + Data([0])
+        
+        let bytes = data.bytes()
+        let nullTerminatedData = bytes + [0]
         _ = nullTerminatedData.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> Int32 in
             return BIO_puts(bio, p.baseAddress?.assumingMemoryBound(to: Int8.self))
         }
