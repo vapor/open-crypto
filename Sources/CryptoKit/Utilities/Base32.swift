@@ -20,7 +20,9 @@ extension Data {
             result.deinitialize(count: maxSize)
             result.deallocate()
         }
-        let size = base32Encoded.withUnsafeBytes { base32_decode($0, result, numericCast(maxSize)) }
+        let size = base32Encoded.withUnsafeBytes { ptr in
+            return base32_decode(ptr.baseAddress?.assumingMemoryBound(to: UInt8.self), result, numericCast(maxSize))
+        }
         self = .init(buffer: UnsafeBufferPointer(start: result, count: numericCast(size)))
     }
     
@@ -41,8 +43,8 @@ extension Data {
             result.deinitialize(count: maxSize)
             result.deallocate()
         }
-        let size = withUnsafeBytes { ptr in
-            return base32_encode(ptr, numericCast(count), result, numericCast(maxSize))
+        let size = self.withUnsafeBytes { ptr in
+            return base32_encode(ptr.baseAddress?.assumingMemoryBound(to: UInt8.self), numericCast(self.count), result, numericCast(maxSize))
         }
         return .init(buffer: UnsafeBufferPointer(start: result, count: numericCast(size)))
     }

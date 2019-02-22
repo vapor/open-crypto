@@ -2,13 +2,6 @@ import XCTest
 @testable import CryptoKit
 
 class RandomTests: XCTestCase {
-    static var allTests = [
-        ("testURandom", testURandom),
-        ("testOSRandom", testOSRandom),
-        ("testURandomCount", testURandomCount),
-        ("testForTrailingZeros", testForTrailingZeros)
-    ]
-
     func testURandom() throws {
         let rand = try URandom().generate(Int8.self)
         print(rand)
@@ -34,7 +27,8 @@ class RandomTests: XCTestCase {
     }
     
     func testSwiftRandom() {
-        let random = [UInt8].random(count: 1024_000)
+        let random = [UInt8].random(count: 1024)
+        XCTAssertEqual(random.count, 1024)
     }
     
     func testArray() throws {
@@ -47,4 +41,11 @@ class RandomTests: XCTestCase {
         }
         print(results)
     }
+    
+    static var allTests = [
+        ("testURandom", testURandom),
+        ("testOSRandom", testOSRandom),
+        ("testURandomCount", testURandomCount),
+        ("testForTrailingZeros", testForTrailingZeros)
+    ]
 }
