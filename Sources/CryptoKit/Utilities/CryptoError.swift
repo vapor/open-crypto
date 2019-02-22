@@ -8,7 +8,7 @@ public struct CryptoError: Error {
     /// See `Debuggable.reason`
     public var reason: String
 
-    /// Internal error creation from OpenSSLL
+    /// Internal error creation from OpenSSL
     internal static func openssl(identifier: String, reason: String) -> CryptoError {
         let errmsg = ERR_error_string(ERR_get_error(), nil)
 
@@ -20,5 +20,10 @@ public struct CryptoError: Error {
         }
 
         return .init(identifier: identifier, reason: "\(reason): \(cReason).")
+    }
+    
+    /// Custom Crypto errors
+    internal static func custom(identifier: String, reason: String) -> CryptoError {
+        return .init(identifier: identifier, reason: reason)
     }
 }
