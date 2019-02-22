@@ -10,4 +10,5 @@ XCTMain([
     testCase(SHA2Tests.allTests),
     testCase(OTPTests.allTests),
     testCase(RandomTests.allTests),
+    testCase(PBKDF2Tests.allTests),
 ])
