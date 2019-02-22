@@ -1,3 +1,13 @@
+public struct RandomGenerator: DataGenerator {
+    public func generateData(count: Int) throws -> [UInt8] {
+        var data = [UInt8]()
+        for _ in 0..<count {
+            data.append(.random())
+        }
+        return data
+    }
+}
+
 extension FixedWidthInteger {
     public static func random() -> Self {
         return Self.random(in: .min ... .max)
