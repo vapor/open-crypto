@@ -20,6 +20,11 @@ public struct RSAKey {
         return try .init(type: .public, key: .make(type: .public, from: certificate.convertToData(), x509: true))
     }
 
+    /// Creates a new `RSAKey` from a DER encoded public key certificate file.
+    public static func `public`(der: LosslessDataConvertible) throws -> RSAKey {
+        return try .init(type: .public, key: .make(from: der.convertToData()))
+    }
+
     // MARK: Properties
 
     /// The specific RSA key type. Either public or private.
@@ -100,6 +105,35 @@ final class CRSAKey {
     /// Creates a new `CRSAKey` from a pointer.
     internal init(_ pointer: OpaquePointer) {
         self.pointer = pointer
+    }
+
+    /// Creates a new DER encoded `CRSAKey` from data.
+    static func make(from der: Data) throws -> CRSAKey {
+        guard let derDecoded = Data(base64URLEncoded: der) else {
+            throw CryptoError.openssl(identifier: "rsax509", reason: "Certificate decoding failed")
+        }
+        var bytes = [UInt8]()
+        bytes.append(contentsOf: derDecoded)
+        guard let x509 = bytes.withUnsafeBufferPointer({ rawKeyPointer -> UnsafeMutablePointer<X509>? in
+                var base = rawKeyPointer.baseAddress
+                let count = bytes.count
+
+                return d2i_X509(nil, &base, count)
+            }) else {
+                throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
+        }
+        defer { X509_free(x509) }
+
+        guard let pubkey = X509_get_pubkey(x509) else {
+            throw CryptoError.openssl(identifier: "rsaPkeyNull", reason: "RSA key creation failed")
+        }
+        defer { EVP_PKEY_free(pubkey) }
+
+        guard let rsa = EVP_PKEY_get1_RSA(pubkey) else {
+            throw CryptoError.openssl(identifier: "rsaPkeyGet1", reason: "RSA key creation failed")
+        }
+
+        return .init(rsa.convert())
     }
 
     /// Creates a new `CRSAKey` from type, data. Specifying `x509` true will treat the data as a certificate.
