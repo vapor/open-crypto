@@ -17,6 +17,12 @@ class RSATests: XCTestCase {
         try XCTAssertTrue(RSA.SHA512.verify(testSignature, signs: plaintext, key: key))
     }
 
+    func testMalformedKeys() throws {
+        XCTAssertThrowsError(try RSAKey.public(pem: malformedKey))
+        XCTAssertThrowsError(try RSAKey.private(pem: malformedKey))
+        XCTAssertThrowsError(try RSAKey.public(certificate: malformedKey))
+    }
+
     func testFailure() throws {
         let plaintext = Data("vapor".utf8)
         let key: RSAKey = try .public(pem: publicKeyString)
@@ -103,6 +109,7 @@ class RSATests: XCTestCase {
     static var allTests = [
         ("testPrivateKey", testPrivateKey),
         ("testPublicKey", testPublicKey),
+        ("testMalformedKeys", testMalformedKeys),
         ("testFailure", testFailure),
         ("testKey1024", testKey1024),
         ("testKey2048", testKey2048),
@@ -360,4 +367,10 @@ F+Q/jxqNmEouQ9ZSP33dbxmoiGklNPe5kE5GkcMm/NL39Q2zJ2/LHxwYFx5u2Zs+
 CvG1EHycbZ7TkKAg0RZf6znl7fdovNpTYwE5Dsp6yfVHaZQrCt40C7lkTQp3jJdO
 JnaPRNI/r2om80rCKK7xczqLVdFVzEmHn3wYN68ZpQx7Ivz8kLGgDw==
 -----END RSA PRIVATE KEY-----
+"""
+
+let malformedKey = """
+-----BEGIN RSA PUBLIC KEY-----
+Ha ha ha, this is not a public key.
+-----END RSA PUBLIC KEY-----
 """
