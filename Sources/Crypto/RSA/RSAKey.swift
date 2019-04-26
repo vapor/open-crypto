@@ -112,15 +112,13 @@ final class CRSAKey {
         guard let derDecoded = Data(base64URLEncoded: der) else {
             throw CryptoError.openssl(identifier: "rsax509", reason: "Certificate decoding failed")
         }
-        var bytes = [UInt8]()
-        bytes.append(contentsOf: derDecoded)
-        guard let x509 = bytes.withUnsafeBufferPointer({ rawKeyPointer -> UnsafeMutablePointer<X509>? in
-                var base = rawKeyPointer.baseAddress
-                let count = bytes.count
 
-                return d2i_X509(nil, &base, count)
-            }) else {
-                throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
+        guard let x509 = derDecoded.withByteBuffer({ bufferPointer -> UnsafeMutablePointer<X509>? in
+            var base = bufferPointer.baseAddress
+            let count = bufferPointer.count
+            return d2i_X509(nil, &base, count)
+        }) else {
+            throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
         }
         defer { X509_free(x509) }
 
