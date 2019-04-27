@@ -152,11 +152,11 @@ final class CRSAKey {
             }
 
             defer { X509_free(x509) }
-            maybePkey = X509_get_pubkey(x509).convert()
+            maybePkey = X509_get_pubkey(x509)?.convert()
         } else {
             switch type {
-            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil).convert()
-            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil).convert()
+            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil)?.convert()
+            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil)?.convert()
             }
         }
 
