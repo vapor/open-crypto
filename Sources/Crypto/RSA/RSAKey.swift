@@ -22,7 +22,7 @@ public struct RSAKey {
 
     /// Creates a new `RSAKey` from a DER encoded public key certificate file.
     public static func `public`(der: LosslessDataConvertible) throws -> RSAKey {
-        return try .init(type: .public, key: .make(from: der.convertToData()))
+        return try .init(type: .public, key: .make(type: .public, from: der.convertToData(), x509: true, der: true))
     }
 
     // MARK: Properties
@@ -107,35 +107,8 @@ final class CRSAKey {
         self.pointer = pointer
     }
 
-    /// Creates a new DER encoded `CRSAKey` from data.
-    static func make(from der: Data) throws -> CRSAKey {
-        guard let derDecoded = Data(base64URLEncoded: der) else {
-            throw CryptoError.openssl(identifier: "rsax509", reason: "Certificate decoding failed")
-        }
-
-        guard let x509 = derDecoded.withByteBuffer({ bufferPointer -> UnsafeMutablePointer<X509>? in
-            var base = bufferPointer.baseAddress
-            let count = bufferPointer.count
-            return d2i_X509(nil, &base, count)
-        }) else {
-            throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
-        }
-        defer { X509_free(x509) }
-
-        guard let pubkey = X509_get_pubkey(x509) else {
-            throw CryptoError.openssl(identifier: "rsaPkeyNull", reason: "RSA key creation failed")
-        }
-        defer { EVP_PKEY_free(pubkey) }
-
-        guard let rsa = EVP_PKEY_get1_RSA(pubkey) else {
-            throw CryptoError.openssl(identifier: "rsaPkeyGet1", reason: "RSA key creation failed")
-        }
-
-        return .init(rsa.convert())
-    }
-
     /// Creates a new `CRSAKey` from type, data. Specifying `x509` true will treat the data as a certificate.
-    static func make(type: RSAKeyType, from data: Data, x509: Bool = false) throws -> CRSAKey {
+    static func make(type: RSAKeyType, from data: Data, x509: Bool = false, der: Bool = false) throws -> CRSAKey {
         let bio = BIO_new(BIO_s_mem())
         defer { BIO_free(bio) }
 
@@ -146,7 +119,22 @@ final class CRSAKey {
 
         let maybePkey: OpaquePointer?
 
-        if x509 {
+        if x509, der {
+            guard let derDecoded = Data(base64URLEncoded: data) else {
+                throw CryptoError.openssl(identifier: "rsax509", reason: "Certificate decoding failed")
+            }
+            
+            guard let x509 = derDecoded.withByteBuffer({ bufferPointer -> UnsafeMutablePointer<X509>? in
+                var base = bufferPointer.baseAddress
+                let count = bufferPointer.count
+                return d2i_X509(nil, &base, count)
+            }) else {
+                throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
+            }
+
+            defer { X509_free(x509) }
+            maybePkey = X509_get_pubkey(x509)?.convert()
+        } else if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
                 throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
             }

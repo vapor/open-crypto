@@ -113,9 +113,10 @@ class RSATests: XCTestCase {
         let payloadData = Data(parts[1])
         let signatureData = Data(parts[2])
 
+        let urlEncodedDer = Data(base64URLEncoded: derEncodedCer.trimmingCharacters(in: .whitespaces))!
         let signature = Data(base64URLEncoded: signatureData)!
         let message = headerData + Data([0x2E]) + payloadData
-        let rsa = try RSAKey.public(der: derEncodedCer.trimmingCharacters(in: .whitespaces))
+        let rsa = try RSAKey.public(der: urlEncodedDer)
 
         try XCTAssertTrue(RSA.SHA256.verify(signature, signs: message, key: rsa))
     }
