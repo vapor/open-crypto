@@ -1,16 +1,29 @@
 version: 2
 
 jobs:
-  linux:
+  bionic:
     docker:
-      - image: vapor/swift:5.0
+      - image: swift:5.0-bionic
     steps:
       - checkout
       - run: swift build -c release
       - run: swift test -c release
-  linux-release:
+  bionic-release:
     docker:
-      - image: vapor/swift:5.0
+      - image: swift:5.0-bionic
+    steps:
+      - checkout
+      - run: swift build -c release
+  xenial:
+    docker:
+      - image: swift:5.0-xenial
+    steps:
+      - checkout
+      - run: swift build -c release
+      - run: swift test -c release
+  xenial-release:
+    docker:
+      - image: swift:5.0-xenial
     steps:
       - checkout
       - run: swift build -c release
@@ -19,5 +32,7 @@ workflows:
   version: 2
   tests:
     jobs:
-      - linux
-      - linux-release
+      - bionic
+      - bionic-release
+      - xenial
+      - xenial-release
