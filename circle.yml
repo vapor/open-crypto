@@ -1,6 +1,19 @@
 version: 2
 
 jobs:
+  macos:
+    macos:
+      xcode: "10.2.0"
+    steps:
+      - checkout
+      - run: swift build
+      - run: swift test
+  macos-release:
+    docker:
+      xcode: "10.2.0"
+    steps:
+      - checkout
+      - run: swift build -c release
   bionic:
     docker:
       - image: swift:5.0-bionic
@@ -36,6 +49,8 @@ workflows:
   version: 2
   tests:
     jobs:
+      - macos
+      - macos-release
       - bionic
       - bionic-release
       - xenial
