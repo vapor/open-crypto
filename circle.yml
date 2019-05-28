@@ -7,7 +7,7 @@ jobs:
     steps:
       - checkout
       - run: apt-get -y install openssl libssl-dev
-      - run: swift build -v
+      - run: swift build --disable-index-store
       - run: swift test
   bionic-release:
     docker:
@@ -22,7 +22,7 @@ jobs:
     steps:
       - checkout
       - run: apt-get -y install openssl libssl-dev
-      - run: swift build -v
+      - run: swift build --disable-index-store
       - run: swift test
   xenial-release:
     docker:
