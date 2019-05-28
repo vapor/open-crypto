@@ -6,26 +6,30 @@ jobs:
       - image: swift:5.0-bionic
     steps:
       - checkout
-      - run: swift build -c release
-      - run: swift test -c release
+      - run: apt-get install openssl libssl-dev
+      - run: swift build
+      - run: swift test
   bionic-release:
     docker:
       - image: swift:5.0-bionic
     steps:
       - checkout
+      - run: apt-get install openssl libssl-dev
       - run: swift build -c release
   xenial:
     docker:
       - image: swift:5.0-xenial
     steps:
       - checkout
-      - run: swift build -c release
-      - run: swift test -c release
+      - run: apt-get install openssl libssl-dev
+      - run: swift build
+      - run: swift test
   xenial-release:
     docker:
       - image: swift:5.0-xenial
     steps:
       - checkout
+      - run: apt-get install openssl libssl-dev
       - run: swift build -c release
 
 workflows:
