@@ -9,7 +9,7 @@ jobs:
       - run: swift build
       - run: swift test
   macos-release:
-    docker:
+    macos:
       xcode: "10.2.0"
     steps:
       - checkout
