@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://user-images.githubusercontent.com/1342803/36575535-7278593c-1819-11e8-8104-69c10892a317.png" height="64" alt="Crypto">
+    <img src="https://user-images.githubusercontent.com/1342803/58572381-8fc6d580-8209-11e9-9d5b-66f3c3ebd5f2.png" alt="CryptoKit">
     <br>
     <br>
     <a href="https://api.vapor.codes/crypto/master/CryptoKit/index.html">
