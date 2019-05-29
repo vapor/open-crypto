@@ -2,7 +2,7 @@
     <img src="https://user-images.githubusercontent.com/1342803/58572381-8fc6d580-8209-11e9-9d5b-66f3c3ebd5f2.png" alt="CryptoKit">
     <br>
     <br>
-    <a href="https://api.vapor.codes/crypto/master/CryptoKit/index.html">
+    <a href="https://api.vapor.codes/crypto-kit/master/CryptoKit/index.html">
         <img src="http://img.shields.io/badge/api-docs-2196f3.svg" alt="API Docs">
     </a>
     <a href="https://discord.gg/vapor">
