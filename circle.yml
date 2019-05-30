@@ -22,6 +22,7 @@ jobs:
     steps:
       - checkout
       - run: apt-get -y install openssl libssl-dev
+      - run: swift build -v -Xswiftc -v -Xcc -v -Xlinker -v -Xcxx -v
       - run: swift build --disable-index-store
       - run: swift test --disable-index-store
   bionic-release:
