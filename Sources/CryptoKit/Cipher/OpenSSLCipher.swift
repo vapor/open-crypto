@@ -17,7 +17,7 @@ final class OpenSSLCipher {
     /// OpenSSL cipher algorithms.
     final class Algorithm {
         /// OpenSSL `EVP_CIPHER` context.
-        var c: OpaquePointer
+        var c: UnsafePointer<EVP_CIPHER>
         
         static func named(_ name: String) -> Algorithm? {
             guard let cipher = EVP_get_cipherbyname(name) else {
@@ -27,7 +27,7 @@ final class OpenSSLCipher {
         }
         
         /// An initializer accepting the EVP_CIPHER to work with
-        init(c: OpaquePointer) {
+        init(c:  UnsafePointer<EVP_CIPHER>) {
             self.c = c
         }
         
@@ -56,7 +56,7 @@ final class OpenSSLCipher {
     var algorithm: Algorithm
     
     /// The OpenSSL Cipher Stream Context
-    private var ctx: OpaquePointer
+    private var ctx: UnsafeMutablePointer<EVP_CIPHER_CTX>
     
     init(algorithm: Algorithm) {
         self.algorithm = algorithm

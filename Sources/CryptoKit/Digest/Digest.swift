@@ -77,10 +77,10 @@ public final class Digest {
         }
         
         /// OpenSSL `EVP_MD` context.
-        let c: OpaquePointer
+        let c: UnsafePointer<EVP_MD>
         
         /// Internal init accepting a `EVP_MD`.
-        init(c: OpaquePointer) {
+        init(c: UnsafePointer<EVP_MD>) {
             self.c = c
         }
         
@@ -142,7 +142,7 @@ public final class Digest {
     public let algorithm: Algorithm
 
     /// Internal OpenSSL `EVP_MD_CTX` context.
-    let ctx: OpaquePointer
+    let ctx: UnsafeMutablePointer<EVP_MD_CTX>
 
     // MARK: Init
 

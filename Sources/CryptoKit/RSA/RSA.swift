@@ -182,7 +182,7 @@ public final class RSA {
     
     /// Typealias for OpenSSLs encrypt and decrypt signature
     private typealias RSAPkeySymmetricCoder = @convention(c)
-        (Int32, UnsafePointer<UInt8>, UnsafeMutablePointer<UInt8>, OpaquePointer, Int32) -> Int32
+        (Int32, UnsafePointer<UInt8>, UnsafeMutablePointer<UInt8>, UnsafeMutablePointer<rsa_st>, Int32) -> Int32
 
     /// Private cipher
     private static func cipher(_ input: CryptoData, padding: RSAPadding, key: RSAKey, coder: RSAPkeySymmetricCoder) throws -> CryptoData {
