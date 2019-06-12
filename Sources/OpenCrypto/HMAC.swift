@@ -14,7 +14,7 @@ public struct HMAC<H> where H : HashFunction {
     ) -> HashedAuthenticationCode<H>
         where D : DataProtocol
     {
-        var hmac = Self.init(key: key)
+        var hmac = self.init(key: key)
         hmac.update(data: data)
         return hmac.finalize()
     }
