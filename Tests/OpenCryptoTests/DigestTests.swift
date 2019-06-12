@@ -1,7 +1,7 @@
 import XCTest
 import OpenCrypto
 
-class MD5Tests: XCTestCase {
+class DigestTests: XCTestCase {
     func testMD5() throws {
         test(Insecure.MD5.self, [
             ("", "d41d8cd98f00b204e9800998ecf8427e"),
@@ -51,7 +51,7 @@ class MD5Tests: XCTestCase {
     }
 }
 
-func test<H>(_ hash: H.Type, _ tests: [(plaintext: String, digest: String)], line: UInt = #line)
+private func test<H>(_ hash: H.Type, _ tests: [(plaintext: String, digest: String)], line: UInt = #line)
     where H: HashFunction
 {
     var line = line

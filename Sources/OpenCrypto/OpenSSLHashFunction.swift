@@ -1,7 +1,11 @@
 import COpenCrypto
 
-protocol OpenSSLDigest: Digest {
+protocol AnyOpenSSLDigest {
     static var algorithm: OpaquePointer { get }
+    static var byteCount: Int { get }
+}
+
+protocol OpenSSLDigest: Digest, AnyOpenSSLDigest {
     var bytes: [UInt8] { get }
     init(bytes: [UInt8])
 }
