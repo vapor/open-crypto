@@ -97,7 +97,7 @@ public struct HMAC<H> where H : HashFunction {
 
     private func initialize() {
         guard self.key.withUnsafeBytes({
-            return HMAC_Init_ex(self.context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), Self.algorithm, nil)
+            return HMAC_Init_ex(self.context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), type(of: self).algorithm, nil)
         }) == 1 else {
             fatalError("Failed initializing HMAC context")
         }
