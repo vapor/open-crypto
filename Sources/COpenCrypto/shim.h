@@ -1,5 +1,5 @@
-#ifndef C_CRYPTO_OPENSSL_H
-#define C_CRYPTO_OPENSSL_H
+#ifndef C_OPEN_CRYPTO_H
+#define C_OPEN_CRYPTO_H
 
 #include <openssl/conf.h>
 #include <openssl/evp.h>

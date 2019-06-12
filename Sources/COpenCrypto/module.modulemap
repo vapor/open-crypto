@@ -1,4 +1,4 @@
-module CCryptoOpenSSL [system] {
+module COpenCrypto [system] {
     header "shim.h"
     link "ssl"
     link "crypto"

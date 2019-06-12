@@ -1,4 +1,0 @@
-module libbcrypt [system][extern_c] {
- header "../bcryptc.h"
- export *
-}
