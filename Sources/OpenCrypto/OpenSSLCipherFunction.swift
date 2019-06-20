@@ -66,11 +66,11 @@ extension OpenSSLCipherFunction {
         let nonce = nonce ?? Nonce()
 
         var buffer = [UInt8]()
-        try self.reset(context: context, algorithm: algorithm, key: key, iv: nonce.bytes, mode: .encrypt)
-        try self.update(context: context, algorithm: algorithm, data: message, into: &buffer)
-        try self.finish(context: context, algorithm: algorithm, into: &buffer)
+        try self.reset(context: convert(context), algorithm: algorithm, key: key, iv: nonce.bytes, mode: .encrypt)
+        try self.update(context: convert(context), algorithm: algorithm, data: message, into: &buffer)
+        try self.finish(context: convert(context), algorithm: algorithm, into: &buffer)
 
-        return try SealedBox(nonce: nonce, ciphertext: buffer, tag: self.getTag(context: context))
+        return try SealedBox(nonce: nonce, ciphertext: buffer, tag: self.getTag(context: convert(context)))
     }
 
     public static func open(
@@ -82,10 +82,10 @@ extension OpenSSLCipherFunction {
         defer { EVP_CIPHER_CTX_free(context) }
 
         var buffer = [UInt8]()
-        try self.reset(context: context, algorithm: algorithm, key: key, iv: sealedBox.nonce.bytes, mode: .decrypt)
-        try self.setTag(context: context, sealedBox.tag)
-        try self.update(context: context, algorithm: algorithm, data: sealedBox.ciphertext, into: &buffer)
-        try self.finish(context: context, algorithm: algorithm, into: &buffer)
+        try self.reset(context: convert(context), algorithm: algorithm, key: key, iv: sealedBox.nonce.bytes, mode: .decrypt)
+        try self.setTag(context: convert(context), sealedBox.tag)
+        try self.update(context: convert(context), algorithm: algorithm, data: sealedBox.ciphertext, into: &buffer)
+        try self.finish(context: convert(context), algorithm: algorithm, into: &buffer)
         return buffer
     }
 
@@ -98,16 +98,16 @@ extension OpenSSLCipherFunction {
     ) throws
         where IV: DataProtocol
     {
-        guard key.bitCount == numericCast(EVP_CIPHER_key_length(algorithm)) * 8 else {
+        guard key.bitCount == numericCast(EVP_CIPHER_key_length(convert(algorithm))) * 8 else {
             throw CryptoKitError.incorrectKeySize
         }
-        guard iv.count == numericCast(EVP_CIPHER_iv_length(algorithm)) else {
+        guard iv.count == numericCast(EVP_CIPHER_iv_length(convert(algorithm))) else {
             throw CryptoKitError.incorrectParameterSize
         }
 
         guard EVP_CipherInit_ex(
-            context,
-            algorithm,
+            convert(context),
+            convert(algorithm),
             nil,
             key.bytes,
             iv.copyBytes(),
@@ -126,11 +126,11 @@ extension OpenSSLCipherFunction {
         where Data: DataProtocol
     {
         let data = data.copyBytes()
-        var chunk = [UInt8](repeating: 0, count: data.count + numericCast(EVP_CIPHER_block_size(algorithm)) - 1)
+        var chunk = [UInt8](repeating: 0, count: data.count + numericCast(EVP_CIPHER_block_size(convert(algorithm))) - 1)
         var chunkLength: Int32 = 0
 
         guard EVP_CipherUpdate(
-            context,
+            convert(context),
             &chunk,
             &chunkLength,
             data,
@@ -146,11 +146,11 @@ extension OpenSSLCipherFunction {
         algorithm: OpaquePointer,
         into buffer: inout [UInt8]
     ) throws {
-        var chunk = [UInt8](repeating: 0, count: numericCast(EVP_CIPHER_block_size(algorithm)))
+        var chunk = [UInt8](repeating: 0, count: numericCast(EVP_CIPHER_block_size(convert(algorithm))))
         var chunkLength: Int32 = 0
 
         guard EVP_CipherFinal_ex(
-            context,
+            convert(context),
             &chunk,
             &chunkLength
         ) == 1 else {
@@ -163,7 +163,7 @@ extension OpenSSLCipherFunction {
         var buffer = [UInt8](repeating: 0, count: Int(AEAD_MAX_TAG_LENGTH))
 
         guard EVP_CIPHER_CTX_ctrl(
-            context,
+            convert(context),
             EVP_CTRL_GCM_GET_TAG,
             AEAD_MAX_TAG_LENGTH,
             &buffer
@@ -183,7 +183,7 @@ extension OpenSSLCipherFunction {
         }
 
         guard EVP_CIPHER_CTX_ctrl(
-            context,
+            convert(context),
             EVP_CTRL_GCM_SET_TAG,
             AEAD_MAX_TAG_LENGTH,
             &buffer

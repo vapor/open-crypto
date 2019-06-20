@@ -1,3 +1,11 @@
+import COpenCrypto
+
+public enum OpenSSL {
+    public static var version: Int {
+        return numericCast(c_open_crypto_openssl_version_number())
+    }
+}
+
 extension DataProtocol {
     func copyBytes() -> [UInt8] {
         var buffer = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: self.count)
@@ -15,4 +23,26 @@ extension Array where Element: FixedWidthInteger {
         }
         return array
     }
+}
+
+// pointer hacks
+
+func convert(_ pointer: OpaquePointer) -> OpaquePointer {
+    return pointer
+}
+
+func convert<T>(_ pointer: UnsafePointer<T>) -> OpaquePointer {
+    return .init(pointer)
+}
+
+func convert<T>(_ pointer: UnsafeMutablePointer<T>) -> OpaquePointer {
+    return .init(pointer)
+}
+
+func convert<T>(_ pointer: OpaquePointer) -> UnsafePointer<T> {
+    return .init(pointer)
+}
+
+func convert<T>(_ pointer: OpaquePointer) -> UnsafeMutablePointer<T> {
+    return .init(pointer)
 }

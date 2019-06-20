@@ -7,7 +7,7 @@ extension Insecure {
     }
     
     public struct MD5Digest : OpenSSLDigest {
-        static let algorithm: OpaquePointer = EVP_md5()
+        static let algorithm: OpaquePointer = convert(EVP_md5())
         let bytes: [UInt8]
     }
 }

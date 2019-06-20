@@ -13,6 +13,9 @@ class CipherTests: XCTestCase {
         ])
     }
     func testChaChaPoly() throws {
+        guard OpenSSL.version >= 0x10100000 else {
+            return
+        }
         try test(ChaChaPoly.self, [
             ("passwordpasswordpasswordpassword", "vapor"),
             ("passwordpasswordpasswordpassword", ""),

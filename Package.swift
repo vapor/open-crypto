@@ -9,13 +9,14 @@ let package = Package(
     dependencies: [],
     targets: [
         .systemLibrary(
-            name: "COpenCrypto",
+            name: "COpenCryptoOpenSSL",
             pkgConfig: "openssl",
             providers: [
                 .apt(["openssl libssl-dev"]),
-                .brew(["openssl@1.1"])
+                .brew(["openssl"])
             ]
         ),
+        .target(name: "COpenCrypto", dependencies: ["COpenCryptoOpenSSL"]),
         .target(name: "OpenCrypto", dependencies: ["COpenCrypto"]),
         .testTarget(name: "OpenCryptoTests", dependencies: ["OpenCrypto"]),
     ]

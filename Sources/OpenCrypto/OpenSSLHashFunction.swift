@@ -12,7 +12,7 @@ protocol OpenSSLDigest: Digest, AnyOpenSSLDigest {
 
 extension OpenSSLDigest {
     public static var byteCount: Int {
-        return numericCast(EVP_MD_size(self.algorithm))
+        return numericCast(EVP_MD_size(convert(self.algorithm)))
     }
 
     public func makeIterator() -> Array<UInt8>.Iterator {
@@ -47,13 +47,13 @@ extension OpenSSLHashFunction {
     }
 
     public init() {
-        self.init(context: EVP_MD_CTX_new())
+        self.init(context: convert(EVP_MD_CTX_new()))
         self.initialize()
     }
 
     public func update(bufferPointer: UnsafeRawBufferPointer) {
         guard bufferPointer.withUnsafeBytes({
-            EVP_DigestUpdate(self.context, $0.baseAddress, $0.count)
+            EVP_DigestUpdate(convert(self.context), $0.baseAddress, $0.count)
         }) == 1 else {
             fatalError("Failed updating digest")
         }
@@ -64,7 +64,7 @@ extension OpenSSLHashFunction {
         var count: UInt32 = 0
 
         guard hash.withUnsafeMutableBytes({
-            EVP_DigestFinal_ex(self.context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
+            EVP_DigestFinal_ex(convert(self.context), $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
         }) == 1 else {
             fatalError("Failed finalizing digest")
         }
@@ -73,12 +73,12 @@ extension OpenSSLHashFunction {
     }
 
     private func initialize() {
-        guard EVP_DigestInit_ex(self.context, Digest.algorithm, nil) == 1 else {
+        guard EVP_DigestInit_ex(convert(self.context), convert(Digest.algorithm), nil) == 1 else {
             fatalError("Failed initializing digest context")
         }
     }
 
     private func free() {
-        EVP_MD_CTX_free(self.context)
+        EVP_MD_CTX_free(convert(self.context))
     }
 }

@@ -1,0 +1,4 @@
+module COpenCryptoOpenSSL [system] {
+    link "ssl"
+    link "crypto"
+}

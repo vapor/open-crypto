@@ -6,7 +6,7 @@ public struct SHA256 : OpenSSLHashFunction {
 }
 
 public struct SHA256Digest : OpenSSLDigest {
-    static let algorithm: OpaquePointer = EVP_sha256()
+    static let algorithm: OpaquePointer = convert(EVP_sha256())
     let bytes: [UInt8]
 }
 
@@ -16,7 +16,7 @@ public struct SHA384 : OpenSSLHashFunction {
 }
 
 public struct SHA384Digest : OpenSSLDigest {
-    static let algorithm: OpaquePointer = EVP_sha384()
+    static let algorithm: OpaquePointer = convert(EVP_sha384())
     let bytes: [UInt8]
 }
 
@@ -26,6 +26,6 @@ public struct SHA512 : OpenSSLHashFunction {
 }
 
 public struct SHA512Digest : OpenSSLDigest {
-    static let algorithm: OpaquePointer = EVP_sha512()
+    static let algorithm: OpaquePointer = convert(EVP_sha512())
     let bytes: [UInt8]
 }

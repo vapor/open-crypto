@@ -7,7 +7,7 @@ extension Insecure {
     }
 
     public struct SHA1Digest : OpenSSLDigest {
-        static let algorithm: OpaquePointer = EVP_sha1()
+        static let algorithm: OpaquePointer = convert(EVP_sha1())
         let bytes: [UInt8]
     }
 }

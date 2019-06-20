@@ -54,7 +54,7 @@ public struct HMAC<H> where H : HashFunction {
 
     public init(key: SymmetricKey) {
         self.key = key
-        self.context = HMAC_CTX_new()
+        self.context = convert(HMAC_CTX_new())
         self.initialize()
     }
 
@@ -75,7 +75,7 @@ public struct HMAC<H> where H : HashFunction {
 
     private mutating func update(bufferPointer: UnsafeRawBufferPointer) {
         guard bufferPointer.withUnsafeBytes({
-            return HMAC_Update(self.context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), $0.count)
+            return HMAC_Update(convert(self.context), $0.baseAddress?.assumingMemoryBound(to: UInt8.self), $0.count)
         }) == 1 else {
             fatalError("Failed updating HMAC digest")
         }
@@ -86,7 +86,7 @@ public struct HMAC<H> where H : HashFunction {
         var count: UInt32 = 0
 
         guard hash.withUnsafeMutableBytes({
-            return HMAC_Final(self.context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
+            return HMAC_Final(convert(self.context), $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
         }) == 1 else {
             fatalError("Failed finalizing HMAC digest")
         }
@@ -97,13 +97,13 @@ public struct HMAC<H> where H : HashFunction {
 
     private func initialize() {
         guard self.key.withUnsafeBytes({
-            return HMAC_Init_ex(self.context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), type(of: self).algorithm, nil)
+            return HMAC_Init_ex(convert(self.context), $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), convert(type(of: self).algorithm), nil)
         }) == 1 else {
             fatalError("Failed initializing HMAC context")
         }
     }
 
     private func free() {
-        HMAC_CTX_free(self.context)
+        HMAC_CTX_free(convert(self.context))
     }
 }

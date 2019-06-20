@@ -6,11 +6,11 @@ public enum AES {
             let algorithm: OpaquePointer
             switch key.bitCount {
             case 128:
-                algorithm = EVP_aes_128_gcm()
+                algorithm = convert(EVP_aes_128_gcm())
             case 192:
-                algorithm = EVP_aes_192_gcm()
+                algorithm = convert(EVP_aes_192_gcm())
             case 256:
-                algorithm = EVP_aes_256_gcm()
+                algorithm = convert(EVP_aes_256_gcm())
             default:
                 throw CryptoKitError.incorrectKeySize
             }
