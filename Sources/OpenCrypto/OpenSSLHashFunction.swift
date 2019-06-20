@@ -27,7 +27,6 @@ extension OpenSSLDigest {
         return try self.bytes.withUnsafeBytes(body)
     }
 
-
     public var description: String {
         return self.bytes.hexEncodedString()
     }

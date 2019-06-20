@@ -8,6 +8,11 @@ public struct SymmetricKey : ContiguousBytes, Equatable {
     init(bytes: [UInt8]) {
         self.bytes = bytes
     }
+
+    public init(size: SymmetricKeySize) {
+        self.bytes = [UInt8].random(count: size.bitCount / 8)
+    }
+
     public init<D>(data: D) where D : ContiguousBytes {
         let bytes = data.withUnsafeBytes { buffer in
             return [UInt8](buffer)

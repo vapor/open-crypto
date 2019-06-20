@@ -11,7 +11,7 @@ public protocol HashFunction {
 }
 
 extension HashFunction {
-    @inlinable public static func hash<D>(data: D) -> Self.Digest where D : DataProtocol {
+    public static func hash<D>(data: D) -> Self.Digest where D : DataProtocol {
         if let digest = data.withContiguousStorageIfAvailable({ buffer in
             return self.hash(bufferPointer: .init(buffer))
         }) {
@@ -24,16 +24,14 @@ extension HashFunction {
         }
     }
 
-    @inlinable public mutating func update<D>(data: D) where D : DataProtocol {
+    public mutating func update<D>(data: D) where D : DataProtocol {
         if let digest = data.withContiguousStorageIfAvailable({ buffer in
             return self.update(bufferPointer: .init(buffer))
         }) {
             return digest
         } else {
-            var buffer = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: data.count)
-            data.copyBytes(to: buffer)
-            defer { buffer.deallocate() }
-            return self.update(bufferPointer: .init(buffer))
+            return data.copyBytes().withUnsafeBufferPointer({ buffer in self.update(bufferPointer: .init(buffer))
+            })
         }
     }
 }
