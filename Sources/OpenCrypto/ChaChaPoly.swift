@@ -1,25 +1,12 @@
 import COpenCrypto
 
-public enum AES {
-    public enum GCM: OpenSSLCipherFunction {
-        static func algorithm(for key: SymmetricKey) throws -> OpaquePointer {
-            let algorithm: OpaquePointer
-            switch key.bitCount {
-            case 128:
-                algorithm = EVP_aes_128_gcm()
-            case 192:
-                algorithm = EVP_aes_192_gcm()
-            case 256:
-                algorithm = EVP_aes_256_gcm()
-            default:
-                throw CryptoKitError.incorrectKeySize
-            }
-            return algorithm
-        }
+public enum ChaChaPoly: OpenSSLCipherFunction {
+    static func algorithm(for key: SymmetricKey) throws -> OpaquePointer {
+        return EVP_chacha20_poly1305()
     }
 }
 
-extension AES.GCM {
+extension ChaChaPoly {
     public struct Nonce : ContiguousBytes, Sequence, OpenSSLCipherNonce {
         let bytes: [UInt8]
 
@@ -41,8 +28,8 @@ extension AES.GCM {
     }
 }
 
-extension AES.GCM {
-    public struct SealedBox : OpenSSLCipherSealedBox {
+extension ChaChaPoly {
+    public struct SealedBox: OpenSSLCipherSealedBox {
         public let nonce: Nonce
         public let ciphertext: [UInt8]
         public let tag: [UInt8]
