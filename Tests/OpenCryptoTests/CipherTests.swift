@@ -13,7 +13,7 @@ class CipherTests: XCTestCase {
         ])
     }
     func testChaChaPoly() throws {
-        guard OpenSSL.version >= 0x10100000 else {
+        guard OpenSSLVersion.current >= .v1_1 else {
             return
         }
         try test(ChaChaPoly.self, [

@@ -1,8 +1,22 @@
 import COpenCrypto
 
-public enum OpenSSL {
-    public static var version: Int {
-        return numericCast(c_open_crypto_openssl_version_number())
+public struct OpenSSLVersion: Comparable, Equatable, Hashable {
+    public static func < (lhs: OpenSSLVersion, rhs: OpenSSLVersion) -> Bool {
+        return lhs.value < rhs.value
+    }
+
+    let value: Int32
+
+    public static var v1_1: OpenSSLVersion {
+        return .init(value: 0x10_10_00_00)
+    }
+
+    public static var v1_0: OpenSSLVersion {
+        return .init(value: 0x10_00_00_00)
+    }
+
+    public static var current: OpenSSLVersion {
+        return .init(value: c_open_crypto_openssl_version_number())
     }
 }
 

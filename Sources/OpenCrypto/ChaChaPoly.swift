@@ -2,7 +2,7 @@ import COpenCrypto
 
 public enum ChaChaPoly: OpenSSLCipherFunction {
     static func algorithm(for key: SymmetricKey) throws -> OpaquePointer {
-        if OpenSSL.version >= 0x10100000 {
+        if OpenSSLVersion.current >= .v1_1 {
             return convert(EVP_chacha20_poly1305())
         } else {
             fatalError("ChaChaPoly is not available on OpenSSL < 1.1")
