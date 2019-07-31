@@ -33,3 +33,4 @@ This package is meant for use on platforms where CryptoKit is not available, lik
 - ✅ ChaChaPoly (1305)
 - ❌ Curve25519
 - ❌ NIST P (256, 384, 521)
+
