@@ -1,4 +1,0 @@
-module libbase32 [system][extern_c] {
- header "../base32.h"
- export *
-}

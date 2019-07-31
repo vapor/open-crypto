@@ -2,27 +2,22 @@
 import PackageDescription
 
 let package = Package(
-    name: "crypto-kit",
+    name: "open-crypto",
     products: [
-        .library(name: "CryptoKit", targets: ["CryptoKit"]),
+        .library(name: "OpenCrypto", targets: ["OpenCrypto"]),
     ],
     dependencies: [],
     targets: [
-        .target(name: "CBase32"),
-        .target(name: "CBcrypt"),
         .systemLibrary(
-            name: "CCryptoOpenSSL",
+            name: "COpenCryptoOpenSSL",
             pkgConfig: "openssl",
             providers: [
                 .apt(["openssl libssl-dev"]),
-                .brew(["openssl@1.1"])
+                .brew(["openssl"])
             ]
         ),
-        .target(name: "CryptoKit", dependencies: [
-            "CBase32",
-            "CBcrypt",
-            "CCryptoOpenSSL"
-        ]),
-        .testTarget(name: "CryptoKitTests", dependencies: ["CryptoKit"]),
+        .target(name: "COpenCrypto", dependencies: ["COpenCryptoOpenSSL"]),
+        .target(name: "OpenCrypto", dependencies: ["COpenCrypto"]),
+        .testTarget(name: "OpenCryptoTests", dependencies: ["OpenCrypto"]),
     ]
 )
