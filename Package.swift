@@ -1,8 +1,11 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.1
 import PackageDescription
 
 let package = Package(
     name: "open-crypto",
+    platforms: [
+       .macOS(.v10_14)
+    ],
     products: [
         .library(name: "OpenCrypto", targets: ["OpenCrypto"]),
     ],
