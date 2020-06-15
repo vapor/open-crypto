@@ -124,16 +124,16 @@ final class CRSAKey {
                 throw CryptoError.openssl(identifier: "rsax509", reason: "Certificate decoding failed")
             }
             
-            guard let x509 = derDecoded.withByteBuffer({ bufferPointer -> UnsafeMutablePointer<X509>? in
+            guard let x509 = derDecoded.withByteBuffer({ bufferPointer -> OpaquePointer? in
                 var base = bufferPointer.baseAddress
                 let count = bufferPointer.count
-                return d2i_X509(nil, &base, count)
+                return d2i_X509(nil, &base, count)?.convert()
             }) else {
                 throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
             }
 
-            defer { X509_free(x509) }
-            maybePkey = X509_get_pubkey(x509)?.convert()
+            defer { X509_free(x509.convert()) }
+            maybePkey = X509_get_pubkey(x509.convert())?.convert()
         } else if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
                 throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
