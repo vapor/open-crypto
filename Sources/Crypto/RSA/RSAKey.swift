@@ -20,6 +20,11 @@ public struct RSAKey {
         return try .init(type: .public, key: .make(type: .public, from: certificate.convertToData(), x509: true))
     }
 
+    /// Creates a new `RSAKey` from a DER encoded public key certificate file.
+    public static func `public`(der: LosslessDataConvertible) throws -> RSAKey {
+        return try .init(type: .public, key: .make(type: .public, from: der.convertToData(), x509: true, der: true))
+    }
+
     // MARK: Properties
 
     /// The specific RSA key type. Either public or private.
@@ -103,7 +108,7 @@ final class CRSAKey {
     }
 
     /// Creates a new `CRSAKey` from type, data. Specifying `x509` true will treat the data as a certificate.
-    static func make(type: RSAKeyType, from data: Data, x509: Bool = false) throws -> CRSAKey {
+    static func make(type: RSAKeyType, from data: Data, x509: Bool = false, der: Bool = false) throws -> CRSAKey {
         let bio = BIO_new(BIO_s_mem())
         defer { BIO_free(bio) }
 
@@ -114,7 +119,22 @@ final class CRSAKey {
 
         let maybePkey: OpaquePointer?
 
-        if x509 {
+        if x509, der {
+            guard let derDecoded = Data(base64URLEncoded: data) else {
+                throw CryptoError.openssl(identifier: "rsax509", reason: "Certificate decoding failed")
+            }
+            
+            guard let x509 = derDecoded.withByteBuffer({ bufferPointer -> UnsafeMutablePointer<X509>? in
+                var base = bufferPointer.baseAddress
+                let count = bufferPointer.count
+                return d2i_X509(nil, &base, count)
+            }) else {
+                throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
+            }
+
+            defer { X509_free(x509) }
+            maybePkey = X509_get_pubkey(x509)?.convert()
+        } else if x509 {
             guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
                 throw CryptoError.openssl(identifier: "rsax509", reason: "Key creation from certificate failed")
             }
