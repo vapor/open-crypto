@@ -1,3 +1,7 @@
+⚠️ This library has been deprecated in favor of https://github.com/apple/swift-crypto
+
+---
+
 <p align="center">
     <img src="https://user-images.githubusercontent.com/1342803/59882676-e5ae1980-9380-11e9-8e61-c4eab4d531a8.png" alt="CryptoKit">
     <br>
